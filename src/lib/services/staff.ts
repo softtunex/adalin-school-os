@@ -8,6 +8,7 @@ import { AppError } from "../errors";
 import { requireWithinLimit } from "../plans/entitlements";
 import { requirePermission, rolePermissions, type Access, type RoleRow } from "./access";
 import { recordAudit, type AuditActor } from "./audit";
+import { markOnboarding } from "./onboarding";
 
 function actorOf(access: Access, ip?: string | null): AuditActor {
   return { userId: access.user.id, name: access.user.name, ip };
@@ -119,6 +120,7 @@ export async function inviteStaff(
         expiresAt: new Date(Date.now() + INVITE_TTL_DAYS * 86_400_000),
       })
       .returning();
+    await markOnboarding(tx, access.school.id, "staff");
     await recordAudit(tx, access.school.id, actorOf(access, ip), {
       action: "staff.invited",
       summary: `Invited ${input.name} (${input.email}) as ${roleRows.map((r) => r.name).join(", ")}`,

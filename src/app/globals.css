@@ -1,26 +1,159 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  --canvas: #ffffff;
+  --paper: #faf8f5;
+  --sunken: #f3f0eb;
+  --ink: #262422;
+  --body: #57534e;
+  --muted: #8a847c;
+  --line: #e8e4de;
+  --line-strong: #d3cdc5;
+
+  --brand: #fe6007;
+  --brand-deep: #c94a00;
+  --brand-ink: #d9520a;
+  --brand-wash: #fff0e6;
+
+  --blue: #1a8fd6;
+  --blue-deep: #136da4;
+  --blue-wash: #e6f4fd;
+
+  --success: #2f9e44;
+  --success-deep: #237a34;
+  --success-wash: #e6f6e9;
+  --warning: #c98a00;
+  --warning-deep: #96680a;
+  --warning-wash: #fdf3db;
+  --danger: #d93a3a;
+  --danger-deep: #a82a2a;
+  --danger-wash: #fce8e8;
+
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a847c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not([data-theme="light"]) {
+    --canvas: #121317;
+    --paper: #17191e;
+    --sunken: #1d2026;
+    --ink: #f2f0ed;
+    --body: #bdb9b3;
+    --muted: #8a867f;
+    --line: #2a2d34;
+    --line-strong: #3b3f47;
+    --brand-ink: #ff7a2e;
+    --brand-wash: #34200f;
+    --brand-deep: #a33c00;
+    --blue: #42b0f0;
+    --blue-deep: #1f7fb8;
+    --blue-wash: #11283a;
+    --success-wash: #142c19;
+    --warning-wash: #33290d;
+    --danger-wash: #361717;
+    color-scheme: dark;
   }
 }
 
+:root[data-theme="dark"] {
+  --canvas: #121317;
+  --paper: #17191e;
+  --sunken: #1d2026;
+  --ink: #f2f0ed;
+  --body: #bdb9b3;
+  --muted: #8a867f;
+  --line: #2a2d34;
+  --line-strong: #3b3f47;
+  --brand-ink: #ff7a2e;
+  --brand-wash: #34200f;
+  --brand-deep: #a33c00;
+  --blue: #42b0f0;
+  --blue-deep: #1f7fb8;
+  --blue-wash: #11283a;
+  --success-wash: #142c19;
+  --warning-wash: #33290d;
+  --danger-wash: #361717;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-canvas: var(--canvas);
+  --color-paper: var(--paper);
+  --color-sunken: var(--sunken);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-wash: var(--brand-wash);
+  --color-blue: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-blue-wash: var(--blue-wash);
+  --color-success: var(--success);
+  --color-success-deep: var(--success-deep);
+  --color-success-wash: var(--success-wash);
+  --color-warning: var(--warning);
+  --color-warning-deep: var(--warning-deep);
+  --color-warning-wash: var(--warning-wash);
+  --color-danger: var(--danger);
+  --color-danger-deep: var(--danger-deep);
+  --color-danger-wash: var(--danger-wash);
+
+  --radius-chunk: 14px;
+  --radius-card: 18px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--body);
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01";
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.label-caps {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }

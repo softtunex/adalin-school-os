@@ -1,4 +1,4 @@
-import { and, desc, gt, lt } from "drizzle-orm";
+import { and, desc, gt, lt, type SQL } from "drizzle-orm";
 import type { DB } from "../db/client";
 import { auditLogs } from "../db/schema";
 import { withTenant } from "../db/tenant";
@@ -11,7 +11,7 @@ export async function listAuditLog(db: DB, access: Access, before?: Date) {
   requirePermission(access, "audit:view");
   requireFeature(access.plan, "audit_log");
   const days = getLimit(access.plan, "audit_days");
-  const conditions = [];
+  const conditions: SQL[] = [];
   if (days !== null) conditions.push(gt(auditLogs.createdAt, new Date(Date.now() - days * 86_400_000)));
   if (before) conditions.push(lt(auditLogs.createdAt, before));
   return withTenant(db, access.school.id, (tx) =>
