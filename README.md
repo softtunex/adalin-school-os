@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# School OS
 
-## Getting Started
+Multi-school management SaaS by Adalin Technologies. One codebase serves proprietors, principals, admin staff, bursars, teachers, parents and students, each with their own view, with features unlocked by plan.
 
-First, run the development server:
+## Run it locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+pnpm db:migrate     # creates the local database in .data/
+pnpm dev            # http://localhost:3005
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No Docker or Postgres install needed: local development uses PGlite (real Postgres running in-process). Set `DATABASE_URL` to use a real Postgres instead.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tests
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm test           # unit and integration tests (in-memory Postgres)
+pnpm test:e2e       # browser tests, desktop and phone (starts the dev server if needed)
+pnpm typecheck && pnpm lint
+```
 
-## Learn More
+## How it's put together
 
-To learn more about Next.js, take a look at the following resources:
+- **Next.js 16** (App Router, Server Actions), TypeScript, Tailwind CSS v4, Geist.
+- **Drizzle ORM** on Postgres. Schema in `src/lib/db/schema.ts`, migrations in `drizzle/` (`pnpm db:generate` after schema changes).
+- **Tenant isolation.** Every school-owned table has `school_id` and Postgres row-level security. School data is always read and written through `withTenant()` (`src/lib/db/tenant.ts`), which switches to a restricted database role that can only see the current school. Tests in `test/tenant-isolation.test.ts`.
+- **Permissions.** Catalog in `src/lib/rbac/permissions.ts`, built-in roles in `src/lib/rbac/roles.ts`. Every service function checks permissions server-side; nobody can grant a permission they don't hold.
+- **Plans.** Defaults in `src/lib/plans/catalog.ts`, stored in the `plans` table so prices and features can change without a deploy. `requireFeature()` and `requireWithinLimit()` gate features.
+- **Services** in `src/lib/services/` hold all business rules and are tested directly; pages and actions in `src/app/` stay thin.
+- **Audit log** records sensitive changes with who, what and when.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project docs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `docs/director-checklist.md`: everything still needed from the Director (accounts, keys, decisions).

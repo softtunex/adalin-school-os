@@ -50,7 +50,7 @@ export function createPostgresDatabase(url: string): Database {
 export function createDatabaseFromEnv(): Database {
   const url = process.env.DATABASE_URL;
   if (url) return createPostgresDatabase(url);
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_LOCAL_DB !== "1") {
     throw new Error("DATABASE_URL is required in production.");
   }
   const dataDir = path.join(process.cwd(), ".data", "pglite");
