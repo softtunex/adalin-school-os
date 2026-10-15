@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -105,6 +106,8 @@ export const schools = pgTable(
     country: text("country").notNull().default("Nigeria"),
     logoUrl: text("logo_url"),
     onboarding: jsonb("onboarding").$type<Record<string, boolean>>().notNull().default({}),
+    admissionPrefix: text("admission_prefix"),
+    nextAdmissionSeq: integer("next_admission_seq").notNull().default(1),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("schools_slug_uq").on(t.slug)],
@@ -195,5 +198,228 @@ export const auditLogs = pgTable(
   (t) => [index("audit_school_time_idx").on(t.schoolId, t.createdAt)],
 );
 
+// ---------- Academic structure ----------
+
+export const academicSessions = pgTable(
+  "academic_sessions",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    startsOn: date("starts_on"),
+    endsOn: date("ends_on"),
+    isCurrent: boolean("is_current").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("sessions_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const terms = pgTable(
+  "terms",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => academicSessions.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    number: integer("number").notNull(),
+    startsOn: date("starts_on"),
+    endsOn: date("ends_on"),
+    isCurrent: boolean("is_current").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("terms_session_number_uq").on(t.sessionId, t.number)],
+);
+
+export const SECTIONS = ["creche", "nursery", "primary", "junior_secondary", "senior_secondary", "other"] as const;
+export type Section = (typeof SECTIONS)[number];
+
+export const classLevels = pgTable(
+  "class_levels",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    section: text("section", { enum: SECTIONS }).notNull(),
+    sort: integer("sort").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("levels_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const classes = pgTable(
+  "classes",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => classLevels.id, { onDelete: "cascade" }),
+    arm: text("arm"),
+    name: text("name").notNull(),
+    classTeacherId: uuid("class_teacher_id").references(() => memberships.id, { onDelete: "set null" }),
+    capacity: integer("capacity"),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("classes_school_name_uq").on(t.schoolId, t.name), index("classes_level_idx").on(t.levelId)],
+);
+
+export const subjects = pgTable(
+  "subjects",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    code: text("code"),
+    sort: integer("sort").notNull().default(0),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("subjects_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const levelSubjects = pgTable(
+  "level_subjects",
+  {
+    schoolId: schoolId(),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => classLevels.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    isElective: boolean("is_elective").notNull().default(false),
+  },
+  (t) => [primaryKey({ columns: [t.levelId, t.subjectId] })],
+);
+
+export const teacherAssignments = pgTable(
+  "teacher_assignments",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    membershipId: uuid("membership_id")
+      .notNull()
+      .references(() => memberships.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("assignments_class_subject_uq").on(t.classId, t.subjectId), index("assignments_member_idx").on(t.membershipId)],
+);
+
+// ---------- People ----------
+
+export const STUDENT_STATUSES = ["active", "graduated", "withdrawn", "suspended"] as const;
+
+export const students = pgTable(
+  "students",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    admissionNo: text("admission_no").notNull(),
+    firstName: text("first_name").notNull(),
+    middleName: text("middle_name"),
+    lastName: text("last_name").notNull(),
+    gender: text("gender", { enum: ["male", "female"] }).notNull(),
+    dateOfBirth: date("date_of_birth"),
+    admittedOn: date("admitted_on"),
+    status: text("status", { enum: STUDENT_STATUSES }).notNull().default("active"),
+    classId: uuid("class_id").references(() => classes.id, { onDelete: "set null" }),
+    stateOfOrigin: text("state_of_origin"),
+    lga: text("lga"),
+    religion: text("religion"),
+    bloodGroup: text("blood_group"),
+    genotype: text("genotype"),
+    address: text("address"),
+    medicalNotes: text("medical_notes"),
+    photoUrl: text("photo_url"),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("students_school_admission_uq").on(t.schoolId, t.admissionNo),
+    index("students_class_idx").on(t.classId),
+    index("students_school_status_idx").on(t.schoolId, t.status),
+  ],
+);
+
+export const guardians = pgTable(
+  "guardians",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    email: text("email"),
+    occupation: text("occupation"),
+    address: text("address"),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("guardians_school_phone_uq").on(t.schoolId, t.phone)],
+);
+
+export const studentGuardians = pgTable(
+  "student_guardians",
+  {
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    guardianId: uuid("guardian_id")
+      .notNull()
+      .references(() => guardians.id, { onDelete: "cascade" }),
+    relationship: text("relationship").notNull().default("Parent"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+  },
+  (t) => [primaryKey({ columns: [t.studentId, t.guardianId] }), index("student_guardians_guardian_idx").on(t.guardianId)],
+);
+
+export const ENROLLMENT_OUTCOMES = ["current", "promoted", "repeated", "graduated", "withdrawn", "transferred"] as const;
+
+export const enrollments = pgTable(
+  "enrollments",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => academicSessions.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    outcome: text("outcome", { enum: ENROLLMENT_OUTCOMES }).notNull().default("current"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("enrollments_student_idx").on(t.studentId), index("enrollments_session_class_idx").on(t.sessionId, t.classId)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
-export const TENANT_TABLES = ["roles", "memberships", "membership_roles", "invitations", "audit_logs"] as const;
+export const TENANT_TABLES = [
+  "roles",
+  "memberships",
+  "membership_roles",
+  "invitations",
+  "audit_logs",
+  "academic_sessions",
+  "terms",
+  "class_levels",
+  "classes",
+  "subjects",
+  "level_subjects",
+  "teacher_assignments",
+  "students",
+  "guardians",
+  "student_guardians",
+  "enrollments",
+] as const;

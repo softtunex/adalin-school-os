@@ -8,6 +8,13 @@
       "when": 1792103939793,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792106376538,
+      "tag": "0001_academics_and_people",
+      "breakpoints": true
     }
   ]
 }
