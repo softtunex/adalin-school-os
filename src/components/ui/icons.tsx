@@ -33,11 +33,38 @@ const PATHS = {
   upgrade: "M12 19V5M5 12l7-7 7 7",
   trash: "M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13",
   clipboard: "M9 4h6v3H9zM7 5H5v16h14V5h-2",
+  search: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4",
+  chevronLeft: "M15 6l-6 6 6 6",
+  chevronRight: "M9 6l6 6-6 6",
+  chevronsUpDown: "M8 9l4-4 4 4M8 15l4 4 4-4",
+  moreVertical: "M12 5h.01M12 12h.01M12 19h.01",
+  bell: "M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4",
+  download: "M12 4v11M7 10l5 5 5-5M5 20h14",
+  upload: "M12 20V9M7 14l5-5 5 5M5 4h14",
+  filter: "M4 6h16M7 12h10M10 18h4",
+  alert: "M12 3l10 18H2zM12 10v4M12 17h.01",
+  info: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 8h.01",
+  userPlus: "M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21c0-4 3-6 7-6s5 1 6 2M19 14v6M16 17h6",
+  userCheck: "M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21c0-4 3-6 7-6 1.5 0 3 .3 4 1M15 19l2 2 4-4",
+  userX: "M10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM3 21c0-4 3-6 7-6 1.5 0 3 .3 4 1M16 16l5 5M21 16l-5 5",
+  grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+  layers: "M12 3l9 5-9 5-9-5zM3 13l9 5 9-5",
+  graduation: "M2 9l10-5 10 5-10 5zM6 11v5c0 1.5 3 3 6 3s6-1.5 6-3v-5",
+  badgeCheck: "M12 2l2.4 1.8 3-.2.9 2.9 2.5 1.7-1 2.8 1 2.8-2.5 1.7-.9 2.9-3-.2L12 22l-2.4-1.8-3 .2-.9-2.9-2.5-1.7 1-2.8-1-2.8 2.5-1.7.9-2.9 3 .2zM8.5 12l2.5 2.5 4.5-5",
+  edit: "M4 20h4L19 9l-4-4L4 16zM14 6l4 4",
+  refresh: "M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7",
+  key: "M15 9a4 4 0 1 1-3.8 5.2L4 21H2v-2h2v-2h2l1.8-1.8A4 4 0 0 1 15 9zM16 8h.01",
+  activity: "M3 12h4l3-8 4 16 3-8h4",
+  building: "M4 21V5l8-3 8 3v16M9 21v-5h6v5M8 8h.01M12 8h.01M16 8h.01M8 12h.01M12 12h.01M16 12h.01",
+  calendarCheck: "M4 6h16v15H4zM4 10h16M9 3v4M15 3v4M9 15l2 2 4-4",
+  bookOpen: "M2 5h7a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H2zM22 5h-7a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h8z",
+  star: "M12 3l2.7 5.6 6.3.9-4.5 4.4 1 6.1L12 17l-5.5 3 1-6.1L3 9.5l6.3-.9z",
 } as const;
 
 export type IconName = keyof typeof PATHS;
 
 export function Icon({ name, size = 20, ...props }: { name: IconName; size?: number } & SVGProps<SVGSVGElement>) {
+  const dots = name === "moreVertical";
   return (
     <svg
       width={size}
@@ -45,7 +72,7 @@ export function Icon({ name, size = 20, ...props }: { name: IconName; size?: num
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={2}
+      strokeWidth={dots ? 3 : 1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden

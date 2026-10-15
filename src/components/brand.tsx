@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { APP_NAME } from "@/lib/config";
-import { Icon } from "./ui/icons";
+import { cn } from "@/lib/cn";
+import { Kola } from "./illustrations/art";
 
-export function Logo({ href = "/", compact = false }: { href?: string; compact?: boolean }) {
+/** Product wordmark: mascot head plus the name in the rounded display face. */
+export function Logo({ href = "/", compact = false, className }: { href?: string; compact?: boolean; className?: string }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-2.5 rounded-[12px] font-black tracking-[-0.02em] text-ink">
-      <span className="grid size-9 place-items-center rounded-[11px] bg-brand text-white shadow-[0_3px_0_var(--brand-deep)]">
-        <Icon name="school" size={20} strokeWidth={2.4} />
-      </span>
-      {compact ? null : <span className="text-[19px]">{APP_NAME}</span>}
+    <Link href={href} className={cn("inline-flex items-center gap-2 rounded-[12px]", className)} aria-label={`${APP_NAME} home`}>
+      <Kola className="h-10 w-9 shrink-0" />
+      {compact ? null : <span className="font-display text-[26px] font-black leading-none tracking-[-0.02em] text-brand">{APP_NAME.toLowerCase()}</span>}
     </Link>
   );
 }

@@ -13,7 +13,7 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
   const fe = state.fieldErrors ?? {};
   return (
     <>
-      <h1 className="text-[32px] font-black tracking-[-0.03em]">Set a new password</h1>
+      <h1 className="font-display text-[32px] font-black leading-tight tracking-[-0.02em]">Set a new password</h1>
       <p className="mt-1 text-[15.5px] text-muted">You&apos;ll be logged out everywhere else.</p>
       <form action={action} className="mt-8 flex flex-col gap-5" noValidate>
         <input type="hidden" name="token" value={token} />

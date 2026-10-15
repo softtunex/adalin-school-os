@@ -163,7 +163,11 @@ describe("staff, roles and permissions", () => {
     const all = await listRoles(database.db, upgraded);
     expect(all.find((r) => r.key === "owner")?.memberCount).toBe(1);
     const log = await listAuditLog(database.db, upgraded);
-    expect(log.some((e) => e.action === "staff.deactivated")).toBe(true);
+    expect(log.rows.some((e) => e.action === "staff.deactivated")).toBe(true);
+    expect(log.stats.important).toBeGreaterThan(0);
+    const accessOnly = await listAuditLog(database.db, upgraded, { category: "access" });
+    expect(accessOnly.rows.every((e) => e.action.startsWith("staff.") || e.action.startsWith("role."))).toBe(true);
+    expect((await listAuditLog(database.db, upgraded, { q: "Exams officer" })).total).toBe(1);
   });
 
   it("plans in the database drive limits, not hard-coded values", async () => {

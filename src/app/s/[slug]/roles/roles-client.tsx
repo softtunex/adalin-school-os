@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useState } from "react";
 import { Button, SubmitButton } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm";
 import { Alert } from "@/components/ui/display";
 import { Field, Input, Textarea } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
@@ -30,11 +31,11 @@ function RoleForm({ slug, grantable, role }: { slug: string; grantable: string[]
         <Textarea id="role-desc" name="description" defaultValue={state.values?.description ?? role?.description} rows={2} />
       </Field>
       <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 text-[14px] font-bold text-ink">Permissions</legend>
+        <legend className="mb-1 text-[14px] font-medium text-ink">Permissions</legend>
         {fe.permissions ? <p className="text-[13.5px] font-semibold text-danger">{fe.permissions}</p> : null}
         {Object.entries(PERMISSION_GROUPS).map(([group, def]) => (
-          <div key={group} className="rounded-chunk border-2 border-line p-3">
-            <p className="label-caps text-muted">{def.label}</p>
+          <div key={group} className="rounded-chunk border border-line p-3">
+            <p className="text-[13px] font-medium text-muted">{def.label}</p>
             <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
               {Object.entries(def.actions).map(([act, label]) => {
                 const key = `${group}:${act}`;
@@ -70,7 +71,7 @@ export function RoleEditorButton({ slug, grantable, role }: { slug: string; gran
         </Button>
       ) : (
         <Button onClick={() => setOpen(true)}>
-          <Icon name="plus" size={18} strokeWidth={2.6} />
+          <Icon name="plus" size={18} strokeWidth={2.4} />
           New role
         </Button>
       )}
@@ -81,38 +82,23 @@ export function RoleEditorButton({ slug, grantable, role }: { slug: string; gran
   );
 }
 
-export function DeleteRoleButton({ slug, roleId }: { slug: string; roleId: string }) {
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string>();
-  const [pending, startTransition] = useTransition();
+export function DeleteRoleButton({ slug, roleId, roleName }: { slug: string; roleId: string; roleName: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex flex-col gap-1">
-      {confirming ? (
-        <div className="flex gap-2">
-          <Button
-            variant="danger"
-            size="sm"
-            disabled={pending}
-            onClick={() =>
-              startTransition(async () => {
-                const r = await deleteRoleAction(slug, roleId);
-                setError(r.error);
-                setConfirming(false);
-              })
-            }
-          >
-            Delete role
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-            Cancel
-          </Button>
-        </div>
-      ) : (
-        <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
-          <Icon name="trash" size={16} /> Delete
-        </Button>
-      )}
-      {error ? <p className="text-[13px] font-semibold text-danger">{error}</p> : null}
-    </div>
+    <>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Icon name="trash" size={16} /> Delete
+      </Button>
+      <ConfirmDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Delete the ${roleName} role?`}
+        confirmLabel="Delete role"
+        danger
+        onConfirm={() => deleteRoleAction(slug, roleId)}
+      >
+        This can&apos;t be undone. Remove it from all staff first.
+      </ConfirmDialog>
+    </>
   );
 }

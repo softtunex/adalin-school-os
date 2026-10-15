@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
-import { Card, Chip, PageHeader } from "@/components/ui/display";
+import { PageBody, Topbar } from "@/components/topbar";
+import { Badge, Card, IconChip, StatCard, StatGrid } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { UpgradeCard } from "@/components/upgrade-card";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { hasFeature } from "@/lib/plans/entitlements";
-import { PERMISSION_GROUPS, permissionLabel, type Permission } from "@/lib/rbac/permissions";
+import { ALL_PERMISSIONS, PERMISSION_GROUPS, permissionLabel, type Permission } from "@/lib/rbac/permissions";
 import { can } from "@/lib/services/access";
 import { listRoles } from "@/lib/services/roles";
 import { DeleteRoleButton, RoleEditorButton } from "./roles-client";
 
-export const metadata: Metadata = { title: "Roles" };
+export const metadata: Metadata = { title: "Roles & permissions" };
 
 function groupPermissions(perms: Permission[]) {
   const groups = new Map<string, string[]>();
@@ -31,63 +32,82 @@ export default async function RolesPage({ params }: { params: Promise<{ slug: st
 
   const staffRoles = roles.filter((r) => r.kind === "staff");
   const portalRoles = roles.filter((r) => r.kind === "portal");
+  const customCount = roles.filter((r) => !r.isSystem).length;
+  const assigned = staffRoles.reduce((n, r) => n + r.memberCount, 0);
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Roles"
-        description="What each role can see and do. People can hold more than one role, for example a teacher who is also the bursar."
-        actions={canManage && customAllowed ? <RoleEditorButton slug={slug} grantable={grantable} /> : null}
-      />
+    <>
+      <Topbar title="Roles & permissions" context={access.school.name} actions={canManage && customAllowed ? <RoleEditorButton slug={slug} grantable={grantable} /> : null} />
+      <PageBody>
+        <StatGrid>
+          <StatCard label="Staff roles" value={staffRoles.length} icon="shield" tone="blue" caption={`${staffRoles.length - customCount} built-in, ${customCount} custom`} />
+          <StatCard label="Role assignments" value={assigned} icon="users" tone="success" caption="People can hold more than one role" />
+          <StatCard label="Permissions" value={ALL_PERMISSIONS.length} icon="key" tone="violet" caption={`Across ${Object.keys(PERMISSION_GROUPS).length} areas of the school`} />
+          <StatCard label="Custom roles" value={customAllowed ? customCount : "—"} icon="star" tone="brand" caption={customAllowed ? "Built by your school" : "Available on Premium"} />
+        </StatGrid>
 
-      {canManage && !customAllowed ? (
-        <UpgradeCard slug={slug} feature="custom_roles" text="Create roles like Exams officer or Vice principal with exactly the permissions you choose." />
-      ) : null}
+        {canManage && !customAllowed ? (
+          <UpgradeCard slug={slug} feature="custom_roles" text="Create roles like Exams officer or Vice principal with exactly the permissions you choose." />
+        ) : null}
 
-      {[
-        { title: "Staff roles", list: staffRoles },
-        { title: "Parent and student access", list: portalRoles },
-      ].map((section) => (
-        <section key={section.title} aria-label={section.title} className="flex flex-col gap-3">
-          <h2 className="text-[18px] font-extrabold">{section.title}</h2>
-          <div className="grid gap-3 md:grid-cols-2">
-            {section.list.map((role) => (
-              <Card key={role.id} className="flex flex-col p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-[17px] font-extrabold">{role.name}</h3>
-                    <p className="mt-0.5 text-[14.5px] text-muted">{role.description || "Custom role"}</p>
-                  </div>
-                  {role.isSystem ? <Chip>Built-in</Chip> : <Chip tone="blue">Custom</Chip>}
-                </div>
-                <p className="tabular mt-3 flex items-center gap-1.5 text-[13.5px] font-bold text-body">
-                  <Icon name="users" size={16} /> {role.memberCount} {role.memberCount === 1 ? "person" : "people"}
-                </p>
-                <details className="group mt-3 rounded-chunk border-2 border-line">
-                  <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[13.5px] font-bold text-blue">
-                    {role.permissions.length} permissions
-                    <Icon name="chevronDown" size={17} className="transition-transform group-open:rotate-180" />
-                  </summary>
-                  <div className="flex flex-col gap-3 border-t-2 border-line px-3 py-3">
-                    {groupPermissions(role.permissions).map(([group, labels]) => (
-                      <div key={group}>
-                        <p className="label-caps text-muted">{group}</p>
-                        <p className="mt-0.5 text-[14px] text-body">{labels.join(" · ")}</p>
+        {[
+          { title: "Staff roles", text: "Each role only sees the parts of the school it needs.", list: staffRoles },
+          { title: "Parent and student access", text: "Portal roles only ever see their own children or their own records.", list: portalRoles },
+        ].map((section) => (
+          <section key={section.title} aria-label={section.title} className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-[17px] font-semibold">{section.title}</h2>
+              <p className="text-[14px] text-muted">{section.text}</p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {section.list.map((role) => (
+                <Card key={role.id} className="flex flex-col p-5">
+                  <div className="flex items-start gap-3">
+                    <IconChip icon={role.key === "owner" ? "badgeCheck" : role.kind === "portal" ? "user" : role.isSystem ? "shield" : "star"} tone={role.key === "owner" ? "brand" : role.isSystem ? "neutral" : "violet"} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-[16px] font-semibold">{role.name}</h3>
+                        {role.isSystem ? null : <Badge tone="violet">Custom</Badge>}
                       </div>
-                    ))}
+                      <p className="mt-0.5 text-[14px] text-muted">{role.description || "Custom role"}</p>
+                    </div>
                   </div>
-                </details>
-                {!role.isSystem && canManage && customAllowed ? (
-                  <div className="mt-4 flex gap-2">
-                    <RoleEditorButton slug={slug} grantable={grantable} role={{ id: role.id, name: role.name, description: role.description, permissions: role.permissions }} />
-                    <DeleteRoleButton slug={slug} roleId={role.id} />
+                  <div className="mt-4 flex items-center gap-4 text-[13.5px] text-body">
+                    <span className="tabular inline-flex items-center gap-1.5">
+                      <Icon name="users" size={16} className="text-muted" />
+                      {role.memberCount} {role.memberCount === 1 ? "person" : "people"}
+                    </span>
+                    <span className="tabular inline-flex items-center gap-1.5">
+                      <Icon name="key" size={16} className="text-muted" />
+                      {role.permissions.length} permissions
+                    </span>
                   </div>
-                ) : null}
-              </Card>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
+                  <details className="group mt-4 rounded-chunk border border-line">
+                    <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[14px] font-medium text-ink hover:bg-paper">
+                      What this role can do
+                      <Icon name="chevronDown" size={17} className="text-muted transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="flex flex-col gap-3 border-t border-line px-3 py-3">
+                      {groupPermissions(role.permissions).map(([group, labels]) => (
+                        <div key={group}>
+                          <p className="text-[12.5px] font-medium text-muted">{group}</p>
+                          <p className="mt-0.5 text-[13.5px] text-body">{labels.join(" · ")}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                  {!role.isSystem && canManage && customAllowed ? (
+                    <div className="mt-4 flex gap-2">
+                      <RoleEditorButton slug={slug} grantable={grantable} role={{ id: role.id, name: role.name, description: role.description, permissions: role.permissions }} />
+                      <DeleteRoleButton slug={slug} roleId={role.id} roleName={role.name} />
+                    </div>
+                  ) : null}
+                </Card>
+              ))}
+            </div>
+          </section>
+        ))}
+      </PageBody>
+    </>
   );
 }

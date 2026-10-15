@@ -8,7 +8,7 @@ export type NavItem = {
   icon: IconName;
   /** Shown when the user holds any of these. Omit for everyone. */
   anyOf?: Permission[];
-  /** Plan feature that unlocks it. Shown with an upgrade badge when missing. */
+  /** Plan feature that unlocks it. Shown with a lock when missing. */
   feature?: FeatureKey;
   staffOnly?: boolean;
 };
@@ -16,12 +16,18 @@ export type NavItem = {
 export type NavSection = { label?: string; items: NavItem[] };
 
 export const NAV: NavSection[] = [
-  { items: [{ href: "", label: "Today", icon: "home" }] },
   {
-    label: "School",
+    items: [
+      { href: "", label: "Overview", icon: "grid" },
+      { href: "/students", label: "Students", icon: "graduation", anyOf: ["students:view"], staffOnly: true },
+      { href: "/academics", label: "Academics", icon: "bookOpen", anyOf: ["academics:view"], staffOnly: true },
+    ],
+  },
+  {
+    label: "Administration",
     items: [
       { href: "/staff", label: "Staff", icon: "users", anyOf: ["staff:view"], staffOnly: true },
-      { href: "/roles", label: "Roles", icon: "shield", anyOf: ["roles:view"], staffOnly: true },
+      { href: "/roles", label: "Roles & permissions", icon: "shield", anyOf: ["roles:view"], staffOnly: true },
       { href: "/audit", label: "Audit log", icon: "history", anyOf: ["audit:view"], feature: "audit_log", staffOnly: true },
       { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing"], staffOnly: true },
     ],

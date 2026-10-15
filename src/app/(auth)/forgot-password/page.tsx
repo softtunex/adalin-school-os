@@ -12,7 +12,7 @@ export default function ForgotPasswordPage() {
   const [state, action] = useActionState(forgotPasswordAction, initialFormState);
   return (
     <>
-      <h1 className="text-[32px] font-black tracking-[-0.03em]">Forgot your password?</h1>
+      <h1 className="font-display text-[32px] font-black leading-tight tracking-[-0.02em]">Forgot your password?</h1>
       <p className="mt-1 text-[15.5px] text-muted">Enter your email and we&apos;ll send a link to set a new one.</p>
       <form action={action} className="mt-8 flex flex-col gap-5" noValidate>
         {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
           Send reset link
         </SubmitButton>
       </form>
-      <Link href="/login" className="mt-8 text-center text-[15px] font-bold text-blue hover:underline">
+      <Link href="/login" className="mt-8 text-center text-[15px] font-semibold text-blue hover:underline">
         Back to log in
       </Link>
     </>

@@ -2,87 +2,87 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* Light is the default. Dark applies only when the user explicitly chooses it. */
 :root {
   --canvas: #ffffff;
-  --paper: #faf8f5;
-  --sunken: #f3f0eb;
-  --ink: #262422;
-  --body: #57534e;
-  --muted: #8a847c;
-  --line: #e8e4de;
-  --line-strong: #d3cdc5;
+  --paper: #f8f8f7;
+  --sunken: #f2f2f0;
+  --ink: #1d1d1f;
+  --body: #4a4a4f;
+  --muted: #84848b;
+  --line: #ececea;
+  --line-strong: #dcdcd8;
 
   --brand: #fe6007;
-  --brand-deep: #c94a00;
+  --brand-deep: #d24c00;
   --brand-ink: #d9520a;
-  --brand-wash: #fff0e6;
+  --brand-wash: #fff1e8;
+  --brand-wash-strong: #ffe2cf;
 
   --blue: #1a8fd6;
   --blue-deep: #136da4;
-  --blue-wash: #e6f4fd;
+  --blue-wash: #eaf5fd;
 
-  --success: #2f9e44;
-  --success-deep: #237a34;
-  --success-wash: #e6f6e9;
-  --warning: #c98a00;
-  --warning-deep: #96680a;
-  --warning-wash: #fdf3db;
-  --danger: #d93a3a;
-  --danger-deep: #a82a2a;
-  --danger-wash: #fce8e8;
+  --success: #239a3d;
+  --success-deep: #1b7a30;
+  --success-wash: #e8f6eb;
+  --warning: #b57a00;
+  --warning-deep: #8a5d00;
+  --warning-wash: #fdf4dd;
+  --danger: #d6363b;
+  --danger-deep: #a8262b;
+  --danger-wash: #fdeaea;
+  --violet: #7c5cdb;
+  --violet-wash: #f1edfd;
 
-  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a847c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  --banner: #1f1712;
+  --banner-2: #2e1d12;
+
+  --shadow-card: 0 1px 2px rgba(20, 20, 20, 0.04);
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2384848b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --canvas: #121317;
-    --paper: #17191e;
-    --sunken: #1d2026;
-    --ink: #f2f0ed;
-    --body: #bdb9b3;
-    --muted: #8a867f;
-    --line: #2a2d34;
-    --line-strong: #3b3f47;
-    --brand-ink: #ff7a2e;
-    --brand-wash: #34200f;
-    --brand-deep: #a33c00;
-    --blue: #42b0f0;
-    --blue-deep: #1f7fb8;
-    --blue-wash: #11283a;
-    --success-wash: #142c19;
-    --warning-wash: #33290d;
-    --danger-wash: #361717;
-    color-scheme: dark;
-  }
-}
-
 :root[data-theme="dark"] {
-  --canvas: #121317;
-  --paper: #17191e;
-  --sunken: #1d2026;
-  --ink: #f2f0ed;
-  --body: #bdb9b3;
-  --muted: #8a867f;
-  --line: #2a2d34;
-  --line-strong: #3b3f47;
-  --brand-ink: #ff7a2e;
-  --brand-wash: #34200f;
-  --brand-deep: #a33c00;
-  --blue: #42b0f0;
-  --blue-deep: #1f7fb8;
-  --blue-wash: #11283a;
-  --success-wash: #142c19;
-  --warning-wash: #33290d;
-  --danger-wash: #361717;
+  --canvas: #111214;
+  --paper: #16171a;
+  --sunken: #1c1d21;
+  --ink: #f1f1f2;
+  --body: #c2c2c7;
+  --muted: #8b8b93;
+  --line: #26272c;
+  --line-strong: #34353b;
+
+  --brand-ink: #ff8a4c;
+  --brand-deep: #b84300;
+  --brand-wash: rgba(254, 96, 7, 0.1);
+  --brand-wash-strong: rgba(254, 96, 7, 0.18);
+
+  --blue: #4fb2ef;
+  --blue-wash: rgba(79, 178, 239, 0.12);
+  --success: #3fbf5d;
+  --success-wash: rgba(63, 191, 93, 0.12);
+  --warning: #e0a52a;
+  --warning-wash: rgba(224, 165, 42, 0.12);
+  --danger: #f05a5f;
+  --danger-wash: rgba(240, 90, 95, 0.12);
+  --violet: #a68cf2;
+  --violet-wash: rgba(166, 140, 242, 0.12);
+
+  --banner: #1c1d21;
+  --banner-2: #232429;
+
+  --shadow-card: none;
+  --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b8b93' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+
   color-scheme: dark;
 }
 
 @theme inline {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-nunito), var(--font-geist-sans), ui-rounded, system-ui, sans-serif;
 
   --color-canvas: var(--canvas);
   --color-paper: var(--paper);
@@ -96,6 +96,7 @@
   --color-brand-deep: var(--brand-deep);
   --color-brand-ink: var(--brand-ink);
   --color-brand-wash: var(--brand-wash);
+  --color-brand-wash-strong: var(--brand-wash-strong);
   --color-blue: var(--blue);
   --color-blue-deep: var(--blue-deep);
   --color-blue-wash: var(--blue-wash);
@@ -108,38 +109,43 @@
   --color-danger: var(--danger);
   --color-danger-deep: var(--danger-deep);
   --color-danger-wash: var(--danger-wash);
+  --color-violet: var(--violet);
+  --color-violet-wash: var(--violet-wash);
+  --color-banner: var(--banner);
+  --color-banner-2: var(--banner-2);
 
-  --radius-chunk: 14px;
-  --radius-card: 18px;
+  --radius-chunk: 12px;
+  --radius-card: 16px;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-}
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-body {
-  background: var(--canvas);
-  color: var(--body);
-  font-family: var(--font-sans);
-  font-feature-settings: "ss01";
-}
+  body {
+    background: var(--canvas);
+    color: var(--body);
+    font-family: var(--font-sans);
+  }
 
-h1,
-h2,
-h3,
-h4 {
-  color: var(--ink);
-  text-wrap: balance;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--ink);
+    text-wrap: balance;
+  }
 
-:focus-visible {
-  outline: 3px solid var(--blue);
-  outline-offset: 2px;
-  border-radius: 6px;
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--blue) 70%, transparent);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
 }
 
 .label-caps {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -149,11 +155,43 @@ h4 {
   font-variant-numeric: tabular-nums;
 }
 
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-float {
+  animation: float-y 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-y 7s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition: none !important;
     animation: none !important;
+  }
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-14deg);
   }
 }

@@ -20,7 +20,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   if (!invitation) {
     return (
       <>
-        <h1 className="text-[32px] font-black tracking-[-0.03em]">This invitation has expired</h1>
+        <h1 className="font-display text-[32px] font-black leading-tight tracking-[-0.02em]">This invitation has expired</h1>
         <p className="mt-2 text-[15.5px] text-muted">It may have been cancelled or already used. Ask your school admin to send a new one.</p>
         <ButtonLink href="/login" variant="secondary" className="mt-8">
           Go to log in
@@ -41,8 +41,8 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   return (
     <>
-      <p className="label-caps text-brand-ink">You&apos;re invited</p>
-      <h1 className="mt-1 text-[32px] font-black leading-tight tracking-[-0.03em]">Join {school?.name}</h1>
+      <p className="text-[13px] font-bold uppercase tracking-[0.06em] text-brand-ink">You&apos;re invited</p>
+      <h1 className="mt-1 font-display text-[32px] font-black leading-tight tracking-[-0.02em]">Join {school?.name}</h1>
       <p className="mt-2 text-[15.5px] text-muted">
         {inviter ? `${inviter.name} invited you` : "You've been invited"} as
       </p>

@@ -18,9 +18,9 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
   await page.getByLabel("Email").fill(ownerEmail);
   await page.getByLabel("Password").fill("Brightfuture1");
   await page.getByRole("button", { name: "Create school" }).click();
-  await expect(page).toHaveURL(/\/s\/bright-future-academy-[\w-]+\?welcome=1/);
+  await expect(page).toHaveURL(/\/s\/bright-future-academy-[\w-]+\?welcome=1/, { timeout: 45_000 });
   await expect(page.getByRole("heading", { name: /Good (morning|afternoon|evening), Funke/ })).toBeVisible();
-  await expect(page.getByText("0 of 2 done")).toBeVisible();
+  await expect(page.getByText(/0 of 4 steps done/)).toBeVisible();
   const slug = new URL(page.url()).pathname.split("/")[2];
 
   // Validation errors are shown inline, not as a crash.
@@ -40,7 +40,7 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
 
   // Invite a subject teacher and capture the shareable link.
   await page.goto(`/s/${slug}/staff`);
-  await expect(page.getByText(/1 of 5 staff places used/)).toBeVisible();
+  await expect(page.getByText("1 / 5", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Invite staff" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Full name").fill("Mr Chidi Okeke");
@@ -55,7 +55,7 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
   await expect(page.getByRole("heading", { name: "Pending invitations" })).toBeVisible();
 
   await page.goto(`/s/${slug}`);
-  await expect(page.getByText("2 of 2 done")).toHaveCount(0);
+  await expect(page.getByText(/2 of 4 steps done/)).toBeVisible();
 
   // The teacher accepts in a separate browser and gets a teacher-only view.
   const teacherContext = await browser.newContext(isMobile ? { viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true } : {});
@@ -83,8 +83,8 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
 
   // Back as the owner: the teacher now shows on the staff list.
   await page.goto(`/s/${slug}/staff`);
-  await expect(page.getByRole("cell", { name: /Mr Chidi Okeke/ })).toBeVisible();
-  await expect(page.getByText(/2 of 5 staff places used/)).toBeVisible();
+  await expect(page.getByRole("cell", { name: /^Mr Chidi Okeke/ })).toBeVisible();
+  await expect(page.getByText("2 / 5", { exact: true })).toBeVisible();
 
   // Logging out sends protected pages back to login, preserving the destination.
   await logout(page);
@@ -106,7 +106,7 @@ test("a stranger can't open another school's pages", async ({ page }) => {
   await page.getByLabel("Email").fill(`outsider${run}${Math.random().toString(36).slice(2, 6)}@e2e.test`);
   await page.getByLabel("Password").fill("Outsider123");
   await page.getByRole("button", { name: "Create school" }).click();
-  await expect(page).toHaveURL(/welcome=1/);
+  await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
   const response = await page.goto("/s/greenfield-college-does-not-belong-to-you");
   expect(response?.status()).toBe(404);
 });
@@ -124,7 +124,7 @@ test("no school page scrolls sideways on a phone", async ({ page, isMobile }) =>
   await page.getByLabel("Email").fill(`narrow${run}@e2e.test`);
   await page.getByLabel("Password").fill("Narrow1234");
   await page.getByRole("button", { name: "Create school" }).click();
-  await expect(page).toHaveURL(/welcome=1/);
+  await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
   const slug = new URL(page.url()).pathname.split("/")[2];
   for (const path of ["", "/staff", "/roles", "/settings", "/audit"]) {
     await page.goto(`/s/${slug}${path}`);

@@ -33,7 +33,7 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
 
       <div className="mt-8 flex flex-col gap-3">
         {schools.length === 0 ? (
-          <EmptyState icon={<Icon name="school" size={26} />} title="You're not part of a school yet">
+          <EmptyState icon="school" title="You're not part of a school yet">
             If your school invited you, open the link in your invitation email. Otherwise, set up your own school.
           </EmptyState>
         ) : (

@@ -47,7 +47,7 @@ async function staffSeatsUsed(tx: Tx) {
   return (active?.n ?? 0) + (pending?.n ?? 0);
 }
 
-export async function listStaff(db: DB, access: Access) {
+export async function listStaff(db: DB, access: Access, filters: StaffFilters = {}) {
   requirePermission(access, "staff:view");
   return withTenant(db, access.school.id, async (tx) => {
     const members = await tx
@@ -75,12 +75,37 @@ export async function listStaff(db: DB, access: Access) {
 
     const byMember = new Map<string, typeof assignments>();
     for (const a of assignments) byMember.set(a.membershipId, [...(byMember.get(a.membershipId) ?? []), a]);
-    const staff = members
+    const allStaff = members
       .map((m) => ({ ...m, roles: byMember.get(m.membershipId) ?? [] }))
       .filter((m) => m.roles.some((r) => r.kind === "staff"));
-    return { staff, pending, seatsUsed: await staffSeatsUsed(tx) };
+
+    const q = filters.q?.trim().toLowerCase();
+    const filtered = allStaff.filter(
+      (m) =>
+        (!q || m.name.toLowerCase().includes(q) || (m.email ?? "").toLowerCase().includes(q) || (m.jobTitle ?? "").toLowerCase().includes(q)) &&
+        (!filters.roleId || m.roles.some((r) => r.roleId === filters.roleId)) &&
+        (!filters.status || m.status === filters.status),
+    );
+    const page = Math.max(1, filters.page ?? 1);
+    return {
+      staff: filtered.slice((page - 1) * STAFF_PAGE_SIZE, page * STAFF_PAGE_SIZE),
+      filtered,
+      total: filtered.length,
+      page,
+      counts: {
+        total: allStaff.length,
+        active: allStaff.filter((m) => m.status === "active").length,
+        deactivated: allStaff.filter((m) => m.status === "deactivated").length,
+        rolesInUse: new Set(allStaff.flatMap((m) => m.roles.filter((r) => r.kind === "staff").map((r) => r.roleId))).size,
+      },
+      pending,
+      seatsUsed: await staffSeatsUsed(tx),
+    };
   });
 }
+
+export const STAFF_PAGE_SIZE = 20;
+export type StaffFilters = { q?: string; roleId?: string; status?: "active" | "deactivated"; page?: number };
 
 export async function inviteStaff(
   db: DB,

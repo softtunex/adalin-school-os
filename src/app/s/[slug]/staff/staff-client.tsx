@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useState } from "react";
 import { CopyField } from "@/components/copy-field";
 import { Button, SubmitButton } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm";
+import { RowMenu, type MenuItem } from "@/components/ui/data";
 import { Alert } from "@/components/ui/display";
 import { Checkbox, Field, Input } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
@@ -15,13 +17,13 @@ export type RoleOption = { id: string; name: string; description: string };
 function RolePicker({ roles, selected, error }: { roles: RoleOption[]; selected?: string[]; error?: string }) {
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1.5 text-[14px] font-bold text-ink">Roles</legend>
+      <legend className="mb-1.5 text-[14px] font-medium text-ink">Roles</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {roles.map((r) => (
           <Checkbox key={r.id} name="roleIds" value={r.id} defaultChecked={selected?.includes(r.id)} label={r.name} description={r.description} />
         ))}
       </div>
-      {error ? <p className="text-[13.5px] font-semibold text-danger">{error}</p> : null}
+      {error ? <p className="text-[13.5px] font-medium text-danger">{error}</p> : null}
     </fieldset>
   );
 }
@@ -67,30 +69,18 @@ function InviteForm({ slug, roles, onDone }: { slug: string; roles: RoleOption[]
 export function InviteButton({ slug, roles, disabledReason }: { slug: string; roles: RoleOption[]; disabledReason?: string }) {
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState(0);
+  const close = () => {
+    setOpen(false);
+    setKey((k) => k + 1);
+  };
   return (
     <>
       <Button onClick={() => setOpen(true)} disabled={!!disabledReason} title={disabledReason}>
-        <Icon name="plus" size={18} strokeWidth={2.6} />
+        <Icon name="plus" size={18} strokeWidth={2.4} />
         Invite staff
       </Button>
-      {disabledReason ? <p className="w-full text-right text-[13px] text-muted sm:w-auto">{disabledReason}</p> : null}
-      <Modal
-        open={open}
-        onClose={() => {
-          setOpen(false);
-          setKey((k) => k + 1);
-        }}
-        title="Invite a staff member"
-      >
-        <InviteForm
-          key={key}
-          slug={slug}
-          roles={roles}
-          onDone={() => {
-            setOpen(false);
-            setKey((k) => k + 1);
-          }}
-        />
+      <Modal open={open} onClose={close} title="Invite a staff member">
+        <InviteForm key={key} slug={slug} roles={roles} onDone={close} />
       </Modal>
     </>
   );
@@ -121,63 +111,58 @@ export function MemberActions({
   canAssign: boolean;
   canDeactivate: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string>();
-  const [pending, startTransition] = useTransition();
-
-  function changeStatus(status: "active" | "deactivated") {
-    startTransition(async () => {
-      const result = await setStatusAction(slug, member.membershipId, status);
-      setError(result.error);
-      setConfirming(false);
-    });
-  }
+  const [dialog, setDialog] = useState<"roles" | "deactivate" | "reactivate" | null>(null);
+  const items: MenuItem[] = [];
+  if (canAssign && member.status === "active") items.push({ label: "Edit roles", icon: "shield", onSelect: () => setDialog("roles") });
+  if (canDeactivate && member.status === "active") items.push({ label: "Deactivate", icon: "userX", danger: true, onSelect: () => setDialog("deactivate") });
+  if (canDeactivate && member.status === "deactivated") items.push({ label: "Reactivate", icon: "userCheck", onSelect: () => setDialog("reactivate") });
 
   return (
-    <div className="flex flex-col items-end gap-1.5">
-      <div className="flex justify-end gap-2">
-        {canAssign && member.status === "active" ? (
-          <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
-            Edit roles
-          </Button>
-        ) : null}
-        {canDeactivate ? (
-          member.status === "active" ? (
-            confirming ? (
-              <>
-                <Button variant="danger" size="sm" disabled={pending} onClick={() => changeStatus("deactivated")}>
-                  Confirm
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <Button variant="ghost" size="sm" onClick={() => setConfirming(true)}>
-                Deactivate
-              </Button>
-            )
-          ) : (
-            <Button variant="secondary" size="sm" disabled={pending} onClick={() => changeStatus("active")}>
-              Reactivate
-            </Button>
-          )
-        ) : null}
-      </div>
-      {error ? <p className="max-w-[260px] text-right text-[13px] font-semibold text-danger">{error}</p> : null}
-      <Modal open={open} onClose={() => setOpen(false)} title={`Roles for ${member.name}`}>
+    <>
+      <RowMenu items={items} label={`Actions for ${member.name}`} />
+      <Modal open={dialog === "roles"} onClose={() => setDialog(null)} title={`Roles for ${member.name}`}>
         <EditRolesForm slug={slug} membershipId={member.membershipId} roles={roles} selected={member.roleIds} />
       </Modal>
-    </div>
+      <ConfirmDialog
+        open={dialog === "deactivate"}
+        onClose={() => setDialog(null)}
+        title={`Deactivate ${member.name}?`}
+        confirmLabel="Deactivate"
+        danger
+        onConfirm={() => setStatusAction(slug, member.membershipId, "deactivated")}
+      >
+        They&apos;ll lose access to this school straight away. Their records and history stay, and you can reactivate them later.
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={dialog === "reactivate"}
+        onClose={() => setDialog(null)}
+        title={`Reactivate ${member.name}?`}
+        confirmLabel="Reactivate"
+        onConfirm={() => setStatusAction(slug, member.membershipId, "active")}
+      >
+        They&apos;ll be able to sign in again with their existing roles.
+      </ConfirmDialog>
+    </>
   );
 }
 
-export function RevokeInviteButton({ slug, invitationId }: { slug: string; invitationId: string }) {
-  const [pending, startTransition] = useTransition();
+export function PendingInviteActions({ slug, invitationId }: { slug: string; invitationId: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Button variant="ghost" size="sm" disabled={pending} onClick={() => startTransition(() => revokeInviteAction(slug, invitationId))}>
-      Cancel invite
-    </Button>
+    <>
+      <RowMenu items={[{ label: "Cancel invitation", icon: "x", danger: true, onSelect: () => setOpen(true) }]} />
+      <ConfirmDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Cancel this invitation?"
+        confirmLabel="Cancel invitation"
+        danger
+        onConfirm={async () => {
+          await revokeInviteAction(slug, invitationId);
+        }}
+      >
+        The link stops working immediately. You can always invite them again.
+      </ConfirmDialog>
+    </>
   );
 }

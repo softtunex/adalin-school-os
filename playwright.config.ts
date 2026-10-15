@@ -5,6 +5,8 @@ const PORT = Number(process.env.E2E_PORT ?? 3005);
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
+  // Tests run on a single-connection in-process database, so they run one at a time.
+  workers: 1,
   retries: 0,
   timeout: 60_000,
   expect: { timeout: 15_000 },
