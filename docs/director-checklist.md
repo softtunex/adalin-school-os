@@ -6,6 +6,10 @@ Collected during the build so work never stops for a question. Handed over at th
 
 1. ~~GitHub repo~~ Done: `softtunex/adalin-school-os`.
 
+## Assets
+
+1. **Illustrations and mascot.** Full brief in `docs/illustration-briefs.md` (11 images, 3 optional animations). Drop the files into `public/illustrations/`.
+
 ## Decisions (built with working defaults, swappable in one place)
 
 1. **Product name.** Currently "School OS" (`src/lib/config.ts`).
