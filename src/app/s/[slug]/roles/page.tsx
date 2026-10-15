@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Card, Chip, PageHeader } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { UpgradeCard } from "@/components/upgrade-card";
-import { requireAccess } from "@/lib/auth/session";
+import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { hasFeature } from "@/lib/plans/entitlements";
 import { PERMISSION_GROUPS, permissionLabel, type Permission } from "@/lib/rbac/permissions";
@@ -23,7 +23,7 @@ function groupPermissions(perms: Permission[]) {
 
 export default async function RolesPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const access = await requireAccess(slug);
+  const access = await requirePageAccess(slug, ["roles:view"]);
   const roles = await listRoles(getDb(), access);
   const canManage = can(access, "roles:manage");
   const customAllowed = hasFeature(access.plan, "custom_roles");

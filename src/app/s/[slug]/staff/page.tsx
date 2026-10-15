@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Avatar, Card, Chip, EmptyState, PageHeader, Table, Td, Th } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
-import { requireAccess } from "@/lib/auth/session";
+import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLimit } from "@/lib/plans/entitlements";
 import { can, rolePermissions } from "@/lib/services/access";
@@ -15,7 +15,7 @@ const dateFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short
 
 export default async function StaffPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const access = await requireAccess(slug);
+  const access = await requirePageAccess(slug, ["staff:view"]);
   const db = getDb();
   const [{ staff, pending, seatsUsed }, allRoles] = await Promise.all([listStaff(db, access), listRoles(db, access)]);
 

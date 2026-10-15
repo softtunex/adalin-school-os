@@ -12,14 +12,19 @@ const OPTIONS: { value: Theme; icon: IconName; label: string }[] = [
   { value: "system", icon: "monitor", label: "System" },
 ];
 
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  if (theme === "system") root.removeAttribute("data-theme");
+  else root.setAttribute("data-theme", theme);
+}
+
 export function ThemeSwitch({ initial }: { initial: Theme }) {
   const [current, setCurrent] = useState<Theme>(initial);
   const [, startTransition] = useTransition();
 
   function choose(theme: Theme) {
     setCurrent(theme);
-    if (theme === "system") delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = theme;
+    applyTheme(theme);
     startTransition(() => setThemeAction(theme));
   }
 

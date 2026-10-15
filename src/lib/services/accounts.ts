@@ -1,7 +1,7 @@
 import { and, count, eq, gt, isNull, sql } from "drizzle-orm";
 import { RESET_TTL_MINUTES, SESSION_TTL_DAYS } from "../config";
 import { burnPasswordCheck, hashPassword, hashToken, newToken, verifyPassword } from "../auth/crypto";
-import type { DB } from "../db/client";
+import type { DB, Tx } from "../db/client";
 import { loginAttempts, membershipRoles, memberships, passwordResets, schools, sessions, users } from "../db/schema";
 import { AppError } from "../errors";
 import { recordAudit } from "./audit";
@@ -27,24 +27,34 @@ export async function registerSchoolOwner(db: DB, input: RegisterInput) {
 
   return db.transaction(async (tx) => {
     const [user] = await tx.insert(users).values({ name: input.name, email: input.email, passwordHash }).returning();
-    const slug = await uniqueSlug(tx, input.schoolName);
-    const [school] = await tx.insert(schools).values({ name: input.schoolName, slug, planKey: "free" }).returning();
-    const schoolRoles = await provisionSystemRoles(tx, school.id);
-    const ownerRole = schoolRoles.find((r) => r.key === "owner")!;
-    const [membership] = await tx
-      .insert(memberships)
-      .values({ schoolId: school.id, userId: user.id, jobTitle: "Proprietor" })
-      .returning();
-    await tx.insert(membershipRoles).values({ schoolId: school.id, membershipId: membership.id, roleId: ownerRole.id });
-    await tx.update(users).set({ lastSchoolId: school.id }).where(eq(users.id, user.id));
-    await recordAudit(tx, school.id, { userId: user.id, name: user.name }, {
-      action: "school.created",
-      summary: `${user.name} created ${school.name}`,
-      entityType: "school",
-      entityId: school.id,
-    });
+    const school = await createSchoolForUser(tx, user, input.schoolName);
     return { user, school };
   });
+}
+
+/** Creates a school on the Free plan with the given user as its Proprietor. */
+export async function createSchoolForUser(tx: Tx, user: { id: string; name: string }, schoolName: string) {
+  const slug = await uniqueSlug(tx, schoolName);
+  const [school] = await tx.insert(schools).values({ name: schoolName, slug, planKey: "free" }).returning();
+  const schoolRoles = await provisionSystemRoles(tx, school.id);
+  const ownerRole = schoolRoles.find((r) => r.key === "owner")!;
+  const [membership] = await tx
+    .insert(memberships)
+    .values({ schoolId: school.id, userId: user.id, jobTitle: "Proprietor" })
+    .returning();
+  await tx.insert(membershipRoles).values({ schoolId: school.id, membershipId: membership.id, roleId: ownerRole.id });
+  await tx.update(users).set({ lastSchoolId: school.id }).where(eq(users.id, user.id));
+  await recordAudit(tx, school.id, { userId: user.id, name: user.name }, {
+    action: "school.created",
+    summary: `${user.name} created ${school.name}`,
+    entityType: "school",
+    entityId: school.id,
+  });
+  return school;
+}
+
+export async function addSchool(db: DB, user: { id: string; name: string }, schoolName: string) {
+  return db.transaction((tx) => createSchoolForUser(tx, user, schoolName));
 }
 
 const MAX_FAILURES_PER_ACCOUNT = 5;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { logoutAction } from "@/app/(auth)/actions";
 import { cn } from "@/lib/cn";
 import type { ResolvedNavItem } from "@/lib/navigation";
@@ -95,8 +95,10 @@ function SidebarBody({ school, user, nav, hasOtherSchools, theme, pathname }: Om
 
 export function AppShell(props: Props) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  useEffect(() => setOpen(false), [pathname]);
+  // The drawer closes on navigation because it only counts as open on the page it was opened from.
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const open = openedOn === pathname;
+  const setOpen = (value: boolean) => setOpenedOn(value ? pathname : null);
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[272px_minmax(0,1fr)]">

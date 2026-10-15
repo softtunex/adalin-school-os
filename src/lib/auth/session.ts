@@ -5,7 +5,8 @@ import { cache } from "react";
 import { SESSION_COOKIE } from "../config";
 import { getDb } from "../db/client";
 import { createSession, getUserBySessionToken, revokeSession } from "../services/accounts";
-import { loadAccess } from "../services/access";
+import { can, loadAccess } from "../services/access";
+import type { Permission } from "../rbac/permissions";
 
 export async function requestMeta() {
   const h = await headers();
@@ -58,6 +59,13 @@ export const requireAccess = cache(async (slug: string) => {
   if (!access) notFound();
   return access;
 });
+
+/** For pages: a missing permission looks the same as a missing page. */
+export async function requirePageAccess(slug: string, anyOf: Permission[]) {
+  const access = await requireAccess(slug);
+  if (!anyOf.some((p) => can(access, p))) notFound();
+  return access;
+}
 
 /** Only allows same-site relative paths, so a crafted ?next= can't bounce users to another site. */
 export function safeNext(next: unknown, fallback = "/schools"): string {

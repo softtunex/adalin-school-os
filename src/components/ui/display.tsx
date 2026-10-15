@@ -108,7 +108,7 @@ export function Progress({ value, tone = "success" }: { value: number; tone?: "s
 
 export function Table({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("overflow-x-auto rounded-card border-2 border-line", className)}>
+    <div className={cn("relative overflow-x-auto rounded-card border-2 border-line", className)}>
       <table className="w-full min-w-[640px] border-collapse text-[14.5px]">{children}</table>
     </div>
   );

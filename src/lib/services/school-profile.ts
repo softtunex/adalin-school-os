@@ -1,0 +1,72 @@
+import { asc, eq } from "drizzle-orm";
+import { z } from "zod";
+import type { DB } from "../db/client";
+import { plans, schools } from "../db/schema";
+import { withTenant } from "../db/tenant";
+import { requirePermission, type Access } from "./access";
+import { recordAudit } from "./audit";
+import { markOnboarding } from "./onboarding";
+
+const optional = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional();
+
+export const schoolProfileSchema = z.object({
+  name: z.string().trim().min(3, "Enter the school's name.").max(160),
+  motto: optional(160),
+  schoolType: z.enum(["nursery", "primary", "secondary", "combined"]).nullable().optional(),
+  curriculum: z.enum(["nigerian", "british", "american", "montessori", "mixed"]).nullable().optional(),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(254)
+    .refine((v) => v === "" || z.string().email().safeParse(v).success, "Enter a valid email address.")
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional(),
+  phone: optional(40),
+  address: optional(300),
+  city: optional(80),
+  state: optional(80),
+  country: z.string().trim().min(2).max(80).default("Nigeria"),
+});
+
+export type SchoolProfileInput = z.infer<typeof schoolProfileSchema>;
+
+export async function updateSchoolProfile(db: DB, access: Access, input: SchoolProfileInput, ip?: string | null) {
+  requirePermission(access, "school:update");
+  await withTenant(db, access.school.id, async (tx) => {
+    await tx
+      .update(schools)
+      .set({
+        name: input.name,
+        motto: input.motto ?? null,
+        schoolType: input.schoolType ?? null,
+        curriculum: input.curriculum ?? null,
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        address: input.address ?? null,
+        city: input.city ?? null,
+        state: input.state ?? null,
+        country: input.country,
+      })
+      .where(eq(schools.id, access.school.id));
+    if (input.address && input.phone && input.schoolType) await markOnboarding(tx, access.school.id, "profile");
+    await recordAudit(tx, access.school.id, { userId: access.user.id, name: access.user.name, ip }, {
+      action: "school.updated",
+      summary: "Updated the school profile",
+      entityType: "school",
+      entityId: access.school.id,
+    });
+  });
+}
+
+export async function listPlans(db: DB) {
+  return db.select().from(plans).orderBy(asc(plans.sort));
+}
