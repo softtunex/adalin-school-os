@@ -14,6 +14,13 @@
   --line-strong: #dcdcd8;
 
   --brand: #fe6007;
+  /* Chart series, in fixed order; checked for colour-blind separation on both themes. */
+  --chart-1: #fe6007;
+  --chart-2: #2563eb;
+  --chart-3: #0f9d58;
+  --chart-4: #8b5cf6;
+  --chart-5: #e0457b;
+  --chart-6: #0891b2;
   --brand-deep: #d24c00;
   --brand-ink: #d9520a;
   --brand-wash: #fff1e8;
@@ -56,6 +63,9 @@
 }
 
 :root[data-theme="dark"] {
+  --chart-1: #e8590c;
+  --chart-2: #3b82f6;
+  --chart-3: #16a34a;
   --canvas: #111214;
   --paper: #16171a;
   --sunken: #1c1d21;
