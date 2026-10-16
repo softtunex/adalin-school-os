@@ -133,10 +133,10 @@ export async function saveElectivesAction(slug: string, classId: string, picks: 
   return run(slug, ({ access, ip }) => setClassElectives(getDb(), access, classId, parsed.data, ip), "Elective subjects saved.");
 }
 
-export async function saveComponentsAction(slug: string, components: unknown): Promise<FormState> {
+export async function saveComponentsAction(slug: string, components: unknown, confirmDeleteScores = false): Promise<FormState> {
   const parsed = componentsSchema.safeParse(components);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the components." };
-  return run(slug, ({ access, ip }) => saveComponents(getDb(), access, parsed.data, ip), "Assessment saved.");
+  return run(slug, ({ access, ip }) => saveComponents(getDb(), access, parsed.data, { confirmDeleteScores: confirmDeleteScores === true, ip }), "Assessment saved.");
 }
 
 export async function saveBandsAction(slug: string, bands: unknown): Promise<FormState> {

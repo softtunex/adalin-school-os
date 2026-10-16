@@ -193,45 +193,95 @@
   animation: float-y 7s ease-in-out infinite;
 }
 
-@keyframes hop {
+@keyframes kl-hover {
   0%,
-  100% {
-    transform: translateY(0) scale(1, 1);
-  }
-  10% {
-    transform: translateY(0) scale(1.06, 0.92);
-  }
-  45% {
-    transform: translateY(-18px) scale(0.96, 1.04);
-  }
-  80% {
-    transform: translateY(0) scale(1.04, 0.95);
-  }
-}
-
-@keyframes hop-shadow {
-  0%,
-  100%,
-  80% {
-    transform: translateX(-50%) scaleX(1);
-    opacity: 1;
-  }
-  45% {
-    transform: translateX(-50%) scaleX(0.6);
-    opacity: 0.5;
-  }
-}
-
-@keyframes dot {
-  0%,
-  80%,
   100% {
     transform: translateY(0);
-    opacity: 0.35;
   }
-  40% {
-    transform: translateY(-6px);
-    opacity: 1;
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes kl-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: scaleX(0.7);
+    opacity: 0.05;
+  }
+}
+
+@keyframes kl-flap-l {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(38deg);
+  }
+}
+
+@keyframes kl-flap-r {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-38deg);
+  }
+}
+
+@keyframes kl-blink {
+  0%,
+  44%,
+  50%,
+  100% {
+    transform: scaleY(1);
+  }
+  47% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes kl-look {
+  0%,
+  20%,
+  100% {
+    transform: translateX(0);
+  }
+  30%,
+  45% {
+    transform: translateX(5px);
+  }
+  60%,
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+@keyframes kl-tassel {
+  0%,
+  100% {
+    transform: rotate(-16deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
+}
+
+@keyframes kl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes kl-unspin {
+  to {
+    transform: rotate(-360deg);
   }
 }
 
@@ -244,17 +294,57 @@
   }
 }
 
-.animate-hop {
-  transform-origin: 50% 100%;
-  animation: hop 0.9s ease-in-out infinite;
+.kl-hover {
+  animation: kl-hover 1.2s ease-in-out infinite;
 }
 
-.animate-hop-shadow {
-  animation: hop-shadow 0.9s ease-in-out infinite;
+.kl-shadow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: kl-shadow 1.2s ease-in-out infinite;
 }
 
-.animate-dot {
-  animation: dot 1s ease-in-out infinite;
+.kl-wing-l,
+.kl-wing-r {
+  transform-box: fill-box;
+  animation: kl-flap-l 0.3s ease-in-out infinite;
+}
+
+.kl-wing-l {
+  transform-origin: 100% 0;
+}
+
+.kl-wing-r {
+  transform-origin: 0 0;
+  animation-name: kl-flap-r;
+}
+
+.kl-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: kl-blink 3.2s ease-in-out infinite;
+}
+
+.kl-pupil {
+  animation: kl-look 4.8s ease-in-out infinite;
+}
+
+.kl-tassel {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: kl-tassel 1.2s ease-in-out infinite;
+}
+
+.kl-orbit {
+  transform-box: view-box;
+  transform-origin: 150px 150px;
+  animation: kl-spin 7s linear infinite;
+}
+
+.kl-counter {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: kl-unspin 7s linear infinite;
 }
 
 .animate-loader-in {

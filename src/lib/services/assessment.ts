@@ -1,4 +1,4 @@
-import { asc, count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq, inArray, max } from "drizzle-orm";
 import { z } from "zod";
 import type { DB, Tx } from "../db/client";
 import { assessmentComponents, gradeBands, schools, scores } from "../db/schema";
@@ -35,42 +35,66 @@ export async function getAssessmentConfig(db: DB, access: Access) {
   requirePermission(access, "academics:view");
   return withTenant(db, access.school.id, async (tx) => {
     const config = await loadAssessmentConfig(tx, access.school.id);
-    const [{ n }] = await tx.select({ n: count() }).from(scores);
-    return { ...config, hasScores: n > 0 };
+    const counts = await tx.select({ componentId: scores.componentId, n: count() }).from(scores).groupBy(scores.componentId);
+    const scoreCounts = Object.fromEntries(counts.map((c) => [c.componentId, c.n]));
+    return { ...config, scoreCounts, hasScores: counts.some((c) => c.n > 0) };
   });
 }
 
 export const componentsSchema = z
-  .array(z.object({ name: z.string().trim().min(1, "Name every component.").max(30), maxScore: z.coerce.number().int().min(1).max(100) }))
+  .array(
+    z.object({
+      id: z.string().uuid().optional(),
+      name: z.string().trim().min(1, "Name every component.").max(30),
+      maxScore: z.coerce.number().int().min(1).max(100),
+    }),
+  )
   .min(1, "Add at least one component.")
   .max(8, "Use at most 8 components.")
   .refine((list) => list.reduce((n, c) => n + c.maxScore, 0) === 100, "The maximum scores must add up to 100.")
   .refine((list) => new Set(list.map((c) => c.name.toLowerCase())).size === list.length, "Each component needs a different name.");
 
 /**
- * Replaces the components. Once any scores exist, components can be renamed and their
- * maximums changed, but not added or removed, so recorded scores never lose their column.
+ * Replaces the components. Rows with an id keep their recorded scores; rows without one
+ * are new, empty columns. Removing a column that already holds scores deletes those
+ * scores, so it needs an explicit confirmation from the caller.
  */
-export async function saveComponents(db: DB, access: Access, input: z.infer<typeof componentsSchema>, ip?: string | null) {
+export async function saveComponents(
+  db: DB,
+  access: Access,
+  input: z.infer<typeof componentsSchema>,
+  opts: { confirmDeleteScores?: boolean; ip?: string | null } = {},
+) {
   requirePermission(access, "academics:manage");
   await withTenant(db, access.school.id, async (tx) => {
     const existing = await tx.select().from(assessmentComponents).orderBy(asc(assessmentComponents.sort));
-    const [{ n }] = await tx.select({ n: count() }).from(scores);
-    if (n > 0) {
-      if (existing.length !== input.length) throw new AppError("Scores have already been entered, so components can be renamed or reweighted but not added or removed.", "conflict");
-      const tooLow = await tx.select({ componentId: scores.componentId, score: scores.score }).from(scores);
-      for (const [i, c] of input.entries()) {
-        const over = tooLow.find((s) => s.componentId === existing[i].id && s.score > c.maxScore);
-        if (over) throw new AppError(`${c.name} already has a score of ${over.score}, above the new maximum of ${c.maxScore}.`, "conflict");
-        await tx.update(assessmentComponents).set({ name: c.name, maxScore: c.maxScore, sort: i }).where(eq(assessmentComponents.id, existing[i].id));
-      }
-    } else {
-      await tx.delete(assessmentComponents);
-      await tx.insert(assessmentComponents).values(input.map((c, i) => ({ schoolId: access.school.id, name: c.name, maxScore: c.maxScore, sort: i })));
+    const byId = new Map(existing.map((c) => [c.id, c]));
+    for (const c of input) if (c.id && !byId.has(c.id)) throw new AppError("That assessment column no longer exists. Refresh and try again.", "conflict");
+
+    const keep = new Set(input.flatMap((c) => (c.id ? [c.id] : [])));
+    const removed = existing.filter((c) => !keep.has(c.id));
+    const counts = await tx.select({ componentId: scores.componentId, n: count(), top: max(scores.score) }).from(scores).groupBy(scores.componentId);
+    const stats = new Map(counts.map((c) => [c.componentId, c]));
+
+    const losing = removed.reduce((n, c) => n + (stats.get(c.id)?.n ?? 0), 0);
+    if (losing > 0 && !opts.confirmDeleteScores) {
+      throw new AppError(`Removing ${removed.map((c) => c.name).join(" and ")} would delete ${losing} recorded score${losing === 1 ? "" : "s"}. Confirm to continue.`, "conflict");
     }
-    await recordAudit(tx, access.school.id, { userId: access.user.id, name: access.user.name, ip }, {
+    for (const c of input) {
+      const top = c.id ? stats.get(c.id)?.top : null;
+      if (top != null && Number(top) > c.maxScore) throw new AppError(`${c.name} already has a score of ${top}, above the new maximum of ${c.maxScore}.`, "conflict");
+    }
+
+    if (removed.length) await tx.delete(assessmentComponents).where(inArray(assessmentComponents.id, removed.map((c) => c.id)));
+    // Park kept rows on temporary names first so swaps and renames can't trip the unique name index.
+    for (const id of keep) await tx.update(assessmentComponents).set({ name: `__${id}` }).where(eq(assessmentComponents.id, id));
+    for (const [i, c] of input.entries()) {
+      if (c.id) await tx.update(assessmentComponents).set({ name: c.name, maxScore: c.maxScore, sort: i }).where(eq(assessmentComponents.id, c.id));
+      else await tx.insert(assessmentComponents).values({ schoolId: access.school.id, name: c.name, maxScore: c.maxScore, sort: i });
+    }
+    await recordAudit(tx, access.school.id, { userId: access.user.id, name: access.user.name, ip: opts.ip }, {
       action: "academics.components",
-      summary: `Set assessment to ${input.map((c) => `${c.name} ${c.maxScore}`).join(", ")}`,
+      summary: `Set assessment to ${input.map((c) => `${c.name} ${c.maxScore}`).join(", ")}${losing ? ` (deleted ${losing} scores)` : ""}`,
     });
   });
 }

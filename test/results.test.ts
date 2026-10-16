@@ -160,8 +160,26 @@ describe("scores and results", () => {
     expect((await getClassResults(database.db, paid, classId)).status).toBe("published");
   });
 
-  it("refuses to change components that would orphan recorded scores", async () => {
-    await expect(saveComponents(database.db, owner, [{ name: "CA", maxScore: 40 }, { name: "Exam", maxScore: 60 }])).rejects.toThrow(/not added or removed/);
-    await expect(saveComponents(database.db, owner, [{ name: "1st CA", maxScore: 10 }, { name: "2nd CA", maxScore: 30 }, { name: "Exam", maxScore: 60 }])).rejects.toThrow(/above the new maximum/);
+  it("lets a school switch its split after scores exist, deleting dropped columns only on confirmation", async () => {
+    const before = await getAssessmentConfig(database.db, owner);
+    const [ca1, ca2, exam] = before.components.map((c) => c.id);
+    expect(before.scoreCounts[ca2]).toBeGreaterThan(0);
+    const fortySixty = [{ id: ca1, name: "Test", maxScore: 40 }, { id: exam, name: "Exam", maxScore: 60 }];
+    await expect(saveComponents(database.db, owner, fortySixty)).rejects.toThrow(/would delete \d+ recorded scores/);
+    await expect(saveComponents(database.db, owner, [{ id: ca1, name: "1st CA", maxScore: 10 }, { id: ca2, name: "2nd CA", maxScore: 30 }, { id: exam, name: "Exam", maxScore: 60 }])).rejects.toThrow(/above the new maximum/);
+
+    await saveComponents(database.db, owner, fortySixty, { confirmDeleteScores: true });
+    const after = await getAssessmentConfig(database.db, owner);
+    expect(after.components.map((c) => `${c.name}:${c.maxScore}`)).toEqual(["Test:40", "Exam:60"]);
+    expect(after.components[0].id).toBe(ca1);
+    const results = await getClassResults(database.db, owner, classId);
+    const ada = results.students.find((s) => s.firstName === "Ada")!.result.subjects[maths];
+    expect(ada.total).toBe((ada.components[ca1] ?? 0) + (ada.components[exam] ?? 0));
+    expect(ada.components[ca2]).toBeUndefined();
+
+    // Swapping names in one save must not trip the unique name index, and new columns start empty.
+    await saveComponents(database.db, owner, [{ id: exam, name: "Test", maxScore: 60 }, { id: ca1, name: "Exam", maxScore: 30 }, { name: "Project", maxScore: 10 }]);
+    const swapped = await getAssessmentConfig(database.db, owner);
+    expect(swapped.components.map((c) => `${c.name}:${c.maxScore}`)).toEqual(["Test:60", "Exam:30", "Project:10"]);
   });
 });

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { ResolvedNavItem } from "@/lib/navigation";
 import { Avatar, initials } from "./ui/display";
 import { Icon } from "./ui/icons";
+import { RouteLoader } from "./route-loader";
 
 type Props = {
   school: { name: string; slug: string; planName: string; logoUrl: string | null };
@@ -127,7 +128,12 @@ export function AppShell(props: Props) {
         </div>
       ) : null}
 
-      <main className="min-w-0">{props.children}</main>
+      <main className="relative min-w-0">
+        {props.children}
+        <Suspense>
+          <RouteLoader />
+        </Suspense>
+      </main>
     </div>
   );
 }
