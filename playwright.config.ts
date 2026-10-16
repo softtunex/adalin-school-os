@@ -28,6 +28,7 @@ export default defineConfig({
     env: { E2E_PORT: String(PORT) },
     url: `http://localhost:${PORT}/login`,
     reuseExistingServer: CI,
-    timeout: 300_000,
+    // Locally the e2e server seeds a fresh database first.
+    timeout: CI ? 300_000 : 600_000,
   },
 });

@@ -80,7 +80,7 @@ export const PERMISSION_GROUPS = {
   },
   teaching: {
     label: "Teaching",
-    actions: { timetable: "Manage timetable", lessons: "Lesson notes and assignments", cbt: "Create CBT exams" },
+    actions: { timetable: "Manage timetable", lessons: "Lesson notes and assignments", review: "Approve lesson notes and schemes of work", cbt: "Create CBT exams" },
   },
   admissions: {
     label: "Admissions",

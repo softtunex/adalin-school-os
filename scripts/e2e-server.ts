@@ -9,10 +9,10 @@ import path from "node:path";
 
 const port = process.env.E2E_PORT ?? "3105";
 const dataDir = path.join(process.cwd(), ".data", "e2e-pglite");
-const env = { ...process.env, PGLITE_DIR: dataDir, NEXT_DIST_DIR: ".next-e2e" };
+const env = { ...process.env, PGLITE_DIR: dataDir, FILES_DIR: ".data/e2e-files", NEXT_DIST_DIR: ".next-e2e" };
 
 rmSync(dataDir, { recursive: true, force: true });
-for (const script of ["seed", "seed-results", "seed-fees", "seed-comms", "seed-timetable", "seed-students"]) {
+for (const script of ["seed", "seed-results", "seed-fees", "seed-comms", "seed-timetable", "seed-students", "seed-teaching"]) {
   const r = spawnSync("npx", ["tsx", `scripts/${script}.ts`], { env, stdio: "inherit", shell: true });
   if (r.status !== 0) process.exit(r.status ?? 1);
 }

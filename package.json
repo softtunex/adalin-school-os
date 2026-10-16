@@ -17,12 +17,14 @@
     "db:seed-fees": "tsx scripts/seed-fees.ts",
     "db:seed-comms": "tsx scripts/seed-comms.ts",
     "db:seed-timetable": "tsx scripts/seed-timetable.ts",
-    "db:seed-students": "tsx scripts/seed-students.ts"
+    "db:seed-students": "tsx scripts/seed-students.ts",
+    "db:seed-teaching": "tsx scripts/seed-teaching.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",
     "@node-rs/argon2": "^2.2.2",
     "@react-pdf/renderer": "^4.9.0",
+    "aws4fetch": "1.0.20",
     "drizzle-orm": "^0.45.4",
     "exceljs": "^4.4.0",
     "next": "16.4.2",

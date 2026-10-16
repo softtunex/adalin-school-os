@@ -50,3 +50,13 @@ export function formatShort(d: Date, now = new Date()) {
   if (dayKeyFmt.format(d).slice(0, 4) === dayKeyFmt.format(now).slice(0, 4)) return dayMonthFmt.format(d);
   return fullDateFmt.format(d);
 }
+
+/** A deadline: "Today, 8:00 am", "Tomorrow, 8:00 am", "Fri, 8:00 am", "12 Oct, 8:00 am". Past ones read like formatWhen. */
+export function formatDue(d: Date, now = new Date()) {
+  const ahead = daysBetween(now, d);
+  if (ahead < 0) return formatWhen(d, { now, relative: false });
+  if (ahead === 0) return `Today, ${formatTime(d)}`;
+  if (ahead === 1) return `Tomorrow, ${formatTime(d)}`;
+  if (ahead < 7) return `${weekdayFmt.format(d)}, ${formatTime(d)}`;
+  return `${dayMonthFmt.format(d)}, ${formatTime(d)}`;
+}

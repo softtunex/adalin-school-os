@@ -23,6 +23,8 @@ export const NAV: NavSection[] = [
       { href: "/results", label: "Results", icon: "results", anyOf: ["results:enter", "results:view"], feature: "score_entry", staffOnly: true },
       { href: "/students", label: "Students", icon: "graduation", anyOf: ["students:view"], staffOnly: true },
       { href: "/timetable", label: "Timetable", icon: "clock", feature: "timetable", staffOnly: true },
+      { href: "/assignments", label: "Assignments", icon: "clipboard", anyOf: ["teaching:lessons"], feature: "assignments", staffOnly: true },
+      { href: "/lesson-notes", label: "Lesson notes", icon: "book", anyOf: ["teaching:lessons", "teaching:review"], feature: "assignments", staffOnly: true },
       { href: "/academics", label: "Academics", icon: "bookOpen", anyOf: ["academics:view"], staffOnly: true },
     ],
   },

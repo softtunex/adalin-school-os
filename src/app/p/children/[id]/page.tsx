@@ -9,7 +9,11 @@ import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { AppError } from "@/lib/errors";
 import { formatNaira } from "@/lib/money";
+import { getChildHomework } from "@/lib/services/assignments";
 import { getChildDetail } from "@/lib/services/parent-portal";
+import { formatDue } from "@/lib/dates";
+import { FileLinks } from "@/components/file-uploader";
+import { HOMEWORK_STATUS } from "@/app/learn/assignments/status";
 import { WeekList } from "@/components/week-list";
 import { AnnouncementItem } from "../../parts";
 
@@ -38,7 +42,8 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
     }
     throw error;
   }
-  const tab = ["attendance", "timetable", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
+  const homework = await getChildHomework(getDb(), user.id, id);
+  const tab = ["attendance", "timetable", "homework", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
   const name = [d.link.firstName, d.link.middleName, d.link.lastName].filter(Boolean).join(" ");
   const base = `/p/children/${id}`;
   const att = d.attendance && d.attendance.days ? Math.round((d.attendance.present / d.attendance.days) * 100) : null;
@@ -70,6 +75,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
         tabs={[
           { key: "attendance", label: "Attendance", href: base },
           ...(d.timetable ? [{ key: "timetable", label: "Timetable", href: `${base}?tab=timetable` }] : []),
+          ...(homework ? [{ key: "homework", label: "Homework", href: `${base}?tab=homework`, count: homework.filter((h) => h.status === "to_do" || h.status === "overdue").length || undefined }] : []),
           { key: "results", label: "Results", href: `${base}?tab=results`, count: d.results.length },
           { key: "fees", label: "Fees", href: `${base}?tab=fees` },
           { key: "news", label: "News", href: `${base}?tab=news` },
@@ -116,6 +122,35 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
 
       {tab === "timetable" && d.timetable ? (
         <WeekList days={d.timetable.schedule.days} periods={d.timetable.schedule.periods} slots={d.timetable.slots} />
+      ) : null}
+
+      {tab === "homework" && homework ? (
+        <Card className="p-5">
+          <h2 className="fs-16 font-semibold">Homework this term</h2>
+          {homework.length === 0 ? (
+            <p className="mt-2 fs-14.5 text-muted">No homework set yet this term.</p>
+          ) : (
+            <ul className="mt-2 flex flex-col divide-y divide-line">
+              {[...homework].reverse().map((h) => (
+                <li key={h.a.id} className="flex flex-col gap-2 py-3">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="min-w-0 flex-1">
+                      <span className="block fs-13 font-semibold text-muted">{h.subjectName}</span>
+                      <span className="block fs-15 font-semibold text-ink">{h.a.title}</span>
+                      <span className="block fs-13.5 text-muted">
+                        {h.status === "marked" && h.sub?.score != null && h.a.maxScore ? `Scored ${h.sub.score} / ${h.a.maxScore}` : `Due ${formatDue(h.a.dueAt)}`}
+                        {h.sub?.late ? " · Handed in late" : ""}
+                      </span>
+                    </span>
+                    <Badge tone={HOMEWORK_STATUS[h.status].tone}>{HOMEWORK_STATUS[h.status].label}</Badge>
+                  </div>
+                  {h.sub?.feedback ? <p className="fs-14 text-body">Teacher: &ldquo;{h.sub.feedback}&rdquo;</p> : null}
+                  <FileLinks files={h.files} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
       ) : null}
 
       {tab === "results" ? (
