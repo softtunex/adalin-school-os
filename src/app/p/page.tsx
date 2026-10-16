@@ -22,6 +22,13 @@ function shortDate(d: Date | string) {
   return date.toLocaleDateString("en-NG", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
 }
 
+/** Names the children instead of assuming "your child": parents and guardians alike. */
+function whoLine(names: string[]) {
+  if (names.length === 1) return `Here's how ${names[0]} is doing.`;
+  if (names.length === 2) return `Here's how ${names[0]} and ${names[1]} are doing.`;
+  return `Here's how the ${names.length} children in your care are doing.`;
+}
+
 function eventRange(a: string, b: string) {
   return a === b ? shortDate(a) : `${shortDate(a)} to ${shortDate(b)}`;
 }
@@ -53,7 +60,7 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
         <h1 className="fs-26 font-bold tracking-[-0.02em] sm:fs-30">
           {greeting()}, {firstName}
         </h1>
-        <p className="mt-1 fs-15 text-muted">{home.childCount === 1 ? "Here's how your child is doing." : `Here's how your ${home.childCount} children are doing.`}</p>
+        <p className="mt-1 fs-15 text-muted">{whoLine(home.schools.flatMap((x) => x.children.map((c) => c.link.firstName)))}</p>
       </div>
 
       {home.schools.map((s) => (
@@ -73,8 +80,8 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
               {s.children.map((c) => {
                 const att = c.attendance && c.attendance.days ? Math.round((c.attendance.present / c.attendance.days) * 100) : null;
                 return (
-                  <Card key={c.link.studentId} className="flex flex-col overflow-hidden">
-                    <Link href={`/p/children/${c.link.studentId}`} className="flex items-center gap-3.5 p-5 pb-4 hover:bg-paper">
+                  <Card key={c.link.studentId} className="flex flex-col overflow-hidden transition-[border-color,box-shadow] hover:border-brand/40">
+                    <Link href={`/p/children/${c.link.studentId}`} className="flex items-center gap-3.5 p-5 pb-4 active:bg-paper">
                       <Avatar name={`${c.link.firstName} ${c.link.lastName}`} size={52} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate fs-18 font-bold text-ink">
@@ -87,29 +94,38 @@ export default async function ParentHome({ searchParams }: { searchParams: Promi
                       </span>
                       <Icon name="chevronRight" className="text-muted" />
                     </Link>
-                    <dl className="grid grid-cols-3 border-y border-line">
-                      <Link href={`/p/children/${c.link.studentId}?tab=attendance`} className="flex flex-col gap-0.5 border-r border-line px-4 py-3 hover:bg-paper">
-                        <dt className="fs-12.5 font-medium text-muted">Attendance</dt>
-                        <dd className={`tabular fs-17 font-bold ${att === null ? "text-muted" : att >= 90 ? "text-success" : att >= 75 ? "text-ink" : "text-danger"}`}>{att === null ? "—" : `${att}%`}</dd>
+                    <div className="grid grid-cols-3 border-y border-line">
+                      <Link href={`/p/children/${c.link.studentId}`} className="flex flex-col gap-0.5 border-r border-line px-4 py-3 hover:bg-paper active:bg-sunken">
+                        <span className="fs-12.5 font-medium text-muted">Attendance</span>
+                        <span className={`tabular fs-17 font-bold ${att === null ? "text-muted" : att >= 90 ? "text-success" : att >= 75 ? "text-ink" : "text-danger"}`}>{att === null ? "—" : `${att}%`}</span>
+                        {c.attendance?.days ? (
+                          <span className="fs-12 text-muted">
+                            {c.attendance.absent} day{c.attendance.absent === 1 ? "" : "s"} absent
+                          </span>
+                        ) : null}
                       </Link>
-                      <Link href={`/p/children/${c.link.studentId}?tab=fees`} className="flex flex-col gap-0.5 border-r border-line px-4 py-3 hover:bg-paper">
-                        <dt className="fs-12.5 font-medium text-muted">Fees</dt>
-                        <dd className={`tabular truncate fs-17 font-bold ${c.owing > 0 ? "text-ink" : "text-success"}`}>{c.owing > 0 ? formatNaira(c.owing) : "Paid"}</dd>
+                      <Link href={`/p/children/${c.link.studentId}?tab=fees`} className="flex flex-col gap-0.5 border-r border-line px-4 py-3 hover:bg-paper active:bg-sunken">
+                        <span className="fs-12.5 font-medium text-muted">Fees</span>
+                        <span className={`tabular truncate fs-17 font-bold ${c.owing > 0 ? "text-ink" : "text-success"}`}>{c.owing > 0 ? formatNaira(c.owing) : "Paid"}</span>
+                        {c.owing > 0 ? <span className="fs-12 text-muted">to pay</span> : null}
                       </Link>
-                      <Link href={`/p/children/${c.link.studentId}?tab=results`} className="flex flex-col gap-0.5 px-4 py-3 hover:bg-paper">
-                        <dt className="fs-12.5 font-medium text-muted">Results</dt>
-                        <dd className="truncate fs-15 font-bold text-ink">{c.latestResult ? c.latestResult.termName : <span className="text-muted">Not out</span>}</dd>
+                      <Link href={`/p/children/${c.link.studentId}?tab=results`} className="flex flex-col gap-0.5 px-4 py-3 hover:bg-paper active:bg-sunken">
+                        <span className="fs-12.5 font-medium text-muted">Results</span>
+                        <span className="truncate fs-15 font-bold text-ink">{c.latestResult ? c.latestResult.termName : <span className="text-muted">Not out</span>}</span>
+                        {c.latestResult ? <span className="fs-12 text-blue">Report card</span> : null}
                       </Link>
-                    </dl>
-                    {c.owing > 0 && c.payToken && s.school.features.includes("fees_online") ? (
-                      <div className="p-4">
-                        <a href={`/pay/${c.payToken}`} className={buttonClass("primary", "md", "w-full")}>
+                    </div>
+                    <div className="flex flex-col gap-2.5 p-4 sm:flex-row">
+                      {c.owing > 0 && c.payToken && s.school.features.includes("fees_online") ? (
+                        <a href={`/pay/${c.payToken}`} className={buttonClass("primary", "md", "flex-1")}>
                           Pay {formatNaira(c.owing)}
                         </a>
-                      </div>
-                    ) : (
-                      <p className="px-5 py-3 fs-13.5 text-muted">{c.attendance ? `${c.attendance.absent} day${c.attendance.absent === 1 ? "" : "s"} absent this term` : "Term hasn't started"}</p>
-                    )}
+                      ) : null}
+                      <Link href={`/p/children/${c.link.studentId}`} className={buttonClass("secondary", "md", "flex-1")}>
+                        See {c.link.firstName}&apos;s records
+                        <Icon name="arrowRight" size={17} />
+                      </Link>
+                    </div>
                   </Card>
                 );
               })}
