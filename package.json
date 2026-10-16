@@ -18,7 +18,8 @@
     "db:seed-comms": "tsx scripts/seed-comms.ts",
     "db:seed-timetable": "tsx scripts/seed-timetable.ts",
     "db:seed-students": "tsx scripts/seed-students.ts",
-    "db:seed-teaching": "tsx scripts/seed-teaching.ts"
+    "db:seed-teaching": "tsx scripts/seed-teaching.ts",
+    "db:seed-cbt": "tsx scripts/seed-cbt.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",

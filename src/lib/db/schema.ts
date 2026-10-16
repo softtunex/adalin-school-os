@@ -1374,6 +1374,8 @@ export const examAttempts = pgTable(
     answers: jsonb("answers").$type<Record<string, number | string>>().notNull().default({}),
     objectiveScore: numeric("objective_score", { precision: 6, scale: 2, mode: "number" }),
     theoryScore: numeric("theory_score", { precision: 6, scale: 2, mode: "number" }),
+    /** Marks the teacher gave each theory question. */
+    theoryMarks: jsonb("theory_marks").$type<Record<string, number>>().notNull().default({}),
     status: text("status", { enum: ["in_progress", "submitted", "graded"] }).notNull().default("in_progress"),
     focusLosses: integer("focus_losses").notNull().default(0),
   },

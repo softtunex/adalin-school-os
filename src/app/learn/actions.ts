@@ -8,6 +8,7 @@ import { getDb } from "@/lib/db/client";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { studentUploadSchool, submissionSchema, submitAssignment } from "@/lib/services/assignments";
+import { answerSchema, recordFocusLoss, saveAnswer, startExam, submitExam } from "@/lib/services/cbt";
 import { createUpload } from "@/lib/services/files";
 import { setOwnPassword } from "@/lib/services/student-accounts";
 
@@ -57,4 +58,47 @@ export async function submitWorkAction(assignmentId: string, _prev: FormState, f
   } catch (error) {
     return { error: userMessage(error), values: { text } };
   }
+}
+
+export async function startExamAction(examId: string): Promise<FormState> {
+  try {
+    const user = await requireUser();
+    await startExam(getDb(), user.id, examId);
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+  redirect(`/exam/${examId}`);
+}
+
+export async function saveAnswerAction(input: { examId: string; questionId: string; answer: number | string | null }): Promise<{ ok: boolean; error?: string; closed?: boolean }> {
+  const parsed = answerSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "That answer couldn't be saved." };
+  try {
+    const user = await requireUser();
+    await saveAnswer(getDb(), user.id, parsed.data);
+    return { ok: true };
+  } catch (error) {
+    const message = userMessage(error);
+    return { ok: false, error: message, closed: /Time is up|isn't open|closed/.test(message) };
+  }
+}
+
+export async function focusLossAction(examId: string) {
+  try {
+    const user = await requireUser();
+    return await recordFocusLoss(getDb(), user.id, examId);
+  } catch {
+    return null;
+  }
+}
+
+export async function submitExamAction(examId: string): Promise<FormState> {
+  try {
+    const user = await requireUser();
+    await submitExam(getDb(), user.id, examId);
+    revalidatePath("/learn", "layout");
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+  redirect(`/learn/exams/${examId}?done=1`);
 }

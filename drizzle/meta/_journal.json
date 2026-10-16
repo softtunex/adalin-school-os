@@ -50,6 +50,13 @@
       "when": 1792162597948,
       "tag": "0006_teaching_and_admissions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792177600426,
+      "tag": "0007_cbt_theory_marks",
+      "breakpoints": true
     }
   ]
 }
