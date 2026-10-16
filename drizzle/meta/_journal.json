@@ -15,6 +15,13 @@
       "when": 1792106376538,
       "tag": "0001_academics_and_people",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792112303048,
+      "tag": "0002_attendance_and_results",
+      "breakpoints": true
     }
   ]
 }

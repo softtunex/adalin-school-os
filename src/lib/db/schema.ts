@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   date,
+  numeric,
   index,
   integer,
   jsonb,
@@ -404,6 +405,192 @@ export const enrollments = pgTable(
   (t) => [index("enrollments_student_idx").on(t.studentId), index("enrollments_session_class_idx").on(t.sessionId, t.classId)],
 );
 
+// ---------- Attendance ----------
+
+export const ATTENDANCE_STATUSES = ["present", "late", "absent", "excused"] as const;
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number];
+
+/** One row per class per day once attendance has been taken. */
+export const attendanceDays = pgTable(
+  "attendance_days",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    termId: uuid("term_id").references(() => terms.id, { onDelete: "set null" }),
+    date: date("date").notNull(),
+    takenBy: uuid("taken_by").references(() => memberships.id, { onDelete: "set null" }),
+    takenAt: timestamp("taken_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("attendance_days_class_date_uq").on(t.classId, t.date), index("attendance_days_term_idx").on(t.termId)],
+);
+
+export const attendanceRecords = pgTable(
+  "attendance_records",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    dayId: uuid("day_id")
+      .notNull()
+      .references(() => attendanceDays.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    status: text("status", { enum: ATTENDANCE_STATUSES }).notNull(),
+    note: text("note"),
+  },
+  (t) => [uniqueIndex("attendance_records_day_student_uq").on(t.dayId, t.studentId), index("attendance_records_student_idx").on(t.studentId)],
+);
+
+// ---------- Assessment configuration ----------
+
+export const assessmentComponents = pgTable(
+  "assessment_components",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    maxScore: integer("max_score").notNull(),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [uniqueIndex("assessment_components_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const gradeBands = pgTable(
+  "grade_bands",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    grade: text("grade").notNull(),
+    minScore: integer("min_score").notNull(),
+    remark: text("remark").notNull().default(""),
+    passes: boolean("passes").notNull().default(true),
+  },
+  (t) => [uniqueIndex("grade_bands_school_grade_uq").on(t.schoolId, t.grade)],
+);
+
+// ---------- Scores and results ----------
+
+export const scores = pgTable(
+  "scores",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    componentId: uuid("component_id")
+      .notNull()
+      .references(() => assessmentComponents.id, { onDelete: "cascade" }),
+    score: numeric("score", { precision: 5, scale: 2, mode: "number" }).notNull(),
+    updatedBy: uuid("updated_by").references(() => memberships.id, { onDelete: "set null" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("scores_unique_uq").on(t.termId, t.studentId, t.subjectId, t.componentId),
+    index("scores_sheet_idx").on(t.termId, t.classId, t.subjectId),
+  ],
+);
+
+export const SHEET_STATUSES = ["draft", "submitted"] as const;
+
+/** Per class + subject + term: whether the subject teacher has submitted their scores. */
+export const scoreSheets = pgTable(
+  "score_sheets",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    status: text("status", { enum: SHEET_STATUSES }).notNull().default("draft"),
+    submittedBy: uuid("submitted_by").references(() => memberships.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("score_sheets_uq").on(t.termId, t.classId, t.subjectId)],
+);
+
+export const RESULT_STATUSES = ["open", "reviewed", "approved", "published"] as const;
+export type ResultStatus = (typeof RESULT_STATUSES)[number];
+
+/** Per class + term: where the class's results are in the approval workflow. */
+export const classResults = pgTable(
+  "class_results",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    status: text("status", { enum: RESULT_STATUSES }).notNull().default("open"),
+    reviewedBy: uuid("reviewed_by").references(() => memberships.id, { onDelete: "set null" }),
+    approvedBy: uuid("approved_by").references(() => memberships.id, { onDelete: "set null" }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    nextTermBegins: date("next_term_begins"),
+  },
+  (t) => [uniqueIndex("class_results_uq").on(t.termId, t.classId)],
+);
+
+/** Per student + term: comments and behaviour ratings for the report card. */
+export const termReports = pgTable(
+  "term_reports",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    classTeacherComment: text("class_teacher_comment"),
+    principalComment: text("principal_comment"),
+    ratings: jsonb("ratings").$type<Record<string, number>>().notNull().default({}),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("term_reports_uq").on(t.termId, t.studentId)],
+);
+
+/** Result checker PINs, sold or issued to parents. Only a hash of the PIN is stored. */
+export const resultPins = pgTable(
+  "result_pins",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    serial: text("serial").notNull(),
+    pinHash: text("pin_hash").notNull(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
+    maxUses: integer("max_uses").notNull().default(5),
+    uses: integer("uses").notNull().default(0),
+    batch: text("batch").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("result_pins_school_serial_uq").on(t.schoolId, t.serial), uniqueIndex("result_pins_school_hash_uq").on(t.schoolId, t.pinHash)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -422,4 +609,13 @@ export const TENANT_TABLES = [
   "guardians",
   "student_guardians",
   "enrollments",
+  "attendance_days",
+  "attendance_records",
+  "assessment_components",
+  "grade_bands",
+  "scores",
+  "score_sheets",
+  "class_results",
+  "term_reports",
+  "result_pins",
 ] as const;
