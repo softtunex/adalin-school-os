@@ -30,7 +30,7 @@ export function AnnouncementItem({ schoolId, id, title, body, date, school, pinn
             {school ? `${school} · ` : ""}
             {date}
           </span>
-          <span className="mt-1 line-clamp-2 block fs-14.5 text-body group-open:hidden">{body}</span>
+          <span className="mt-1 line-clamp-2 fs-14.5 text-body group-open:hidden">{body}</span>
         </span>
       </summary>
       <p className="whitespace-pre-line pb-4 pl-5 fs-15 leading-relaxed text-body">{body}</p>

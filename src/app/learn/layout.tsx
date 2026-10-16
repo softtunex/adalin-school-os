@@ -20,7 +20,7 @@ export default async function LearnLayout({ children }: { children: ReactNode })
   const exams = me.school.features.includes("cbt") ? (await getStudentExams(getDb(), user.id)).rows.filter((r) => r.status === "open" || r.status === "in_progress").length : null;
   const shell = { name: `${me.firstName} ${me.lastName}`, contact: `${me.admissionNo}${me.className ? ` · ${me.className}` : ""}` };
   return (
-    <StudentShell user={shell} show={{ timetable: me.school.features.includes("timetable"), homework, exams, results: me.school.studentResults }}>
+    <StudentShell user={shell} show={{ timetable: me.school.features.includes("timetable"), homework, exams, materials: me.school.features.includes("lms"), results: me.school.studentResults }}>
       {user.mustChangePassword ? (
         <Card className="mx-auto mt-6 max-w-[440px] p-6">
           <h1 className="fs-22 font-bold">Welcome, {me.firstName}</h1>

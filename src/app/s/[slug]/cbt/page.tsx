@@ -200,7 +200,7 @@ async function Bank({ slug, access, sp }: { slug: string; access: Access; sp: SP
               {list.rows.map(({ q, subjectName, levelName, used }) => (
                 <tr key={q.id} className="align-top hover:bg-paper">
                   <Td>
-                    <span className="line-clamp-2 block max-w-[52ch] text-ink">{q.body}</span>
+                    <span className="line-clamp-2 max-w-[52ch] text-ink">{q.body}</span>
                     {q.kind === "objective" ? (
                       <span className="mt-1 block fs-13 text-muted">
                         Answer: <span className="font-medium text-success-deep">{q.options[q.answer ?? 0]}</span>

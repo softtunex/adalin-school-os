@@ -12,7 +12,7 @@ import { fieldErrors } from "@/lib/validation";
 import type { UploadTicket } from "@/components/file-uploader";
 
 /** Starts a staff upload (assignment briefs, lesson notes). */
-export async function staffUploadAction(slug: string, ownerType: "assignment" | "lesson_note", name: string, size: number): Promise<UploadTicket> {
+export async function staffUploadAction(slug: string, ownerType: "assignment" | "lesson_note" | "material", name: string, size: number): Promise<UploadTicket> {
   try {
     const access = await requireAccess(slug);
     if (!can(access, "teaching:lessons")) return { error: "You don't have permission to upload here." };

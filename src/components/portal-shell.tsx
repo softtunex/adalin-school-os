@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, useState, type ReactNode } from "react";
 import { Logo } from "@/components/brand";
 import { RouteLoader } from "@/components/route-loader";
 import { Avatar } from "@/components/ui/display";
@@ -155,14 +155,51 @@ export function PortalShell({
         </main>
       </div>
 
-      {/* Phone bottom tabs */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas sm:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }} aria-label="Parent app tabs">
-        <div className="grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
-          {tabs.map((t) => {
+      <PhoneTabs tabs={tabs} pathname={pathname} badge={badge} />
+    </div>
+  );
+}
+
+/** Phone bottom tabs. More than five tabs: the first four, plus "More" for the rest. */
+function PhoneTabs({ tabs, pathname, badge }: { tabs: PortalTab[]; pathname: string; badge: (href: string) => number }) {
+  const [open, setOpen] = useState(false);
+  const primary = tabs.length > 5 ? tabs.slice(0, 4) : tabs;
+  const extra = tabs.length > 5 ? tabs.slice(4) : [];
+  const moreOn = extra.some((t) => t.match(pathname));
+  const moreCount = extra.reduce((n, t) => n + badge(t.href), 0);
+  const cell = (on: boolean) => cn("flex flex-col items-center gap-1 py-2.5 fs-12 font-bold", on ? "text-brand" : "text-muted");
+  const pill = (on: boolean) => cn("relative grid h-8 w-14 place-items-center rounded-full", on && "bg-brand-wash");
+  return (
+    <>
+      {open ? <button type="button" aria-label="Close menu" className="fixed inset-0 z-20 bg-ink/30 sm:hidden" onClick={() => setOpen(false)} /> : null}
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas sm:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }} aria-label="App tabs">
+        {open ? (
+          <ul className="flex flex-col gap-1 border-b border-line p-3">
+            {extra.map((t) => {
+              const on = t.match(pathname);
+              return (
+                <li key={t.href}>
+                  <Link
+                    href={t.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={on ? "page" : undefined}
+                    className={cn("flex h-12 items-center gap-3 rounded-chunk px-3 fs-15 font-semibold", on ? "bg-brand-wash text-brand-ink" : "text-ink hover:bg-paper")}
+                  >
+                    <Icon name={t.icon} size={20} />
+                    <span className="flex-1">{t.label}</span>
+                    <Count n={badge(t.href)} inline />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${primary.length + (extra.length ? 1 : 0)}, minmax(0, 1fr))` }}>
+          {primary.map((t) => {
             const on = t.match(pathname);
             return (
-              <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined} className={cn("flex flex-col items-center gap-1 py-2.5 fs-12 font-bold", on ? "text-brand" : "text-muted")}>
-                <span className={cn("relative grid h-8 w-14 place-items-center rounded-full", on && "bg-brand-wash")}>
+              <Link key={t.href} href={t.href} onClick={() => setOpen(false)} aria-current={on ? "page" : undefined} className={cell(on)}>
+                <span className={pill(on)}>
                   <Icon name={t.icon} size={21} />
                   <Count n={badge(t.href)} />
                 </span>
@@ -170,8 +207,17 @@ export function PortalShell({
               </Link>
             );
           })}
+          {extra.length ? (
+            <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={cell(moreOn || open)}>
+              <span className={pill(moreOn || open)}>
+                <Icon name={open ? "x" : "menu"} size={21} />
+                {open ? null : <Count n={moreCount} />}
+              </span>
+              More
+            </button>
+          ) : null}
         </div>
       </nav>
-    </div>
+    </>
   );
 }

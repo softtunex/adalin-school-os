@@ -1,13 +1,13 @@
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import type { DB, Tx } from "../db/client";
-import { assignments, assignmentSubmissions, files, lessonNotes, schools } from "../db/schema";
+import { assignments, assignmentSubmissions, classes, files, lessonNotes, materials, schools } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { deleteStored, docExt, DOC_TYPES, inspectStored, MAX_FILE_BYTES, MAX_FILES, newStorageKey, sniffMatches, storageConfigured, uploadUrl } from "../documents";
 import { AppError } from "../errors";
 import { can, loadAccess } from "./access";
 import { myChildren } from "./parent-portal";
 import { myStudentRecord } from "./student-portal";
-import { teaches } from "./teaching";
+import { studentSubjectIds, teaches } from "./teaching";
 
 export type FileOwner = (typeof files.$inferSelect)["ownerType"];
 export type FileInfo = { id: string; name: string; size: number; mime: string };
@@ -116,6 +116,21 @@ export async function fileForUser(db: DB, userId: string, fileId: string) {
     }
     const children = (await myChildren(db, userId)).filter((c) => c.schoolId === f.schoolId);
     if (f.ownerType === "assignment" ? children.some((c) => c.classId === a.classId) && a.status !== "draft" : children.some((c) => c.studentId === row.studentId)) return f;
+    return null;
+  }
+
+  if (f.ownerType === "material") {
+    const [m] = await db.select().from(materials).where(eq(materials.id, f.ownerId));
+    if (!m) return null;
+    if (staff) return f;
+    const sees = async (studentId: string, levelId: string | null) =>
+      !!levelId && m.levelId === levelId && (!m.subjectId || (await withTenant(db, f.schoolId, (tx) => studentSubjectIds(tx, studentId, levelId))).has(m.subjectId));
+    const me = await myStudentRecord(db, userId);
+    if (me && me.schoolId === f.schoolId && (await sees(me.studentId, me.levelId))) return f;
+    for (const c of (await myChildren(db, userId)).filter((c) => c.schoolId === f.schoolId && c.classId)) {
+      const [cls] = await db.select({ levelId: classes.levelId }).from(classes).where(eq(classes.id, c.classId!));
+      if (await sees(c.studentId, cls?.levelId ?? null)) return f;
+    }
     return null;
   }
 

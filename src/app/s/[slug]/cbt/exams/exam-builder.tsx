@@ -234,7 +234,7 @@ export function ExamBuilder({
                   <label className={cn("flex cursor-pointer gap-3 px-5 py-3.5", on ? "bg-brand-wash/50" : "hover:bg-paper")}>
                     <input type="checkbox" className="mt-1 size-4 accent-[var(--brand)]" checked={on} onChange={() => setPicked((p) => (on ? p.filter((x) => x !== q.id) : [...p, q.id]))} />
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-2 block fs-14.5 text-ink">{q.body}</span>
+                      <span className="line-clamp-2 fs-14.5 text-ink">{q.body}</span>
                       <span className="mt-1 flex flex-wrap items-center gap-2 fs-13 text-muted">
                         <Badge tone={q.kind === "objective" ? "success" : "blue"}>{q.kind === "objective" ? "Objective" : "Theory"}</Badge>
                         {q.marks} mark{q.marks === 1 ? "" : "s"}

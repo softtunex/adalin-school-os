@@ -44,7 +44,7 @@ export default async function ParentNotifications() {
                   <IconChip icon={k.icon} tone={k.tone} size={38} />
                   <span className="min-w-0 flex-1">
                     <span className={cn("block fs-15 text-ink", !n.readAt ? "font-bold" : "font-semibold")}>{n.title}</span>
-                    {n.body ? <span className="line-clamp-2 block fs-14 text-body">{n.body}</span> : null}
+                    {n.body ? <span className="line-clamp-2 fs-14 text-body">{n.body}</span> : null}
                     <span className="block fs-12.5 text-muted">
                       {schoolName} · {formatWhen(n.createdAt)}
                     </span>
