@@ -12,6 +12,9 @@ import { getLimit } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
 import { getOverview } from "@/lib/services/overview";
 import { OverviewSwitch } from "./overview-switch";
+import { ClockCard } from "./hr/hr-client";
+import { hasFeature } from "@/lib/plans/entitlements";
+import { getMyDay, lagosClock, LEAVE_LABEL } from "@/lib/services/hr";
 import { formatWhen } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Overview" };
@@ -33,6 +36,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
   const { welcome } = await searchParams;
   const access = await requireAccess(slug);
   const data = await getOverview(getDb(), access);
+  const myDay = access.isStaff && hasFeature(access.plan, "staff_attendance") ? await getMyDay(getDb(), access) : null;
   const firstName = access.user.name.split(/\s+/).find((p) => !/^(mr|mrs|ms|miss|dr|prof|chief)\.?$/i.test(p)) ?? access.user.name;
   const onboarding = access.school.onboarding ?? {};
   const base = `/s/${slug}`;
@@ -79,6 +83,20 @@ export default async function OverviewPage({ params, searchParams }: { params: P
             <Illustration name="mascot-wave" fallback={<Kola wave className="w-full" />} className="w-full" />
           </div>
         </div>
+
+        {myDay ? (
+          <ClockCard
+            slug={slug}
+            compact
+            clockedIn={myDay.record?.clockIn ? lagosClock(myDay.record.clockIn) : null}
+            clockedOut={myDay.record?.clockOut ? lagosClock(myDay.record.clockOut) : null}
+            status={myDay.record?.status ?? null}
+            onLeave={myDay.onLeave ? LEAVE_LABEL[myDay.onLeave.kind] : null}
+            workday={myDay.workday}
+            closed={myDay.closed}
+            resumeAt={myDay.settings.resumeAt}
+          />
+        ) : null}
 
         {nextStep ? (
           <Banner

@@ -65,6 +65,20 @@ export type AdmissionSettings = {
   assessment?: Assessment;
 };
 
+/** Staff day and leave rules. Times are Lagos "HH:MM". */
+export type HrSettings = {
+  resumeAt?: string;
+  lateAfter?: string;
+  closeAt?: string;
+  /** ISO weekdays staff work, 1 = Monday. */
+  workDays?: number[];
+  /** Days a year per kind of leave. */
+  allowances?: Partial<Record<LeaveKind, number>>;
+};
+
+export const LEAVE_KINDS = ["annual", "sick", "casual", "maternity", "paternity", "compassionate", "study", "unpaid"] as const;
+export type LeaveKind = (typeof LEAVE_KINDS)[number];
+
 export type Assessment = "exam" | "interview" | "both" | "none";
 
 // ---------- Platform (no row-level security: accessed by the app's owner role) ----------
@@ -184,6 +198,7 @@ export const schools = pgTable(
     paystackSubaccount: text("paystack_subaccount"),
     commsSettings: jsonb("comms_settings").$type<CommsSettings>().notNull().default({}),
     admissionSettings: jsonb("admission_settings").$type<AdmissionSettings>().notNull().default({}),
+    hrSettings: jsonb("hr_settings").$type<HrSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1449,6 +1464,54 @@ export const applicants = pgTable(
   (t) => [uniqueIndex("applicants_school_ref_uq").on(t.schoolId, t.ref), uniqueIndex("applicants_token_uq").on(t.token), index("applicants_status_idx").on(t.schoolId, t.status)],
 );
 
+// ---------- Staff attendance and leave ----------
+
+export const STAFF_DAY_STATUSES = ["present", "late", "absent", "leave"] as const;
+
+export const staffAttendance = pgTable(
+  "staff_attendance",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    membershipId: uuid("membership_id")
+      .notNull()
+      .references(() => memberships.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    status: text("status", { enum: STAFF_DAY_STATUSES }).notNull(),
+    clockIn: timestamp("clock_in", { withTimezone: true }),
+    clockOut: timestamp("clock_out", { withTimezone: true }),
+    /** "self" when the staff member clocked in; otherwise marked by a manager. */
+    method: text("method", { enum: ["self", "manager"] }).notNull().default("self"),
+    note: text("note"),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("staff_attendance_member_date_uq").on(t.membershipId, t.date), index("staff_attendance_school_date_idx").on(t.schoolId, t.date)],
+);
+
+export const leaveRequests = pgTable(
+  "leave_requests",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    membershipId: uuid("membership_id")
+      .notNull()
+      .references(() => memberships.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: LEAVE_KINDS }).notNull(),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    /** Working days covered, counted on the school's workdays. */
+    days: integer("days").notNull(),
+    reason: text("reason").notNull().default(""),
+    status: text("status", { enum: ["pending", "approved", "rejected", "cancelled"] }).notNull().default("pending"),
+    decidedBy: uuid("decided_by").references(() => memberships.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionNote: text("decision_note"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("leave_requests_member_idx").on(t.membershipId, t.startsOn), index("leave_requests_status_idx").on(t.schoolId, t.status)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1511,4 +1574,6 @@ export const TENANT_TABLES = [
   "exam_attempts",
   "materials",
   "applicants",
+  "staff_attendance",
+  "leave_requests",
 ] as const;

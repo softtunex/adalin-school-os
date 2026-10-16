@@ -54,6 +54,8 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
       "staff:view",
       "staff:invite",
       "staff:update",
+      "staff:attendance",
+      "staff:leave",
       "roles:view",
       "academics:view",
       "academics:manage",

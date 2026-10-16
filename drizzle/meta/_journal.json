@@ -57,6 +57,13 @@
       "when": 1792177600426,
       "tag": "0007_cbt_theory_marks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792186276060,
+      "tag": "0008_staff_attendance_and_leave",
+      "breakpoints": true
     }
   ]
 }

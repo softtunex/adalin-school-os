@@ -11,6 +11,8 @@ export const PERMISSION_GROUPS = {
       update: "Edit staff",
       deactivate: "Deactivate staff",
       assign_roles: "Assign roles",
+      attendance: "Record and review staff attendance",
+      leave: "Approve staff leave",
     },
   },
   roles: {

@@ -22,7 +22,8 @@
     "db:seed-cbt": "tsx scripts/seed-cbt.ts",
     "db:seed-materials": "tsx scripts/seed-materials.ts",
     "db:seed-admissions": "tsx scripts/seed-admissions.ts",
-    "db:seed-analytics": "tsx scripts/seed-analytics.ts"
+    "db:seed-analytics": "tsx scripts/seed-analytics.ts",
+    "db:seed-hr": "tsx scripts/seed-hr.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",

@@ -16,6 +16,9 @@ import { CREDIT_PACKS, getMessaging } from "@/lib/services/credits";
 import { listBanks, paystackMode } from "@/lib/services/paystack";
 import { listPlans } from "@/lib/services/school-profile";
 import { AdmissionSettings } from "../admissions/admission-settings";
+import { HrSettingsForm } from "../hr/hr-settings-form";
+import { LEAVE_KINDS } from "@/lib/db/schema";
+import { hrSettings, LEAVE_LABEL } from "@/lib/services/hr";
 import { LogoCard } from "./logo-card";
 import { BuyCredits, CommsSettingsForm } from "./messaging-forms";
 import { FeeRulesForm, SettlementForm } from "./payments-forms";
@@ -25,10 +28,11 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
   const sp = await searchParams;
   const canAdmissions = can(access, "admissions:manage") && hasFeature(access.plan, "admissions");
+  const canHr = (can(access, "staff:update") || can(access, "staff:leave")) && hasFeature(access.plan, "staff_attendance");
   const tab = sp.tab ?? (canProfile ? "profile" : can(access, "fees:manage") ? "payments" : can(access, "comms:announce") ? "messaging" : "admissions");
   const s = access.school;
   const base = `/s/${slug}/settings`;
@@ -45,11 +49,19 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
             ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
             ...(canAdmissions ? [{ key: "admissions", label: "Admissions", href: `${base}?tab=admissions` }] : []),
+            ...(canHr ? [{ key: "hr", label: "Staff & HR", href: `${base}?tab=hr` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "admissions" && canAdmissions ? (
+        {tab === "hr" && canHr ? (
+          <HrSettingsForm
+            slug={slug}
+            settings={hrSettings(s.hrSettings)}
+            kinds={LEAVE_KINDS.map((k) => ({ kind: k, label: LEAVE_LABEL[k] }))}
+            editable={can(access, "staff:update") || can(access, "staff:leave")}
+          />
+        ) : tab === "admissions" && canAdmissions ? (
           <AdmissionSettings slug={slug} access={access} />
         ) : tab === "messaging" && can(access, "comms:announce") ? (
           <MessagingTab slug={slug} access={access} bought={sp.bought} failed={!!sp.failed} />
