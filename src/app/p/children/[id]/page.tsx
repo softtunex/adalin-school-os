@@ -166,9 +166,14 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
                     </span>
                   </span>
                   <Badge tone={INVOICE[inv.status]?.tone ?? "neutral"}>{INVOICE[inv.status]?.label ?? inv.status}</Badge>
-                  <a href={`/pay/${inv.payToken}`} className={buttonClass(inv.balance > 0 && d.canPayOnline ? "primary" : "secondary", "sm")}>
-                    {inv.balance > 0 && d.canPayOnline ? `Pay ${formatNaira(inv.balance)}` : "View"}
-                  </a>
+                  <span className="flex w-full gap-2 sm:w-auto">
+                    <a href={`/pay/${inv.payToken}/pdf`} target="_blank" rel="noreferrer" className={buttonClass("secondary", "sm", "flex-1 sm:flex-none")} aria-label={`Download invoice ${inv.number}`}>
+                      <Icon name="download" size={16} /> Invoice
+                    </a>
+                    <a href={`/pay/${inv.payToken}`} className={buttonClass(inv.balance > 0 && d.canPayOnline ? "primary" : "secondary", "sm", "flex-1 sm:flex-none")}>
+                      {inv.balance > 0 && d.canPayOnline ? `Pay ${formatNaira(inv.balance)}` : "View"}
+                    </a>
+                  </span>
                 </li>
               ))}
             </ul>

@@ -39,7 +39,7 @@ test("a wrong code is refused and unknown numbers learn nothing", async ({ page,
 
 test("staff post an announcement, the parent signs in with a code, reads it, and messages the teacher", async ({ page, browser, isMobile }) => {
   test.skip(isMobile, "desktop journey");
-  test.setTimeout(240_000);
+  test.setTimeout(process.env.CI ? 240_000 : 480_000);
   const stamp = Date.now();
 
   await staffLogin(page);
@@ -58,14 +58,23 @@ test("staff post an announcement, the parent signs in with a code, reads it, and
   await expect(phone.getByText(`Cultural day ${stamp}`)).toBeVisible();
 
   // The child page and the published report card.
-  await phone.locator("a[href^='/p/children/']").first().click();
+  await phone.locator("main a[href^='/p/children/']").first().click();
   await expect(phone).toHaveURL(/\/p\/children\//, { timeout: 45_000 });
+  const childUrl = phone.url();
   await phone.getByRole("link", { name: /Results/ }).click();
   const card = phone.getByRole("link", { name: "Report card" }).first();
   if (await card.count()) {
     const pdf = await phone.request.get((await card.getAttribute("href"))!);
     expect(pdf.headers()["content-type"]).toBe("application/pdf");
   }
+
+  // Every child's invoices can be downloaded as a PDF.
+  await phone.goto(`${childUrl.split("?")[0]}?tab=fees`);
+  const invoice = phone.getByRole("link", { name: /Download invoice/ }).first();
+  await expect(invoice).toBeVisible({ timeout: 30_000 });
+  const invoicePdf = await phone.request.get((await invoice.getAttribute("href"))!);
+  expect(invoicePdf.headers()["content-type"]).toBe("application/pdf");
+  expect((await invoicePdf.body()).subarray(0, 4).toString()).toBe("%PDF");
 
   // Message the class teacher.
   await phone.goto("/p/messages/new");

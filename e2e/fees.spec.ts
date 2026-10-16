@@ -29,7 +29,7 @@ test("a new school on Free sees fees as an upgrade, not an error", async ({ page
 
 test("the bursar's day: dashboard, an invoice, a payment, a receipt, the parent pay link, an expense", async ({ page, isMobile, context }) => {
   test.skip(isMobile, "desktop journey");
-  test.setTimeout(240_000);
+  test.setTimeout(process.env.CI ? 240_000 : 480_000);
   await login(page);
   const base = `/s/${DEMO.slug}`;
 

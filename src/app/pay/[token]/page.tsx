@@ -86,6 +86,9 @@ export default async function PayPage({ params, searchParams }: { params: Promis
               <dt>Balance</dt>
               <dd className="tabular">{formatNaira(Math.max(0, balance))}</dd>
             </div>
+            <a href={`/pay/${token}/pdf`} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1.5 self-start fs-14 font-semibold text-blue hover:underline">
+              <Icon name="download" size={16} /> Download invoice (PDF)
+            </a>
           </dl>
           <div className="border-t border-line bg-paper/60 p-5 sm:p-6">
             {isVoid ? (

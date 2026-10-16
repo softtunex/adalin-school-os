@@ -7,7 +7,7 @@ const run = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
 test("attendance, score entry, publishing and PDF report cards", async ({ page, isMobile }) => {
   test.skip(isMobile, "desktop journey");
-  test.setTimeout(240_000);
+  test.setTimeout(process.env.CI ? 240_000 : 480_000);
 
   await page.goto("/signup");
   await page.getByLabel("School name").fill(`Kings Court School ${run}`);
