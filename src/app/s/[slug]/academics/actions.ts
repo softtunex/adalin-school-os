@@ -21,6 +21,7 @@ import {
   updateTermDates,
 } from "@/lib/services/academics";
 import { setClassElectives } from "@/lib/services/electives";
+import { bandsSchema, componentsSchema, saveBands, saveComponents } from "@/lib/services/assessment";
 import { fieldErrors } from "@/lib/validation";
 
 async function run(slug: string, fn: (ctx: { access: Awaited<ReturnType<typeof requireAccess>>; ip: string | null }) => Promise<unknown>, success: string): Promise<FormState> {
@@ -130,4 +131,16 @@ export async function saveElectivesAction(slug: string, classId: string, picks: 
   const parsed = picksSchema.safeParse(picks);
   if (!parsed.success || !z.string().uuid().safeParse(classId).success) return { error: "The choices couldn't be read. Reload and try again." };
   return run(slug, ({ access, ip }) => setClassElectives(getDb(), access, classId, parsed.data, ip), "Elective subjects saved.");
+}
+
+export async function saveComponentsAction(slug: string, components: unknown): Promise<FormState> {
+  const parsed = componentsSchema.safeParse(components);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the components." };
+  return run(slug, ({ access, ip }) => saveComponents(getDb(), access, parsed.data, ip), "Assessment saved.");
+}
+
+export async function saveBandsAction(slug: string, bands: unknown): Promise<FormState> {
+  const parsed = bandsSchema.safeParse(bands);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the grading scale." };
+  return run(slug, ({ access, ip }) => saveBands(getDb(), access, parsed.data, ip), "Grading scale saved.");
 }

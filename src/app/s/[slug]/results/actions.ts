@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { RESULT_STATUSES } from "@/lib/db/schema";
 import { userMessage } from "@/lib/errors";
 import { saveScores, saveTermReport, setClassResultStatus, setSheetStatus } from "@/lib/services/results";
+import { generatePins } from "@/lib/services/pins";
 
 const uuid = z.string().uuid();
 const entriesSchema = z
@@ -73,4 +74,15 @@ export async function saveTermReportAction(slug: string, input: unknown): Promis
     const access = await requireAccess(slug);
     await saveTermReport(getDb(), access, parsed.data);
   }, "Saved");
+}
+
+export async function generatePinsAction(slug: string, count: number, maxUses: number): Promise<{ error?: string; batch?: string; term?: string; pins?: { serial: string; pin: string }[] }> {
+  try {
+    const access = await requireAccess(slug);
+    const result = await generatePins(getDb(), access, { count: Math.floor(Number(count)), maxUses: Math.floor(Number(maxUses)) }, (await requestMeta()).ip);
+    revalidatePath(`/s/${slug}/results/pins`);
+    return result;
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
 }

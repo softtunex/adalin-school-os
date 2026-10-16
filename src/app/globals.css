@@ -195,3 +195,18 @@
     transform: rotate(-14deg);
   }
 }
+
+@media print {
+  body:has(#pin-cards) * {
+    visibility: hidden;
+  }
+  #pin-cards,
+  #pin-cards * {
+    visibility: visible;
+  }
+  #pin-cards {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+}

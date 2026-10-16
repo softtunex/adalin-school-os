@@ -15,6 +15,8 @@ import { getAcademicOverview } from "@/lib/services/academics";
 import { getElectiveMatrix } from "@/lib/services/electives";
 import type { Access } from "@/lib/services/access";
 import { ElectivesGrid } from "./electives-grid";
+import { BandsEditor, ComponentsEditor } from "./assessment-editor";
+import { getAssessmentConfig } from "@/lib/services/assessment";
 import {
   AddArmButton,
   AddLevelButton,
@@ -79,7 +81,7 @@ export default async function AcademicsPage({
     );
   }
 
-  const tab = ["classes", "subjects", "terms", "teachers", "electives"].includes(sp.tab ?? "") ? sp.tab! : "classes";
+  const tab = ["classes", "subjects", "terms", "teachers", "electives", "assessment"].includes(sp.tab ?? "") ? sp.tab! : "classes";
   const classes = data.levels.flatMap((l) => l.classes);
   const staffName = new Map(data.staff.map((s) => [s.membershipId, s.name]));
   const totalStudents = classes.reduce((n, c) => n + c.studentCount, 0);
@@ -125,6 +127,7 @@ export default async function AcademicsPage({
             { key: "terms", label: "Sessions & terms", href: `${base}?tab=terms` },
             { key: "teachers", label: "Subject teachers", href: `${base}?tab=teachers` },
             { key: "electives", label: "Electives", href: `${base}?tab=electives` },
+            { key: "assessment", label: "Assessment & grading", href: `${base}?tab=assessment` },
           ]}
         />
 
@@ -297,6 +300,7 @@ export default async function AcademicsPage({
 
         {tab === "teachers" ? <TeachersTab slug={slug} sp={sp} data={data} canManage={canManage} /> : null}
         {tab === "electives" ? <ElectivesTab slug={slug} classId={sp.class} data={data} access={access} /> : null}
+        {tab === "assessment" ? <AssessmentTab slug={slug} access={access} /> : null}
       </PageBody>
     </>
   );
@@ -391,5 +395,16 @@ async function ElectivesTab({ slug, classId, data, access }: { slug: string; cla
         <ElectivesGrid key={matrix.class.id} slug={slug} classId={matrix.class.id} electives={matrix.electives} students={matrix.students} initial={matrix.picks} editable={can(access, "students:update")} />
       )}
     </TableCard>
+  );
+}
+
+async function AssessmentTab({ slug, access }: { slug: string; access: Access }) {
+  const config = await getAssessmentConfig(getDb(), access);
+  const editable = can(access, "academics:manage");
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
+      <ComponentsEditor slug={slug} initial={config.components.map((c) => ({ name: c.name, maxScore: c.maxScore }))} locked={config.hasScores} editable={editable} />
+      <BandsEditor slug={slug} initial={config.bands.map((b) => ({ grade: b.grade, minScore: b.minScore, remark: b.remark, passes: b.passes }))} editable={editable} />
+    </div>
   );
 }

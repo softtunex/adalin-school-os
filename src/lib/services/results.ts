@@ -39,7 +39,7 @@ async function requireCurrentTerm(tx: Tx) {
   return current;
 }
 
-async function resolveTerm(tx: Tx, termId?: string) {
+export async function resolveTerm(tx: Tx, termId?: string) {
   if (!termId) return requireCurrentTerm(tx);
   const [row] = await tx
     .select({ term: terms, session: academicSessions })
@@ -301,69 +301,82 @@ export async function setSheetStatus(db: DB, access: Access, input: { classId: s
 
 // ---------- Class results, broadsheet, workflow ----------
 
+/**
+ * Computes a class's results for a term without any permission checks; callers must
+ * authorise first. For past terms the class list comes from who was scored in that class.
+ */
+export async function buildClassResults(tx: Tx, schoolId: string, classId: string, current: Awaited<ReturnType<typeof resolveTerm>>) {
+  const [cls] = await tx.select().from(classes).where(eq(classes.id, classId));
+  if (!cls) throw new AppError("That class wasn't found.", "not_found");
+  const config = await loadAssessmentConfig(tx, schoolId);
+  const studentCols = { id: students.id, firstName: students.firstName, middleName: students.middleName, lastName: students.lastName, admissionNo: students.admissionNo, gender: students.gender, dateOfBirth: students.dateOfBirth, photoUrl: students.photoUrl };
+
+  const [subjectRows, scoreRows, sheetRows, reports, classResult, attendance] = await Promise.all([
+    tx
+      .select({ id: subjects.id, name: subjects.name, code: subjects.code })
+      .from(levelSubjects)
+      .innerJoin(subjects, eq(subjects.id, levelSubjects.subjectId))
+      .where(eq(levelSubjects.levelId, cls.levelId))
+      .orderBy(asc(subjects.sort), asc(subjects.name)),
+    tx.select().from(scores).where(and(eq(scores.termId, current.term.id), eq(scores.classId, classId))),
+    tx.select().from(scoreSheets).where(and(eq(scoreSheets.termId, current.term.id), eq(scoreSheets.classId, classId))),
+    tx.select().from(termReports).where(eq(termReports.termId, current.term.id)),
+    classResultRow(tx, schoolId, current.term.id, classId),
+    classAttendanceTotals(tx, classId, current.term.id),
+  ]);
+  const scoredIds = [...new Set(scoreRows.map((r) => r.studentId))];
+  const roster = current.term.isCurrent
+    ? await tx.select(studentCols).from(students).where(and(eq(students.classId, classId), eq(students.status, "active"))).orderBy(asc(students.lastName), asc(students.firstName))
+    : scoredIds.length
+      ? await tx.select(studentCols).from(students).where(inArray(students.id, scoredIds)).orderBy(asc(students.lastName), asc(students.firstName))
+      : [];
+
+  // Only subjects someone actually scored show up on the broadsheet and report cards.
+  const scoredSubjects = subjectRows.filter((s) => scoreRows.some((r) => r.subjectId === s.id));
+  const results = computeClassResults({
+    studentIds: roster.map((s) => s.id),
+    subjectIds: scoredSubjects.map((s) => s.id),
+    components: config.components,
+    bands: config.bands,
+    scores: scoreRows.map((r) => ({ studentId: r.studentId, subjectId: r.subjectId, componentId: r.componentId, score: r.score })),
+  });
+  const reportBy = new Map(reports.map((r) => [r.studentId, r]));
+  return {
+    term: current,
+    class: { id: cls.id, name: cls.name, classTeacherId: cls.classTeacherId },
+    components: config.components,
+    bands: config.bands,
+    subjects: scoredSubjects,
+    offeredSubjects: subjectRows,
+    sheets: subjectRows.map((s) => ({
+      subjectId: s.id,
+      subjectName: s.name,
+      status: sheetRows.find((r) => r.subjectId === s.id)?.status ?? "draft",
+      scored: new Set(scoreRows.filter((r) => r.subjectId === s.id).map((r) => r.studentId)).size,
+    })),
+    students: roster.map((s) => ({
+      ...s,
+      result: results.get(s.id)!,
+      report: reportBy.get(s.id) ?? null,
+      attendance: attendance.totals.get(s.id) ?? { present: 0, absent: 0, late: 0, excused: 0 },
+    })),
+    attendanceDays: attendance.days,
+    summary: classSummary(results),
+    status: classResult.status,
+    nextTermBegins: classResult.nextTermBegins,
+    publishedAt: classResult.publishedAt,
+  };
+}
+
 export async function getClassResults(db: DB, access: Access, classId: string, termId?: string) {
   return withTenant(db, access.school.id, async (tx) => {
     if (!can(access, "results:view")) throw new AppError("You don't have permission to do that.", "forbidden");
     const scope = await studentScope(tx, access);
     if (scope !== "all" && !scope.includes(classId)) throw new AppError("You can't view results for this class.", "forbidden");
     const current = await resolveTerm(tx, termId);
-    const [cls] = await tx.select().from(classes).where(eq(classes.id, classId));
-    if (!cls) throw new AppError("That class wasn't found.", "not_found");
-    const config = await loadAssessmentConfig(tx, access.school.id);
-
-    const [roster, subjectRows, scoreRows, sheetRows, reports, classResult, attendance] = await Promise.all([
-      tx
-        .select({ id: students.id, firstName: students.firstName, middleName: students.middleName, lastName: students.lastName, admissionNo: students.admissionNo, gender: students.gender, dateOfBirth: students.dateOfBirth, photoUrl: students.photoUrl })
-        .from(students)
-        .where(and(eq(students.classId, classId), eq(students.status, "active")))
-        .orderBy(asc(students.lastName), asc(students.firstName)),
-      tx
-        .select({ id: subjects.id, name: subjects.name, code: subjects.code })
-        .from(levelSubjects)
-        .innerJoin(subjects, eq(subjects.id, levelSubjects.subjectId))
-        .where(eq(levelSubjects.levelId, cls.levelId))
-        .orderBy(asc(subjects.sort), asc(subjects.name)),
-      tx.select().from(scores).where(and(eq(scores.termId, current.term.id), eq(scores.classId, classId))),
-      tx.select().from(scoreSheets).where(and(eq(scoreSheets.termId, current.term.id), eq(scoreSheets.classId, classId))),
-      tx.select().from(termReports).where(eq(termReports.termId, current.term.id)),
-      classResultRow(tx, access.school.id, current.term.id, classId),
-      classAttendanceTotals(tx, classId, current.term.id),
-    ]);
-
-    // Only subjects someone actually scored show up on the broadsheet and report cards.
-    const scoredSubjects = subjectRows.filter((s) => scoreRows.some((r) => r.subjectId === s.id));
-    const results = computeClassResults({
-      studentIds: roster.map((s) => s.id),
-      subjectIds: scoredSubjects.map((s) => s.id),
-      components: config.components,
-      bands: config.bands,
-      scores: scoreRows.map((r) => ({ studentId: r.studentId, subjectId: r.subjectId, componentId: r.componentId, score: r.score })),
-    });
-    const reportBy = new Map(reports.map((r) => [r.studentId, r]));
+    const built = await buildClassResults(tx, access.school.id, classId, current);
     return {
-      term: current,
-      class: { id: cls.id, name: cls.name, classTeacherId: cls.classTeacherId },
-      components: config.components,
-      bands: config.bands,
-      subjects: scoredSubjects,
-      offeredSubjects: subjectRows,
-      sheets: subjectRows.map((s) => ({
-        subjectId: s.id,
-        subjectName: s.name,
-        status: sheetRows.find((r) => r.subjectId === s.id)?.status ?? "draft",
-        scored: new Set(scoreRows.filter((r) => r.subjectId === s.id).map((r) => r.studentId)).size,
-      })),
-      students: roster.map((s) => ({
-        ...s,
-        result: results.get(s.id)!,
-        report: reportBy.get(s.id) ?? null,
-        attendance: attendance.totals.get(s.id) ?? { present: 0, absent: 0, late: 0, excused: 0 },
-      })),
-      attendanceDays: attendance.days,
-      summary: classSummary(results),
-      status: classResult.status,
-      nextTermBegins: classResult.nextTermBegins,
-      publishedAt: classResult.publishedAt,
+      ...built,
       permissions: {
         review: await canReview(tx, access, classId),
         approve: can(access, "results:approve"),

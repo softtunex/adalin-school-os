@@ -4,6 +4,7 @@ import { ReportScene } from "@/components/illustrations/art";
 import { Illustration } from "@/components/illustrations";
 import { PageBody, Topbar } from "@/components/topbar";
 import { ButtonLink } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { Alert, Badge, Card, StatCard, StatGrid, Table, TableCard, Td, Th } from "@/components/ui/display";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
@@ -65,7 +66,17 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
-      <Topbar title="Results" context={`${term.term.name}, ${term.session.name}`} />
+      <Topbar
+        title="Results"
+        context={`${term.term.name}, ${term.session.name}`}
+        actions={
+          can(access, "results:pins") ? (
+            <ButtonLink href={`/s/${slug}/results/pins`} variant="secondary">
+              <Icon name="key" size={17} /> Result PINs
+            </ButtonLink>
+          ) : null
+        }
+      />
       <PageBody>
         <StatGrid>
           {mySheets.length ? (
