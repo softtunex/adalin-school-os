@@ -171,8 +171,8 @@ export function ScoreGrid({
                 const band = total === null ? null : gradeFor(total, bands);
                 const pos = positions.get(s) ?? null;
                 return (
-                  <tr key={s.id} className="hover:bg-paper">
-                    <td className="sticky left-0 z-10 border-b border-line bg-canvas px-4 py-2">
+                  <tr key={s.id} className="group hover:bg-paper">
+                    <td className="sticky left-0 z-10 border-b border-line bg-canvas px-4 py-2 group-hover:bg-paper">
                       <p className="max-w-[220px] truncate font-medium text-ink">{s.name}</p>
                       <p className="font-mono text-[12px] text-muted">{s.admissionNo}</p>
                     </td>

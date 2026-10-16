@@ -58,6 +58,7 @@ export default async function RegisterPage({ params, searchParams }: { params: P
             className={sheet.class.name}
             date={date}
             readOnly={!sheet.canEdit}
+            taken={sheet.taken}
             initial={sheet.students.map((s) => ({ id: s.id, name: `${s.firstName} ${s.lastName}`, admissionNo: s.admissionNo, status: s.status, note: s.note }))}
           />
         )}

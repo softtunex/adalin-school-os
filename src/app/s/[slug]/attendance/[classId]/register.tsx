@@ -56,10 +56,11 @@ async function flushQueue(): Promise<number> {
   return sent;
 }
 
-export function Register({ slug, classId, className, date, readOnly, initial }: { slug: string; classId: string; className: string; date: string; readOnly: boolean; initial: Row[] }) {
+export function Register({ slug, classId, className, date, readOnly, taken, initial }: { slug: string; classId: string; className: string; date: string; readOnly: boolean; taken: boolean; initial: Row[] }) {
   const router = useRouter();
   const [rows, setRows] = useState(initial);
   const [dirty, setDirty] = useState(false);
+  const [saved, setSaved] = useState(taken);
   const [message, setMessage] = useState<{ tone: "success" | "danger" | "warning"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -97,6 +98,7 @@ export function Register({ slug, classId, className, date, readOnly, initial }: 
         if (result.error) setMessage({ tone: "danger", text: result.error });
         else {
           setDirty(false);
+          setSaved(true);
           setMessage({ tone: "success", text: `Register saved: ${result.present} in school, ${result.absent} absent.` });
           router.refresh();
         }
@@ -138,7 +140,7 @@ export function Register({ slug, classId, className, date, readOnly, initial }: 
               <p className="truncate font-medium text-ink">{r.name}</p>
               <p className="font-mono text-[12px] text-muted">{r.admissionNo}</p>
             </div>
-            <div role="radiogroup" aria-label={`Attendance for ${r.name}`} className="flex gap-1.5">
+            <div role="radiogroup" aria-label={`Attendance for ${r.name}`} className="flex basis-full gap-1.5 sm:basis-auto">
               {OPTIONS.map((o) => {
                 const on = r.status === o.value;
                 return (
@@ -152,7 +154,7 @@ export function Register({ slug, classId, className, date, readOnly, initial }: 
                     disabled={readOnly}
                     onClick={() => setStatus(r.id, o.value)}
                     className={cn(
-                      "grid size-11 place-items-center rounded-[12px] border-2 text-[14px] font-extrabold transition-[transform,box-shadow] active:translate-y-[3px] active:shadow-none disabled:cursor-default disabled:active:translate-y-0",
+                      "grid h-11 flex-1 place-items-center rounded-[12px] border-2 text-[14px] font-extrabold sm:w-11 sm:flex-none transition-[transform,box-shadow] active:translate-y-[3px] active:shadow-none disabled:cursor-default disabled:active:translate-y-0",
                       on ? o.on : "border-line-strong bg-canvas text-muted shadow-[0_3px_0_var(--line-strong)] hover:text-ink",
                     )}
                   >
@@ -191,7 +193,7 @@ export function Register({ slug, classId, className, date, readOnly, initial }: 
               {counts.excused ? ` · ${counts.excused} excused` : ""}
             </p>
             <Button onClick={save} disabled={pending} size="lg">
-              {pending ? "Saving…" : dirty ? "Save register" : "Save register again"}
+              {pending ? "Saving…" : saved && !dirty ? "Save register again" : "Save register"}
             </Button>
           </div>
         </div>
