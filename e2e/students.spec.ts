@@ -108,4 +108,17 @@ test("an owner sets up classes, adds and imports students, and manages a profile
   const select = page.getByRole("combobox", { name: "Teacher" }).first();
   await select.selectOption({ label: "Mrs Bisi Akande" });
   await expect(page.getByText("Saved")).toBeVisible({ timeout: 15_000 });
+
+  // End-of-session promotion: create the next session, review, apply.
+  await page.goto(`/s/${slug}/students/promote`);
+  await page.getByRole("button", { name: /Create \d{4}\/\d{4} session/ }).click();
+  await expect(page.getByText(/Moving students from/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByLabel("Class for Chiamaka Okonkwo")).toHaveValue(/.+/);
+  await page.getByLabel("Next session for Emeka Okonkwo").selectOption("repeat");
+  await page.getByRole("button", { name: /Apply to 2 students/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Apply promotion" }).click();
+  await expect(page.getByRole("heading", { name: /Welcome to/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("1 promoted · 1 repeating · 0 graduated · 0 withdrawn")).toBeVisible();
+  await page.goto(`/s/${slug}/students?q=chiamaka`);
+  await expect(page.getByRole("cell", { name: "JSS 2 Silver", exact: true })).toBeVisible();
 });

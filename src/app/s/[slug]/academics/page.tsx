@@ -5,6 +5,8 @@ import { PageBody, Topbar } from "@/components/topbar";
 import { FilterSelect } from "@/components/ui/data";
 import { Avatar, Badge, Card, EmptyState, IconChip, StatCard, StatGrid, Table, TableCard, Td, Th } from "@/components/ui/display";
 import { Tabs } from "@/components/ui/tabs";
+import { ButtonLink } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { SECTION_LABELS, sessionNameFor } from "@/lib/academics/templates";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
@@ -90,7 +92,14 @@ export default async function AcademicsPage({
             tab === "subjects" ? (
               <SubjectEditorButton slug={slug} levels={data.levels.map((l) => ({ id: l.id, name: l.name }))} />
             ) : tab === "terms" ? (
-              <NewSessionButton slug={slug} />
+              <>
+                {can(access, "students:promote") ? (
+                  <ButtonLink href={`/s/${slug}/students/promote`} variant="secondary">
+                    <Icon name="upgrade" size={18} /> Promote students
+                  </ButtonLink>
+                ) : null}
+                <NewSessionButton slug={slug} />
+              </>
             ) : tab === "classes" ? (
               <AddLevelButton slug={slug} />
             ) : null

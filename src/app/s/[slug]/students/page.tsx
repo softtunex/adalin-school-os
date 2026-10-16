@@ -64,6 +64,12 @@ export default async function StudentsPage({
         actions={
           canCreate ? (
             <>
+              {can(access, "students:promote") ? (
+                <ButtonLink href={`${base}/promote`} variant="ghost" className="hidden sm:inline-flex">
+                  <Icon name="upgrade" size={18} />
+                  Promote
+                </ButtonLink>
+              ) : null}
               {can(access, "students:import") ? (
                 <ButtonLink href={`${base}/import`} variant="secondary">
                   <Icon name="upload" size={18} />
