@@ -64,9 +64,11 @@ test("a teacher sets homework, a student hands it in with a file, and the teache
   // The teacher sees the work and marks it; the student sees the mark.
   await teacher.goto(assignmentUrl);
   await teacher.getByRole("button", { name: /^To mark/ }).click();
-  await expect(teacher.getByText("Oluwaseun Lawal")).toBeVisible();
+  await expect(teacher.getByText("Oluwaseun Lawal", { exact: true })).toBeVisible();
   await teacher.getByRole("button", { name: "View work" }).click();
   await expect(teacher.getByRole("link", { name: /my-answer\.pdf/ })).toBeVisible();
+  // Read the link now: once marked, the student leaves the "To mark" list.
+  const fileHref = await teacher.getByRole("link", { name: /my-answer\.pdf/ }).getAttribute("href");
   await teacher.getByLabel("Mark for Oluwaseun Lawal").fill("8");
   await teacher.getByLabel("Feedback for Oluwaseun Lawal").fill("Good. Check question 3.");
   await teacher.getByRole("button", { name: "Save marks" }).click();
@@ -76,8 +78,7 @@ test("a teacher sets homework, a student hands it in with a file, and the teache
   await expect(student.getByText("Your mark")).toBeVisible();
   await expect(student.getByText("Good. Check question 3.")).toBeVisible();
 
-  // Someone else's file isn't reachable.
-  const fileHref = await teacher.getByRole("link", { name: /my-answer\.pdf/ }).getAttribute("href");
+  // School leadership can open the work; a signed-out visitor is sent to log in.
   const outsider = await staffPage(browser, "director@demo.schoolos.ng");
   expect((await outsider.request.get(fileHref!)).status()).toBe(200); // principal-level staff can open it
   const other = await (await browser.newContext()).newPage();
