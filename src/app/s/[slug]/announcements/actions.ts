@@ -94,6 +94,7 @@ export async function saveCommsSettingsAction(slug: string, _prev: FormState, fo
     paymentAlerts: on("paymentAlerts"),
     smsAlerts: on("smsAlerts"),
     parentMessaging: on("parentMessaging"),
+    studentResults: on("studentResults"),
     limitHours: on("limitHours"),
     start: formData.get("start") || undefined,
     end: formData.get("end") || undefined,

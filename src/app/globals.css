@@ -371,14 +371,18 @@
 }
 
 @media print {
-  body:has(#pin-cards) * {
+  body:has(#pin-cards) *,
+  body:has(#login-slips) * {
     visibility: hidden;
   }
   #pin-cards,
-  #pin-cards * {
+  #pin-cards *,
+  #login-slips,
+  #login-slips * {
     visibility: visible;
   }
-  #pin-cards {
+  #pin-cards,
+  #login-slips {
     position: absolute;
     inset: 0 auto auto 0;
     width: 100%;

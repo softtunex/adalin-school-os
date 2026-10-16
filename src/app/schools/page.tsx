@@ -18,6 +18,7 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
   const { pick } = await searchParams;
   const schools = await listUserSchools(getDb(), user.id);
 
+  if (user.username) redirect("/learn");
   const children = await myChildren(getDb(), user.id);
   if (schools.length === 0 && children.length > 0) redirect("/p");
   if (schools.length === 1 && !pick && children.length === 0) redirect(`/s/${schools[0].slug}`);

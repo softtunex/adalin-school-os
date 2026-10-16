@@ -77,7 +77,7 @@ async function main() {
     return `${pick.s.firstName} ${child.student.lastName} (${pick.className})`;
   });
 
-  await saveCommsSettings(db, owner, { absenceAlerts: true, resultAlerts: true, paymentAlerts: true, smsAlerts: true, parentMessaging: true, limitHours: false });
+  await saveCommsSettings(db, owner, { absenceAlerts: true, resultAlerts: true, paymentAlerts: true, smsAlerts: true, parentMessaging: true, studentResults: true, limitHours: false });
   await addCredits(db, owner.school.id, 1_500, "demo-credits", "Demo credits");
 
   await saveEvent(db, owner, { title: "Mid-term break", kind: "holiday", startsOn: plusDays(10), endsOn: plusDays(12), details: "School resumes the following Monday.", forParents: true });

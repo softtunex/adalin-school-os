@@ -77,7 +77,8 @@ function Composer({ slug, classes, smsAllowed, credits, onDone }: { slug: string
         <Select id="ann-audience" name="audience" value={audience} onChange={(e) => setAudience(e.target.value)}>
           <option value="everyone">Everyone: parents and staff</option>
           <option value="parents">All parents</option>
-          <option value="classes">Parents of some classes</option>
+          <option value="students">Students (student portal)</option>
+          <option value="classes">Parents and students of some classes</option>
           <option value="staff">Staff only</option>
         </Select>
       </Field>

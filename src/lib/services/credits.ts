@@ -111,6 +111,7 @@ export const commsSettingsSchema = z.object({
   paymentAlerts: z.boolean(),
   smsAlerts: z.boolean(),
   parentMessaging: z.boolean(),
+  studentResults: z.boolean().optional(),
   limitHours: z.boolean(),
   start: time.optional(),
   end: time.optional(),
@@ -125,6 +126,7 @@ export async function saveCommsSettings(db: DB, access: Access, input: z.infer<t
     paymentAlerts: input.paymentAlerts,
     smsAlerts: input.smsAlerts,
     parentMessaging: input.parentMessaging,
+    studentResults: input.studentResults ?? false,
     messagingHours: input.limitHours && input.start && input.end ? { start: input.start, end: input.end } : undefined,
   };
   await withTenant(db, access.school.id, async (tx) => {

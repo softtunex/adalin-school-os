@@ -16,7 +16,7 @@ export const announcementSchema = z
   .object({
     title: z.string().trim().min(3, "Give it a short title.").max(120),
     body: z.string().trim().min(3, "Write the announcement.").max(4000),
-    audience: z.enum(["everyone", "staff", "parents", "classes"]),
+    audience: z.enum(["everyone", "staff", "parents", "students", "classes"]),
     classIds: z.array(z.string().uuid()).default([]),
     pinned: z.boolean().default(false),
     email: z.boolean().default(false),
@@ -46,7 +46,7 @@ async function staffUsers(tx: Tx, onlyClassTeachersOf?: string[]) {
 }
 
 async function audienceStudents(tx: Tx, audience: string, classIds: string[]) {
-  if (audience === "staff") return [];
+  if (audience === "staff" || audience === "students") return [];
   const rows = await tx
     .select({ id: students.id })
     .from(students)
@@ -132,7 +132,7 @@ export function smsText(school: string, title: string, body: string) {
 }
 
 export function describeAudience(audience: string, classes: number) {
-  return audience === "everyone" ? "everyone" : audience === "staff" ? "staff" : audience === "parents" ? "all parents" : `${classes} class${classes === 1 ? "" : "es"}`;
+  return audience === "everyone" ? "everyone" : audience === "staff" ? "staff" : audience === "parents" ? "all parents" : audience === "students" ? "students" : `${classes} class${classes === 1 ? "" : "es"}`;
 }
 
 export async function listAnnouncements(db: DB, access: Access) {

@@ -96,7 +96,7 @@ export async function requireChild(db: DB, userId: string, studentId: string) {
 }
 
 /** Terms where this child has published results, newest first. */
-async function publishedTerms(tx: Tx, studentId: string) {
+export async function publishedTerms(tx: Tx, studentId: string) {
   const rows = await tx
     .selectDistinct({ termId: scores.termId, classId: scores.classId, termName: terms.name, number: terms.number, session: academicSessions.name, publishedAt: classResults.publishedAt, className: classes.name })
     .from(scores)

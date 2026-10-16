@@ -70,6 +70,10 @@ export default async function StudentsPage({
                   Promote
                 </ButtonLink>
               ) : null}
+              <ButtonLink href={`${base}/logins`} variant="ghost" className="hidden sm:inline-flex">
+                <Icon name="key" size={18} />
+                Logins
+              </ButtonLink>
               {can(access, "students:import") ? (
                 <ButtonLink href={`${base}/import`} variant="secondary">
                   <Icon name="upload" size={18} />

@@ -169,6 +169,7 @@ async function MessagingTab({ slug, access, bought, failed }: { slug: string; ac
             paymentAlerts: c.paymentAlerts !== false,
             smsAlerts: !!c.smsAlerts,
             parentMessaging: c.parentMessaging !== false,
+            studentResults: !!c.studentResults,
             hours: c.messagingHours ?? null,
           }}
         />

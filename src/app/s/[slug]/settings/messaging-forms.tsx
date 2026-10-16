@@ -51,7 +51,7 @@ export function CommsSettingsForm({
   editable,
 }: {
   slug: string;
-  settings: { senderId: string; absenceAlerts: boolean; resultAlerts: boolean; paymentAlerts: boolean; smsAlerts: boolean; parentMessaging: boolean; hours: { start: string; end: string } | null };
+  settings: { senderId: string; absenceAlerts: boolean; resultAlerts: boolean; paymentAlerts: boolean; smsAlerts: boolean; parentMessaging: boolean; studentResults: boolean; hours: { start: string; end: string } | null };
   sms: boolean;
   editable: boolean;
 }) {
@@ -78,6 +78,7 @@ export function CommsSettingsForm({
             description={sms ? "Reaches parents who aren't on the app or don't use email. Uses credits." : "SMS is on the Standard plan."}
           />
           <Checkbox name="parentMessaging" defaultChecked={settings.parentMessaging} label="Parents can message teachers" description="Parents write to their child's class teacher from the parent app." />
+          <Checkbox name="studentResults" defaultChecked={settings.studentResults} label="Students can see their own results" description="Published report cards also show in the student portal (still held back when fees are owed, if you hold results)." />
           <Checkbox name="limitHours" checked={limit} onChange={(e) => setLimit(e.target.checked)} label="Only during set hours" description="Outside these hours parents can read messages but not send new ones." />
           {limit ? (
             <div className="grid gap-3 sm:w-80 sm:grid-cols-2">
