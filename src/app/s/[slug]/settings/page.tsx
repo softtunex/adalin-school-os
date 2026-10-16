@@ -31,6 +31,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
           current={tab}
           tabs={[
             { key: "profile", label: "School profile", href: base },
+            { key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` },
             { key: "plan", label: "Plan & billing", href: `${base}?tab=plan` },
           ]}
         />

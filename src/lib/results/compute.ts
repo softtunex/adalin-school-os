@@ -199,9 +199,16 @@ export const BRITISH_BANDS: Band[] = [
 
 export const GRADING_PRESETS = {
   waec: { label: "WAEC (A1 to F9)", bands: WAEC_BANDS },
-  simple: { label: "Simple (A to F)", bands: SIMPLE_BANDS },
+  simple: { label: "A to F (A from 70)", bands: SIMPLE_BANDS },
   british: { label: "British (A* to U)", bands: BRITISH_BANDS },
 } as const;
+
+export const COMPONENT_PRESETS = [
+  { label: "20 / 20 / 60", components: [{ name: "1st CA", maxScore: 20 }, { name: "2nd CA", maxScore: 20 }, { name: "Exam", maxScore: 60 }] },
+  { label: "40 / 60", components: [{ name: "Test", maxScore: 40 }, { name: "Exam", maxScore: 60 }] },
+  { label: "30 / 70", components: [{ name: "CA", maxScore: 30 }, { name: "Exam", maxScore: 70 }] },
+  { label: "10 / 10 / 20 / 60", components: [{ name: "1st Test", maxScore: 10 }, { name: "2nd Test", maxScore: 10 }, { name: "Assignment", maxScore: 20 }, { name: "Exam", maxScore: 60 }] },
+] as const;
 
 export const DEFAULT_COMPONENTS = [
   { name: "1st CA", maxScore: 20 },

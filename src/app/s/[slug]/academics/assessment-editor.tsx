@@ -7,7 +7,7 @@ import { Alert, Badge, Card } from "@/components/ui/display";
 import { Input } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
-import { GRADING_PRESETS, type Band } from "@/lib/results/compute";
+import { COMPONENT_PRESETS, GRADING_PRESETS, type Band } from "@/lib/results/compute";
 import { saveBandsAction, saveComponentsAction } from "./actions";
 
 type Comp = { name: string; maxScore: number };
@@ -29,6 +29,16 @@ export function ComponentsEditor({ slug, initial, locked, editable }: { slug: st
         <Badge tone={sum === 100 ? "success" : "danger"}>Total {sum} / 100</Badge>
       </div>
       {locked ? <Alert tone="blue">Scores have been entered, so you can rename and reweight these but not add or remove columns.</Alert> : null}
+      {editable && !locked ? (
+        <div className="flex flex-wrap gap-2">
+          <span className="self-center fs-13.5 text-muted">Start from:</span>
+          {COMPONENT_PRESETS.map((p) => (
+            <Button key={p.label} variant="secondary" size="sm" onClick={() => setRows(p.components.map((c) => ({ ...c })))}>
+              {p.label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
       <div className="flex flex-col gap-2">
         {rows.map((r, i) => (
           <div key={i} className="flex items-center gap-2">
@@ -133,12 +143,12 @@ export function BandsEditor({ slug, initial, editable }: { slug: string; initial
               return (
                 <tr key={i}>
                   <td className="border-b border-line px-2 py-2">
-                    <Input aria-label="Grade" value={r.grade} maxLength={4} disabled={!editable} onChange={(e) => update(i, { grade: e.target.value })} className="h-10 w-20 text-center font-semibold" />
+                    <Input aria-label="Grade" value={r.grade} maxLength={4} disabled={!editable} onChange={(e) => update(i, { grade: e.target.value })} className="h-10 w-[72px] px-2 text-center font-semibold" />
                   </td>
                   <td className="border-b border-line px-2 py-2">
-                    <Input aria-label="Minimum score" type="number" min={0} max={100} value={r.minScore} disabled={!editable} onChange={(e) => update(i, { minScore: Number(e.target.value) })} className="h-10 w-20 text-center" />
+                    <Input aria-label="Minimum score" type="number" min={0} max={100} value={r.minScore} disabled={!editable} onChange={(e) => update(i, { minScore: Number(e.target.value) })} className="h-10 w-[76px] px-2 text-center" />
                   </td>
-                  <td className="tabular border-b border-line px-2 py-2 text-body">
+                  <td className="tabular whitespace-nowrap border-b border-line px-2 py-2 text-body">
                     {r.minScore}–{upper}
                   </td>
                   <td className="border-b border-line px-2 py-2">
