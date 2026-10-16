@@ -27,7 +27,7 @@ export function paystackMode(): "live" | "test" | "off" {
   return process.env.NODE_ENV === "production" && process.env.PAYMENTS_TEST_MODE !== "1" ? "off" : "test";
 }
 
-async function paystack<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+export async function paystack<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
   const key = process.env.PAYSTACK_SECRET_KEY;
   if (!key) throw new AppError("Online payment isn't switched on yet.", "conflict");
   const res = await fetch(`${API}${path}`, {

@@ -38,6 +38,12 @@ He has homework due, an open CBT test ("Second CA test") and published results.
 
 Other students get logins from **Students → Logins** (staff side), which prints slips with a temporary password.
 
+## Admissions (no login needed)
+
+- Public application form: <http://localhost:3005/apply/greenfield-college>. Anyone can apply; the ₦5,000 form fee uses the test checkout.
+- A parent's page with an open offer (Chiamaka Nwosu, accept or decline it here): <http://localhost:3005/apply/greenfield-college/status/3ZL2Nozb_eanE4fFK5wrxxcZtZOqJrI3>. This link only works on your local demo database; `pnpm db:seed-admissions` prints a fresh one on a new database.
+- Staff side: **Admissions** in the sidebar (Director or admin).
+
 ## Payments
 
 Online fee payments run in test mode locally: the Paystack checkout is a built-in test page, so no card is charged.

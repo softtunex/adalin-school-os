@@ -59,6 +59,8 @@ export type AdmissionSettings = {
   levelIds?: string[];
   feeKobo?: number;
   intro?: string;
+  /** Entrance exam date, venue and what to bring, shown to applicants. */
+  examInfo?: string;
 };
 
 // ---------- Platform (no row-level security: accessed by the app's owner role) ----------

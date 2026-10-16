@@ -297,3 +297,66 @@ export function ReceiptPdf({ doc }: { doc: ReceiptDoc }) {
     </Document>
   );
 }
+
+export type OfferLetterDoc = {
+  school: SchoolHeader;
+  ref: string;
+  date: string;
+  child: string;
+  guardian: string;
+  address: string | null;
+  level: string;
+  session: string | null;
+  examScore: number | null;
+  acceptBy: string;
+  statusUrl: string;
+  principal: string | null;
+};
+
+export function OfferLetterPdf({ doc }: { doc: OfferLetterDoc }) {
+  const para = { fontSize: 10.5, color: INK, lineHeight: 1.55, marginTop: 10 };
+  return (
+    <Document title={`Offer of admission ${doc.ref}`} author={doc.school.name}>
+      <Page size="A4" style={s.page}>
+        <Header school={doc.school} />
+        <View style={s.docTitleRow}>
+          <View>
+            <Text style={s.docTitle}>OFFER OF ADMISSION</Text>
+            <Text style={s.docNo}>{doc.ref}</Text>
+          </View>
+          <Meta items={[["Date", doc.date]]} />
+        </View>
+        <View style={{ marginTop: 18 }}>
+          <Text style={s.strong}>{doc.guardian}</Text>
+          {doc.address ? <Text style={{ fontSize: 9.5, color: BODY, marginTop: 2 }}>{doc.address}</Text> : null}
+        </View>
+        <Text style={[para, { marginTop: 16 }]}>Dear {doc.guardian},</Text>
+        <Text style={[para, { fontFamily: "Helvetica-Bold" }]}>
+          Offer of admission: {doc.child}, {doc.level}
+          {doc.session ? `, ${doc.session} session` : ""}
+        </Text>
+        <Text style={para}>
+          We are pleased to offer {doc.child} a place in {doc.level} at {doc.school.name}
+          {doc.session ? ` for the ${doc.session} academic session` : ""}
+          {doc.examScore !== null ? `, following a score of ${doc.examScore} in our entrance examination` : ""}. Congratulations.
+        </Text>
+        <Text style={para}>
+          To accept this offer, please confirm on your application page by {doc.acceptBy}, after which the school will complete registration and share the fee schedule and resumption date. If we do
+          not hear from you by then, the place may be offered to another child.
+        </Text>
+        <View style={[s.pay, { marginTop: 16 }]}>
+          <Text style={s.boxLabel}>Accept or decline online</Text>
+          <Text style={{ fontSize: 9.5, color: INK }}>{doc.statusUrl}</Text>
+        </View>
+        <Text style={para}>We look forward to welcoming {doc.child} to {doc.school.name}.</Text>
+        <View style={{ marginTop: 36 }}>
+          <View style={{ width: 180, borderTopWidth: 1, borderTopColor: INK, paddingTop: 4 }}>
+            <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: INK }}>{doc.principal ?? "The Principal"}</Text>
+            <Text style={{ fontSize: 8.5, color: MUTED }}>For {doc.school.name}</Text>
+          </View>
+        </View>
+        <Footer left={`${doc.school.name} · ${doc.ref}`} />
+      </Page>
+    </Document>
+  );
+}

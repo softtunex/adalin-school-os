@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/db/client";
 import { deliverSoon } from "@/lib/deliver";
+import { handleApplicationFeeEvent } from "@/lib/services/admissions";
 import { settleCreditPurchase } from "@/lib/services/credits";
 import { handlePaystackEvent, verifyWebhookSignature } from "@/lib/services/paystack";
 
@@ -8,7 +9,9 @@ export async function POST(request: Request) {
   if (!verifyWebhookSignature(raw, request.headers.get("x-paystack-signature"))) return new Response("Invalid signature", { status: 401 });
   try {
     const event = JSON.parse(raw);
-    if (event?.event === "charge.success" && String(event.data?.reference ?? "").startsWith("sosc_")) await settleCreditPurchase(getDb(), event.data);
+    const reference = String(event.data?.reference ?? "");
+    if (event?.event === "charge.success" && reference.startsWith("sosc_")) await settleCreditPurchase(getDb(), event.data);
+    else if (event?.event === "charge.success" && reference.startsWith("sosa_")) await handleApplicationFeeEvent(getDb(), event.data);
     else await handlePaystackEvent(getDb(), event);
     deliverSoon();
   } catch (error) {
