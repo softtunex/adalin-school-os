@@ -15,6 +15,10 @@ Collected during the build so work never stops for a question. Handed over at th
 9. **Vercel Pro (or another scheduler)** if we want the outbox safety net every 10 minutes (`/api/cron/outbox`). Messages normally go out straight after each action; the cron only catches stragglers. The Hobby plan allows daily crons only.
 10. **Domain** for the product once the name is decided (e.g. `schoolos.ng`), with each school on its own subdomain later.
 
+## Live-site safety (for whoever sets up Vercel)
+
+- Never set `ALLOW_TEST_LOGIN_CODES` or `PAYMENTS_TEST_MODE` on the live site. They exist for CI and demo servers only: the first shows parent sign-in codes on screen and accepts a fixed code, the second fakes Paystack.
+
 ## Assets
 
 1. **Illustrations and mascot.** Full brief in `docs/illustration-briefs.md` (11 images, 3 optional animations). Drop the files into `public/illustrations/`.

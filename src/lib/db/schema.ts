@@ -49,6 +49,16 @@ export type CommsSettings = {
   parentMessaging?: boolean;
   /** Parents can only send messages between these times (Lagos), e.g. "07:00" to "18:00". */
   messagingHours?: { start: string; end: string };
+  /** Students can see their own published results in the student portal. */
+  studentResults?: boolean;
+};
+
+export type AdmissionSettings = {
+  open?: boolean;
+  /** Class levels taking applications; all when empty. */
+  levelIds?: string[];
+  feeKobo?: number;
+  intro?: string;
 };
 
 // ---------- Platform (no row-level security: accessed by the app's owner role) ----------
@@ -65,11 +75,15 @@ export const users = pgTable(
     isPlatformAdmin: boolean("is_platform_admin").notNull().default(false),
     lastSchoolId: uuid("last_school_id"),
     notifyPrefs: jsonb("notify_prefs").$type<NotifyPrefs>().notNull().default({}),
+    /** Student logins: "<school slug>/<admission no>", lower case. Staff and parents use email or phone. */
+    username: text("username"),
+    mustChangePassword: boolean("must_change_password").notNull().default(false),
     createdAt: createdAt(),
   },
   (t) => [
     uniqueIndex("users_email_uq").on(sql`lower(${t.email})`),
     uniqueIndex("users_phone_uq").on(t.phone),
+    uniqueIndex("users_username_uq").on(t.username),
   ],
 );
 
@@ -163,6 +177,8 @@ export const schools = pgTable(
     feeSettings: jsonb("fee_settings").$type<FeeSettings>().notNull().default({}),
     paystackSubaccount: text("paystack_subaccount"),
     commsSettings: jsonb("comms_settings").$type<CommsSettings>().notNull().default({}),
+    admissionSettings: jsonb("admission_settings").$type<AdmissionSettings>().notNull().default({}),
+    nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("schools_slug_uq").on(t.slug)],
@@ -894,7 +910,7 @@ export const expenses = pgTable(
 
 // ---------- Communication ----------
 
-export const AUDIENCES = ["everyone", "staff", "parents", "classes"] as const;
+export const AUDIENCES = ["everyone", "staff", "parents", "students", "classes"] as const;
 export type Audience = (typeof AUDIENCES)[number];
 
 export const announcements = pgTable(
@@ -1062,6 +1078,369 @@ export const creditLedger = pgTable(
   (t) => [index("credit_ledger_school_idx").on(t.schoolId, t.createdAt), uniqueIndex("credit_ledger_reference_uq").on(t.schoolId, t.reference)],
 );
 
+// ---------- Files ----------
+
+/** Private documents: homework, materials, admission papers. Served only through an access-checked route. */
+export const files = pgTable(
+  "files",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    mime: text("mime").notNull(),
+    size: integer("size").notNull(),
+    storageKey: text("storage_key").notNull(),
+    ownerType: text("owner_type", { enum: ["assignment", "submission", "material", "lesson_note", "applicant"] }).notNull(),
+    ownerId: uuid("owner_id"),
+    uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("files_owner_idx").on(t.ownerType, t.ownerId)],
+);
+
+// ---------- Timetable ----------
+
+export const bellSchedules = pgTable(
+  "bell_schedules",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    /** ISO weekdays the schedule runs, 1 = Monday. */
+    days: jsonb("days").$type<number[]>().notNull().default([1, 2, 3, 4, 5]),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("bell_schedules_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const PERIOD_KINDS = ["lesson", "break", "assembly", "other"] as const;
+
+export const bellPeriods = pgTable(
+  "bell_periods",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    scheduleId: uuid("schedule_id")
+      .notNull()
+      .references(() => bellSchedules.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    startsAt: text("starts_at").notNull(),
+    endsAt: text("ends_at").notNull(),
+    kind: text("kind", { enum: PERIOD_KINDS }).notNull().default("lesson"),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("bell_periods_schedule_idx").on(t.scheduleId)],
+);
+
+/** Which bell schedule a class level follows (nursery often runs a shorter day). Default schedule when absent. */
+export const levelSchedules = pgTable(
+  "level_schedules",
+  {
+    schoolId: schoolId(),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => classLevels.id, { onDelete: "cascade" }),
+    scheduleId: uuid("schedule_id")
+      .notNull()
+      .references(() => bellSchedules.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.levelId] })],
+);
+
+export const timetableSlots = pgTable(
+  "timetable_slots",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    day: integer("day").notNull(),
+    periodId: uuid("period_id")
+      .notNull()
+      .references(() => bellPeriods.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id").references(() => subjects.id, { onDelete: "set null" }),
+    teacherId: uuid("teacher_id").references(() => memberships.id, { onDelete: "set null" }),
+    room: text("room"),
+    note: text("note"),
+  },
+  (t) => [uniqueIndex("timetable_slot_uq").on(t.termId, t.classId, t.day, t.periodId), index("timetable_teacher_idx").on(t.termId, t.teacherId)],
+);
+
+// ---------- Assignments and lesson notes ----------
+
+export const assignments = pgTable(
+  "assignments",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    instructions: text("instructions").notNull().default(""),
+    dueAt: timestamp("due_at", { withTimezone: true }).notNull(),
+    maxScore: integer("max_score"),
+    /** CA column the grades are copied into, scaled to its maximum. */
+    componentId: uuid("component_id").references(() => assessmentComponents.id, { onDelete: "set null" }),
+    allowLate: boolean("allow_late").notNull().default(true),
+    status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("published"),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("assignments_class_idx").on(t.classId, t.dueAt)],
+);
+
+export const assignmentSubmissions = pgTable(
+  "assignment_submissions",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    assignmentId: uuid("assignment_id")
+      .notNull()
+      .references(() => assignments.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    text: text("text").notNull().default(""),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    late: boolean("late").notNull().default(false),
+    score: numeric("score", { precision: 6, scale: 2, mode: "number" }),
+    feedback: text("feedback"),
+    gradedBy: uuid("graded_by").references(() => memberships.id, { onDelete: "set null" }),
+    gradedAt: timestamp("graded_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("assignment_submissions_uq").on(t.assignmentId, t.studentId)],
+);
+
+/** Scheme of work: the planned topic for each week of a term, per level and subject. */
+export const schemeItems = pgTable(
+  "scheme_items",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => classLevels.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    week: integer("week").notNull(),
+    topic: text("topic").notNull(),
+  },
+  (t) => [uniqueIndex("scheme_items_uq").on(t.termId, t.levelId, t.subjectId, t.week)],
+);
+
+export const LESSON_NOTE_STATUSES = ["draft", "submitted", "approved", "returned"] as const;
+
+export const lessonNotes = pgTable(
+  "lesson_notes",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => classLevels.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    week: integer("week").notNull(),
+    topic: text("topic").notNull(),
+    objectives: text("objectives").notNull().default(""),
+    content: text("content").notNull().default(""),
+    status: text("status", { enum: LESSON_NOTE_STATUSES }).notNull().default("draft"),
+    reviewComment: text("review_comment"),
+    authorId: uuid("author_id").references(() => memberships.id, { onDelete: "set null" }),
+    reviewedBy: uuid("reviewed_by").references(() => memberships.id, { onDelete: "set null" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("lesson_notes_status_idx").on(t.schoolId, t.status), index("lesson_notes_author_idx").on(t.authorId)],
+);
+
+// ---------- CBT ----------
+
+export const questions = pgTable(
+  "questions",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id").references(() => classLevels.id, { onDelete: "set null" }),
+    topic: text("topic"),
+    kind: text("kind", { enum: ["objective", "theory"] }).notNull(),
+    body: text("body").notNull(),
+    options: jsonb("options").$type<string[]>().notNull().default([]),
+    /** Index of the correct option, for objective questions. */
+    answer: integer("answer"),
+    marks: numeric("marks", { precision: 5, scale: 2, mode: "number" }).notNull().default(1),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("questions_subject_idx").on(t.subjectId, t.levelId)],
+);
+
+export const exams = pgTable(
+  "exams",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    instructions: text("instructions").notNull().default(""),
+    durationMins: integer("duration_mins").notNull(),
+    opensAt: timestamp("opens_at", { withTimezone: true }).notNull(),
+    closesAt: timestamp("closes_at", { withTimezone: true }).notNull(),
+    shuffle: boolean("shuffle").notNull().default(true),
+    showScore: boolean("show_score").notNull().default(true),
+    componentId: uuid("component_id").references(() => assessmentComponents.id, { onDelete: "set null" }),
+    status: text("status", { enum: ["draft", "published", "closed"] }).notNull().default("draft"),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("exams_term_idx").on(t.termId, t.opensAt)],
+);
+
+export const examClasses = pgTable(
+  "exam_classes",
+  {
+    schoolId: schoolId(),
+    examId: uuid("exam_id")
+      .notNull()
+      .references(() => exams.id, { onDelete: "cascade" }),
+    classId: uuid("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.examId, t.classId] })],
+);
+
+export const examQuestions = pgTable(
+  "exam_questions",
+  {
+    schoolId: schoolId(),
+    examId: uuid("exam_id")
+      .notNull()
+      .references(() => exams.id, { onDelete: "cascade" }),
+    questionId: uuid("question_id")
+      .notNull()
+      .references(() => questions.id, { onDelete: "cascade" }),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.examId, t.questionId] })],
+);
+
+export const examAttempts = pgTable(
+  "exam_attempts",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    examId: uuid("exam_id")
+      .notNull()
+      .references(() => exams.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    deadline: timestamp("deadline", { withTimezone: true }).notNull(),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    /** The question order this student sees (shuffled per student). */
+    order: jsonb("order").$type<{ q: string; o: number[] }[]>().notNull(),
+    answers: jsonb("answers").$type<Record<string, number | string>>().notNull().default({}),
+    objectiveScore: numeric("objective_score", { precision: 6, scale: 2, mode: "number" }),
+    theoryScore: numeric("theory_score", { precision: 6, scale: 2, mode: "number" }),
+    status: text("status", { enum: ["in_progress", "submitted", "graded"] }).notNull().default("in_progress"),
+    focusLosses: integer("focus_losses").notNull().default(0),
+  },
+  (t) => [uniqueIndex("exam_attempts_uq").on(t.examId, t.studentId)],
+);
+
+// ---------- Learning materials ----------
+
+export const materials = pgTable(
+  "materials",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    levelId: uuid("level_id").references(() => classLevels.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id").references(() => subjects.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    kind: text("kind", { enum: ["file", "link", "note"] }).notNull(),
+    url: text("url"),
+    body: text("body"),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("materials_level_idx").on(t.levelId, t.subjectId)],
+);
+
+// ---------- Admissions ----------
+
+export const APPLICANT_STATUSES = ["applied", "exam", "interview", "offered", "accepted", "enrolled", "rejected", "withdrawn"] as const;
+export type ApplicantStatus = (typeof APPLICANT_STATUSES)[number];
+
+export const applicants = pgTable(
+  "applicants",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    ref: text("ref").notNull(),
+    /** Secret key for the applicant's own status page. */
+    token: text("token").notNull(),
+    sessionId: uuid("session_id").references(() => academicSessions.id, { onDelete: "set null" }),
+    levelId: uuid("level_id").references(() => classLevels.id, { onDelete: "set null" }),
+    firstName: text("first_name").notNull(),
+    middleName: text("middle_name"),
+    lastName: text("last_name").notNull(),
+    gender: text("gender", { enum: ["male", "female"] }).notNull(),
+    dateOfBirth: date("date_of_birth"),
+    previousSchool: text("previous_school"),
+    guardianName: text("guardian_name").notNull(),
+    guardianPhone: text("guardian_phone").notNull(),
+    guardianEmail: text("guardian_email"),
+    guardianRelationship: text("guardian_relationship").notNull().default("Parent"),
+    address: text("address"),
+    notes: text("notes"),
+    status: text("status", { enum: APPLICANT_STATUSES }).notNull().default("applied"),
+    examScore: numeric("exam_score", { precision: 6, scale: 2, mode: "number" }),
+    interviewNotes: text("interview_notes"),
+    feeKobo: bigint("fee_kobo", { mode: "number" }).notNull().default(0),
+    feePaid: boolean("fee_paid").notNull().default(false),
+    payReference: text("pay_reference"),
+    offeredAt: timestamp("offered_at", { withTimezone: true }),
+    studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("applicants_school_ref_uq").on(t.schoolId, t.ref), uniqueIndex("applicants_token_uq").on(t.token), index("applicants_status_idx").on(t.schoolId, t.status)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1108,4 +1487,20 @@ export const TENANT_TABLES = [
   "notifications",
   "outbound_messages",
   "credit_ledger",
+  "files",
+  "bell_schedules",
+  "bell_periods",
+  "level_schedules",
+  "timetable_slots",
+  "assignments",
+  "assignment_submissions",
+  "scheme_items",
+  "lesson_notes",
+  "questions",
+  "exams",
+  "exam_classes",
+  "exam_questions",
+  "exam_attempts",
+  "materials",
+  "applicants",
 ] as const;

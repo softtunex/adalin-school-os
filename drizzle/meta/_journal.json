@@ -43,6 +43,13 @@
       "when": 1792148263686,
       "tag": "0005_communication",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792162597948,
+      "tag": "0006_teaching_and_admissions",
+      "breakpoints": true
     }
   ]
 }
