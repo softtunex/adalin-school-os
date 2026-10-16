@@ -11,9 +11,11 @@ import {
   applicationSchema,
   confirmApplicationFee,
   enrollApplicant,
+  getApplicant,
   getApplicationStatus,
   getApplyPage,
   listApplicants,
+  nextStatuses,
   offerLetterData,
   respondToOffer,
   saveAdmissionSettings,
@@ -108,6 +110,19 @@ describe("admissions", () => {
     const list = await listApplicants(database.db, owner);
     expect(list.pipeline.offered).toBe(1);
     expect(list.stats.fees).toBe(500_000);
+  });
+
+  it("follows the school's choice of assessment", async () => {
+    const { token: t2 } = await submitApplication(database.db, slug, form(jss1, "z"), { ip: "4.4.4.20", baseUrl: BASE });
+    const other = (await getApplicationStatus(database.db, slug, t2))!.a.id;
+    await saveAdmissionSettings(database.db, owner, admissionSettingsSchema.parse({ open: true, levelIds: [jss1], fee: "", assessment: "none" }));
+    owner = (await loadAccess(database.db, owner.user.id, slug))!;
+    expect((await getApplyPage(database.db, slug))!.assessment).toBe("none");
+    expect((await getApplicant(database.db, owner, other)).next).not.toContain("exam");
+    await expect(updateApplicant(database.db, owner, { id: other, status: "interview", notify: false }, { baseUrl: BASE })).rejects.toThrow(/No assessment/);
+    expect(nextStatuses("applied", "interview")).toEqual(["interview", "offered", "rejected", "withdrawn"]);
+    await saveAdmissionSettings(database.db, owner, admissionSettingsSchema.parse({ open: true, levelIds: [jss1], fee: "5,000", assessment: "both" }));
+    owner = (await loadAccess(database.db, owner.user.id, slug))!;
   });
 
   it("lets the parent accept, then enrols the child with their guardian", async () => {

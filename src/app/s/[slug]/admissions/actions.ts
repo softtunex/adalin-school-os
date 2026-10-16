@@ -15,12 +15,14 @@ export async function saveAdmissionSettingsAction(slug: string, _prev: FormState
     fee: String(formData.get("fee") ?? ""),
     intro: String(formData.get("intro") ?? ""),
     examInfo: String(formData.get("examInfo") ?? ""),
+    assessment: String(formData.get("assessment") ?? "both"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the settings." };
   try {
     const access = await requireAccess(slug);
     await saveAdmissionSettings(getDb(), access, parsed.data, (await requestMeta()).ip);
-    revalidatePath(`/s/${slug}/admissions`);
+    revalidatePath(`/s/${slug}/admissions`, "layout");
+    revalidatePath(`/s/${slug}/settings`);
     return { success: parsed.data.open ? "Saved. Your admission form is open." : "Saved. Admissions are closed." };
   } catch (error) {
     return { error: userMessage(error) };

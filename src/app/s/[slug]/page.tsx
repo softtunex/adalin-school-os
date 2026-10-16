@@ -11,6 +11,7 @@ import { getDb } from "@/lib/db/client";
 import { getLimit } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
 import { getOverview } from "@/lib/services/overview";
+import { OverviewSwitch } from "./overview-switch";
 import { formatWhen } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Overview" };
@@ -60,6 +61,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
     <>
       <Topbar title="Overview" context={access.school.name} />
       <PageBody>
+        <OverviewSwitch slug={slug} access={access} current="today" />
         <div className="relative flex items-center overflow-hidden rounded-card border border-brand/15 bg-brand-wash px-6 py-6 sm:px-8">
           <div aria-hidden className="absolute -right-10 -top-16 size-56 rounded-full bg-brand/10" />
           <div className="relative min-w-0 flex-1">

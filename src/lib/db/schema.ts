@@ -61,7 +61,11 @@ export type AdmissionSettings = {
   intro?: string;
   /** Entrance exam date, venue and what to bring, shown to applicants. */
   examInfo?: string;
+  /** How applicants are assessed: entrance exam, interview, both, or neither (straight to an offer). */
+  assessment?: Assessment;
 };
+
+export type Assessment = "exam" | "interview" | "both" | "none";
 
 // ---------- Platform (no row-level security: accessed by the app's owner role) ----------
 

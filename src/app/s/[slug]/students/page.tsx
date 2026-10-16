@@ -112,7 +112,7 @@ export default async function StudentsPage({
             }
             icon="users"
             tone="violet"
-            caption={stats.active ? `${Math.round((stats.female / stats.active) * 100)}% girls` : "No students yet"}
+            caption={stats.active ? `${Math.round((stats.female / stats.active) * 100)}% girls · ${100 - Math.round((stats.female / stats.active) * 100)}% boys` : "No students yet"}
           />
           <StatCard label="Missing a parent" value={stats.noGuardian} icon="alert" tone={stats.noGuardian ? "warning" : "success"} caption={stats.noGuardian ? "No parent contact on file" : "Every student has a contact"} />
           <StatCard label="Not in a class" value={stats.noClass} icon="layers" tone={stats.noClass ? "danger" : "success"} caption={stats.left ? `${stats.left} withdrawn or graduated` : "All placed"} />

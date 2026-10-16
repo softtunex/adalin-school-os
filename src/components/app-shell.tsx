@@ -52,7 +52,8 @@ function SidebarBody({ school, user, nav, pathname }: Omit<Props, "children"> & 
             <div key={section.label ?? i} className="flex flex-col gap-1">
               {section.label ? <p className="px-3 pb-1 fs-12.5 font-medium text-muted">{section.label}</p> : null}
               {section.items.map((item) => {
-                const active = item.href === home ? pathname === home : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                // Analytics lives under Overview, so Overview stays highlighted there.
+                const active = item.href === home ? pathname === home || pathname.startsWith(`${home}/analytics`) : pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
                     key={item.href}

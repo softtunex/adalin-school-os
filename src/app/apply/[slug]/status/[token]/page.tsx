@@ -16,16 +16,19 @@ export const metadata: Metadata = { title: "Your application", robots: { index: 
 
 type SP = { new?: string; paid?: string; cancelled?: string; failed?: string; accepted?: string; declined?: string };
 
-const STEPS = [
-  { key: "applied", label: "Application received" },
-  { key: "assess", label: "Entrance exam or interview" },
-  { key: "offered", label: "Offer of admission" },
-  { key: "accepted", label: "Offer accepted" },
-  { key: "enrolled", label: "Enrolled" },
-] as const;
+const ASSESS_STEP: Record<string, string> = { exam: "Entrance exam", interview: "Interview", both: "Entrance exam and interview" };
 
-function stepIndex(status: string) {
-  return { applied: 0, exam: 1, interview: 1, offered: 2, accepted: 3, enrolled: 4 }[status] ?? 0;
+/** The steps this school uses: the assessment step only appears when the school assesses applicants. */
+function stepsFor(assessment: string) {
+  const steps: { key: string; label: string }[] = [{ key: "applied", label: "Application received" }];
+  if (assessment !== "none") steps.push({ key: "assess", label: ASSESS_STEP[assessment] ?? ASSESS_STEP.both });
+  steps.push({ key: "offered", label: "Offer of admission" }, { key: "accepted", label: "Offer accepted" }, { key: "enrolled", label: "Enrolled" });
+  return steps;
+}
+
+function stepIndex(steps: { key: string }[], status: string) {
+  const key = status === "exam" || status === "interview" ? "assess" : status;
+  return Math.max(0, steps.findIndex((s) => s.key === key));
 }
 
 export default async function StatusPage({ params, searchParams }: { params: Promise<{ slug: string; token: string }>; searchParams: Promise<SP> }) {
@@ -35,7 +38,8 @@ export default async function StatusPage({ params, searchParams }: { params: Pro
   if (!s) notFound();
   const { a, page } = s;
   const ended = a.status === "rejected" || a.status === "withdrawn";
-  const at = stepIndex(a.status);
+  const STEPS = stepsFor(page.assessment);
+  const at = stepIndex(STEPS, a.status);
   const child = `${a.firstName} ${a.lastName}`;
   const base = `/apply/${slug}/status/${token}`;
 

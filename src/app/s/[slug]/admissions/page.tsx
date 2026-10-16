@@ -5,18 +5,17 @@ import { UpgradeCard } from "@/components/upgrade-card";
 import { FilterSelect, Pagination, SearchInput, ToolbarLink } from "@/components/ui/data";
 import { Badge, EmptyState, StatCard, StatGrid, Table, TableCard, Td, Th } from "@/components/ui/display";
 import { Tabs } from "@/components/ui/tabs";
-import { appUrl, requirePageAccess } from "@/lib/auth/session";
+import { requirePageAccess } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
 import { getDb } from "@/lib/db/client";
 import { APPLICANT_STATUSES } from "@/lib/db/schema";
 import { formatWhen } from "@/lib/dates";
-import { formatNaira, formatNairaCompact } from "@/lib/money";
+import { formatNairaCompact } from "@/lib/money";
 import { hasFeature } from "@/lib/plans/entitlements";
-import { can, type Access } from "@/lib/services/access";
+import type { Access } from "@/lib/services/access";
 import { APPLICANT_PAGE_SIZE, getApplyPage, listApplicants, STATUS_LABEL } from "@/lib/services/admissions";
-import { paystackMode } from "@/lib/services/paystack";
 import { STATUS_TONE } from "./shared";
-import { AdmissionSettingsForm } from "./settings-form";
+import { AdmissionSettings } from "./admission-settings";
 
 export const metadata: Metadata = { title: "Admissions" };
 
@@ -49,7 +48,7 @@ export default async function AdmissionsPage({ params, searchParams }: { params:
             { key: "settings", label: "Form and settings", href: `${base}?tab=settings` },
           ]}
         />
-        {tab === "settings" ? <Settings slug={slug} access={access} /> : <Applicants slug={slug} access={access} sp={sp} />}
+        {tab === "settings" ? <AdmissionSettings slug={slug} access={access} /> : <Applicants slug={slug} access={access} sp={sp} />}
       </PageBody>
     </>
   );
@@ -161,26 +160,5 @@ async function Applicants({ slug, access, sp }: { slug: string; access: Access; 
         )}
       </TableCard>
     </>
-  );
-}
-
-async function Settings({ slug, access }: { slug: string; access: Access }) {
-  const db = getDb();
-  const [form, list] = await Promise.all([getApplyPage(db, slug), listApplicants(db, access, { limit: 1 })]);
-  const s = access.school.admissionSettings;
-  const mode = paystackMode();
-  const payNote =
-    mode === "off" || (!access.school.paystackSubaccount && mode !== "test")
-      ? "Parents will pay at the school. To take the fee online, add your bank account in Settings → Payments."
-      : `Paid online by card, transfer or USSD, straight into your school account${s.feeKobo ? ` (currently ${formatNaira(s.feeKobo)})` : ""}.`;
-  return (
-    <AdmissionSettingsForm
-      slug={slug}
-      link={`${await appUrl()}/apply/${slug}`}
-      levels={list.levels}
-      settings={{ open: !!form?.open, levelIds: s.levelIds ?? [], fee: s.feeKobo ? String(s.feeKobo / 100) : "", intro: s.intro ?? "", examInfo: s.examInfo ?? "" }}
-      editable={can(access, "admissions:manage")}
-      payNote={payNote}
-    />
   );
 }

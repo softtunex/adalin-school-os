@@ -19,7 +19,6 @@ export const NAV: NavSection[] = [
   {
     items: [
       { href: "", label: "Overview", icon: "grid" },
-      { href: "/analytics", label: "Analytics", icon: "activity", anyOf: ["school:analytics"], feature: "analytics", staffOnly: true },
       { href: "/attendance", label: "Attendance", icon: "calendarCheck", anyOf: ["attendance:take", "attendance:edit_past", "attendance:report"], feature: "attendance", staffOnly: true },
       { href: "/results", label: "Results", icon: "results", anyOf: ["results:enter", "results:view"], feature: "score_entry", staffOnly: true },
       { href: "/students", label: "Students", icon: "graduation", anyOf: ["students:view"], staffOnly: true },
@@ -53,7 +52,7 @@ export const NAV: NavSection[] = [
       { href: "/staff", label: "Staff", icon: "users", anyOf: ["staff:view"], staffOnly: true },
       { href: "/roles", label: "Roles & permissions", icon: "shield", anyOf: ["roles:view"], staffOnly: true },
       { href: "/audit", label: "Audit log", icon: "history", anyOf: ["audit:view"], feature: "audit_log", staffOnly: true },
-      { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing", "fees:manage"], staffOnly: true },
+      { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing", "fees:manage", "admissions:manage"], staffOnly: true },
     ],
   },
 ];

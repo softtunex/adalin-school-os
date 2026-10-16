@@ -132,7 +132,9 @@ export async function getAnalyticsOverview(db: DB, access: Access, termId?: stri
         .select({
           active: sql<number>`count(*) filter (where ${students.status} = 'active')`.mapWith(Number),
           female: sql<number>`count(*) filter (where ${students.status} = 'active' and ${students.gender} = 'female')`.mapWith(Number),
-          joined: term.startsOn ? sql<number>`count(*) filter (where ${students.admittedOn} >= ${term.startsOn})`.mapWith(Number) : sql<number>`0`.mapWith(Number),
+          joined: term.startsOn
+            ? sql<number>`count(*) filter (where ${students.admittedOn} >= ${term.startsOn} and (${term.endsOn}::date is null or ${students.admittedOn} <= ${term.endsOn}::date))`.mapWith(Number)
+            : sql<number>`0`.mapWith(Number),
           left: sql<number>`count(*) filter (where ${students.status} in ('withdrawn', 'graduated'))`.mapWith(Number),
         })
         .from(students),

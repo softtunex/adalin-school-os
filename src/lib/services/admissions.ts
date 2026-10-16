@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { and, asc, count, desc, eq, gt, ilike, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { DB, Tx } from "../db/client";
-import { academicSessions, applicants, classes, classLevels, loginAttempts, plans, schools, type AdmissionSettings, type ApplicantStatus } from "../db/schema";
+import { academicSessions, applicants, classes, classLevels, loginAttempts, plans, schools, type AdmissionSettings, type ApplicantStatus, type Assessment } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { formatNaira, nairaField } from "../money";
@@ -55,9 +55,17 @@ const NEXT: Record<ApplicantStatus, ApplicantStatus[]> = {
   rejected: ["applied"],
   withdrawn: ["applied"],
 };
-export function nextStatuses(s: ApplicantStatus) {
-  return NEXT[s];
+/** The next steps open to staff, given how the school assesses applicants. */
+export function nextStatuses(s: ApplicantStatus, assessment: Assessment = "both") {
+  return NEXT[s].filter((n) => (n !== "exam" || assessment === "exam" || assessment === "both") && (n !== "interview" || assessment === "interview" || assessment === "both"));
 }
+
+export const ASSESSMENT_LABEL: Record<Assessment, string> = {
+  exam: "Entrance exam",
+  interview: "Interview",
+  both: "Entrance exam and interview",
+  none: "No assessment",
+};
 
 function fullName(a: { firstName: string; middleName: string | null; lastName: string }) {
   return [a.firstName, a.middleName, a.lastName].filter(Boolean).join(" ");
@@ -75,12 +83,13 @@ export const admissionSettingsSchema = z.object({
   fee: z.preprocess((v) => (v === "" || v == null ? "0" : v), nairaField("application fee", { allowZero: true })),
   intro: z.string().trim().max(1500).default(""),
   examInfo: z.string().trim().max(1500).default(""),
+  assessment: z.enum(["exam", "interview", "both", "none"]).default("both"),
 });
 
 export async function saveAdmissionSettings(db: DB, access: Access, input: z.infer<typeof admissionSettingsSchema>, ip?: string | null) {
   requireAdmissions(access);
   requirePermission(access, "admissions:manage");
-  const settings: AdmissionSettings = { open: input.open, levelIds: input.levelIds, feeKobo: input.fee, intro: input.intro, examInfo: input.examInfo };
+  const settings: AdmissionSettings = { open: input.open, levelIds: input.levelIds, feeKobo: input.fee, intro: input.intro, examInfo: input.assessment === "exam" || input.assessment === "both" ? input.examInfo : "", assessment: input.assessment };
   await db.update(schools).set({ admissionSettings: settings }).where(eq(schools.id, access.school.id));
   await withTenant(db, access.school.id, (tx) =>
     recordAudit(tx, access.school.id, actor(access, ip), { action: "admissions.settings", summary: `${input.open ? "Opened" : "Closed"} admissions${input.fee ? `, form fee ${formatNaira(input.fee)}` : ""}` }),
@@ -110,6 +119,7 @@ export async function getApplyPage(db: DB, slug: string) {
       feeKobo: settings.feeKobo ?? 0,
       intro: settings.intro ?? "",
       examInfo: settings.examInfo ?? "",
+      assessment: (settings.assessment ?? "both") as Assessment,
       payOnline: (settings.feeKobo ?? 0) > 0 && paystackMode() !== "off" && (!!school.paystackSubaccount || paystackMode() === "test"),
     };
   });
@@ -355,7 +365,8 @@ export async function getApplicant(db: DB, access: Access, id: string) {
     const classOptions = row.a.levelId
       ? await tx.select({ id: classes.id, name: classes.name }).from(classes).where(and(eq(classes.levelId, row.a.levelId), eq(classes.isActive, true))).orderBy(asc(classes.name))
       : [];
-    return { ...row, classOptions, next: NEXT[row.a.status] };
+    const [school] = await tx.select({ settings: schools.admissionSettings }).from(schools).where(eq(schools.id, access.school.id));
+    return { ...row, classOptions, next: nextStatuses(row.a.status, school?.settings.assessment ?? "both") };
   });
 }
 
@@ -382,6 +393,9 @@ export async function updateApplicant(db: DB, access: Access, input: z.infer<typ
     const moving = input.status && input.status !== a.status;
     if (moving) {
       if (!NEXT[a.status].includes(input.status!)) throw new AppError(`An applicant who is "${STATUS_LABEL[a.status]}" can't move to "${STATUS_LABEL[input.status!]}".`, "conflict");
+      if (!nextStatuses(a.status, access.school.admissionSettings.assessment ?? "both").includes(input.status!)) {
+        throw new AppError(`Your admissions are set to "${ASSESSMENT_LABEL[access.school.admissionSettings.assessment ?? "both"]}". Change it in Admissions settings first.`, "conflict");
+      }
       if (input.status === "offered" && !(input.feePaid ?? a.feePaid)) throw new AppError("The application fee hasn't been paid. Mark it paid first if they paid at the school.", "conflict");
       set.status = input.status;
       if (input.status === "offered") set.offeredAt = new Date();

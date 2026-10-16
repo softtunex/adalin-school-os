@@ -15,6 +15,7 @@ import { hasFeature } from "@/lib/plans/entitlements";
 import type { Access } from "@/lib/services/access";
 import { getAcademicAnalytics, getAnalyticsOverview, getAtRisk, getTeacherAnalytics, PASS_MARK, RISK, type RiskReason } from "@/lib/services/analytics";
 import { TermFilter } from "../fees/shared";
+import { OverviewSwitch } from "../overview-switch";
 
 export const metadata: Metadata = { title: "Analytics" };
 
@@ -62,12 +63,13 @@ export default async function AnalyticsPage({ params, searchParams }: { params: 
   const q = (t: string) => `${base}?tab=${t}${sp.term ? `&term=${sp.term}` : ""}`;
   return (
     <>
-      <Topbar title="Analytics" context={access.school.name} />
+      <Topbar title="Overview" context={`Analytics · ${access.school.name}`} />
       <PageBody>
+        <OverviewSwitch slug={slug} access={access} current="analytics" />
         <Tabs
           current={tab}
           tabs={[
-            { key: "overview", label: "Overview", href: sp.term ? `${base}?term=${sp.term}` : base },
+            { key: "overview", label: "Term summary", href: sp.term ? `${base}?term=${sp.term}` : base },
             { key: "academics", label: "Academics", href: q("academics") },
             { key: "students", label: "Students at risk", href: q("students") },
             { key: "teachers", label: "Teachers", href: q("teachers") },
@@ -198,8 +200,11 @@ async function Overview({ slug, access, sp }: { slug: string; access: Access; sp
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 fs-14">
             <dt className="text-muted">Active students</dt>
             <dd className="tabular text-right font-semibold text-ink">{o.students.active}</dd>
-            <dt className="text-muted">Girls</dt>
-            <dd className="tabular text-right font-semibold text-ink">{o.students.active ? `${Math.round((o.students.female / o.students.active) * 100)}%` : "—"}</dd>
+            <dt className="text-muted">Girls · boys</dt>
+            <dd className="tabular text-right font-semibold text-ink">
+              {o.students.active ? `${o.students.female} · ${o.students.active - o.students.female}` : "—"}
+              {o.students.active ? <span className="block fs-12.5 font-normal text-muted">{Math.round((o.students.female / o.students.active) * 100)}% · {100 - Math.round((o.students.female / o.students.active) * 100)}%</span> : null}
+            </dd>
             <dt className="text-muted">New this term</dt>
             <dd className="tabular text-right font-semibold text-ink">{o.students.joined}</dd>
             <dt className="text-muted">Applications open</dt>

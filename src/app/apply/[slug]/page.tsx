@@ -37,7 +37,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ slug: st
           </Card>
         ) : (
           <>
-            {page.feeKobo || page.examInfo ? (
+            {page.feeKobo || (page.examInfo && (page.assessment === "exam" || page.assessment === "both")) ? (
               <Card className="flex flex-col gap-2 border-brand/30 bg-brand-wash/40 p-4 fs-14.5 text-body">
                 {page.feeKobo ? (
                   <p>
@@ -45,7 +45,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ slug: st
                     {page.payOnline ? ", payable online after you apply." : ", payable at the school."}
                   </p>
                 ) : null}
-                {page.examInfo ? <p className="whitespace-pre-wrap">Entrance exam: {page.examInfo}</p> : null}
+                {page.examInfo && (page.assessment === "exam" || page.assessment === "both") ? <p className="whitespace-pre-wrap">Entrance exam: {page.examInfo}</p> : null}
               </Card>
             ) : null}
             <ApplyForm slug={slug} levels={page.levels} feeLabel={page.feeKobo && page.payOnline ? formatNaira(page.feeKobo) : null} />
