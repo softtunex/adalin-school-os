@@ -61,7 +61,7 @@ export function FileUploader({
     if (!list) return;
     const picked = Array.from(list).slice(0, Math.max(0, room));
     const fresh = picked.map((f) => ({ key: `${f.name}-${f.size}-${Math.random()}`, name: f.name, size: f.size, progress: 0, file: f }));
-    setItems((all) => [...all, ...fresh.map(({ file: _f, ...i }) => i)]);
+    setItems((all) => [...all, ...fresh.map((f) => ({ key: f.key, name: f.name, size: f.size, progress: 0 }))]);
     onBusyChange?.(true);
     await Promise.all(
       fresh.map(async ({ key, file }) => {
