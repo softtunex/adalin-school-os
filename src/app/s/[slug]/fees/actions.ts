@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { userMessage } from "@/lib/errors";
 import { formValues, type FormState } from "@/lib/form-state";
 import { sendEmail } from "@/lib/mail";
+import { deliverSoon } from "@/lib/deliver";
 import { formatNaira } from "@/lib/money";
 import {
   copyFeeStructure,
@@ -30,7 +31,7 @@ import {
   removeInvoiceLine,
   voidInvoice,
 } from "@/lib/services/invoices";
-import { receiptEmail, receiptRecipients, recordPayment, recordPaymentSchema, reversePayment } from "@/lib/services/payments";
+import { recordPayment, recordPaymentSchema, reversePayment } from "@/lib/services/payments";
 import { feeSettingsSchema, saveFeeSettings, saveSettlementAccount, settlementSchema } from "@/lib/services/paystack";
 import { fieldErrors } from "@/lib/validation";
 
@@ -168,30 +169,10 @@ export async function recordPaymentAction(slug: string, _prev: FormState, formDa
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
   const sendReceipt = formData.get("sendReceipt") === "on";
   const out = await run(slug, async ({ access, ip }) => {
-    const db = getDb();
-    const { payment, invoice } = await recordPayment(db, access, parsed.data, ip);
-    let emailed = 0;
-    if (sendReceipt) {
-      const { contacts, studentName } = await receiptRecipients(db, access, invoice.studentId);
-      for (const c of contacts.slice(0, 2)) {
-        const ok = await sendEmail({
-          to: c.email,
-          ...receiptEmail({
-            schoolName: access.school.name,
-            guardianName: c.name,
-            studentName,
-            receiptNo: payment.receiptNo,
-            invoiceNumber: invoice.number,
-            amountKobo: payment.amountKobo,
-            balanceKobo: invoice.chargesKobo - invoice.discountKobo - invoice.paidKobo,
-            paidOn: payment.paidOn,
-          }),
-        });
-        if (ok) emailed++;
-      }
-    }
+    const { payment, told } = await recordPayment(getDb(), access, parsed.data, ip, { emailReceipt: sendReceipt });
+    deliverSoon();
     return {
-      success: `${formatNaira(payment.amountKobo)} recorded. Receipt ${payment.receiptNo}${emailed ? `, emailed to ${emailed === 1 ? "the parent" : "both parents"}` : ""}.`,
+      success: `${formatNaira(payment.amountKobo)} recorded. Receipt ${payment.receiptNo}${told ? ", and the parents have been told" : ""}.`,
       data: { paymentId: payment.id, receiptNo: payment.receiptNo },
     };
   });

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requestMeta, requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { deliverSoon } from "@/lib/deliver";
 import { RESULT_STATUSES } from "@/lib/db/schema";
 import { userMessage } from "@/lib/errors";
 import { saveScores, saveTermReport, setClassResultStatus, setSheetStatus } from "@/lib/services/results";
@@ -54,6 +55,7 @@ export async function setResultStatusAction(slug: string, classId: string, statu
     async () => {
       const access = await requireAccess(slug);
       await setClassResultStatus(getDb(), access, { classId, status: status as (typeof RESULT_STATUSES)[number], nextTermBegins }, (await requestMeta()).ip);
+      deliverSoon();
     },
     { open: "Results reopened.", reviewed: "Marked as reviewed.", approved: "Results approved and locked.", published: "Results published." }[status as (typeof RESULT_STATUSES)[number]],
     `/s/${slug}/results/class/${classId}`,

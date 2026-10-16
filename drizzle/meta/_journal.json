@@ -36,6 +36,13 @@
       "when": 1792143080642,
       "tag": "0004_finance",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792148263686,
+      "tag": "0005_communication",
+      "breakpoints": true
     }
   ]
 }

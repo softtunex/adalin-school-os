@@ -26,6 +26,7 @@ import { can, type Access } from "./access";
 import { getCurrentTerm, studentScope } from "./academics";
 import { loadAssessmentConfig } from "./assessment";
 import { classAttendanceTotals } from "./attendance";
+import { resultAlerts } from "./alerts";
 import { recordAudit } from "./audit";
 import { subjectRoster } from "./electives";
 
@@ -435,6 +436,7 @@ export async function setClassResultStatus(
       .insert(classResults)
       .values({ schoolId: access.school.id, termId: current.term.id, classId: input.classId, ...patch })
       .onConflictDoUpdate({ target: [classResults.termId, classResults.classId], set: patch });
+    if (input.status === "published") await resultAlerts(tx, access.school.id, input.classId, { id: current.term.id, name: current.term.name, session: current.session.name });
     const verb = { open: "Reopened", reviewed: "Reviewed", approved: "Approved", published: "Published" }[input.status];
     await recordAudit(tx, access.school.id, actor(access, ip), {
       action: input.status === "open" ? "results.unlocked" : `results.${input.status}`,

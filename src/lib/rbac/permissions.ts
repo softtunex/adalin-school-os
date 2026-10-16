@@ -70,7 +70,13 @@ export const PERMISSION_GROUPS = {
   },
   comms: {
     label: "Communication",
-    actions: { announce: "Post announcements", message: "Send messages", sms: "Send SMS and WhatsApp", credits: "Buy message credits" },
+    actions: {
+      announce: "Post announcements and events",
+      message: "Send messages",
+      moderate: "See every parent conversation",
+      sms: "Send SMS and WhatsApp",
+      credits: "Buy message credits",
+    },
   },
   teaching: {
     label: "Teaching",

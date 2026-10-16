@@ -34,6 +34,23 @@ export type FeeSettings = {
   invoiceNote?: string;
 };
 
+/** How a parent wants to hear from schools. Missing keys mean the default (on). */
+export type NotifyPrefs = { sms?: boolean; whatsapp?: boolean; email?: boolean };
+
+export type CommsSettings = {
+  /** Up to 11 characters, registered with Termii. Falls back to the platform sender. */
+  senderId?: string;
+  absenceAlerts?: boolean;
+  resultAlerts?: boolean;
+  paymentAlerts?: boolean;
+  /** Also send alerts by SMS (uses credits), not just in-app and email. */
+  smsAlerts?: boolean;
+  /** Parents can start conversations with staff. */
+  parentMessaging?: boolean;
+  /** Parents can only send messages between these times (Lagos), e.g. "07:00" to "18:00". */
+  messagingHours?: { start: string; end: string };
+};
+
 // ---------- Platform (no row-level security: accessed by the app's owner role) ----------
 
 export const users = pgTable(
@@ -47,6 +64,7 @@ export const users = pgTable(
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     isPlatformAdmin: boolean("is_platform_admin").notNull().default(false),
     lastSchoolId: uuid("last_school_id"),
+    notifyPrefs: jsonb("notify_prefs").$type<NotifyPrefs>().notNull().default({}),
     createdAt: createdAt(),
   },
   (t) => [
@@ -91,6 +109,21 @@ export const loginAttempts = pgTable(
   (t) => [index("login_attempts_key_idx").on(t.key, t.createdAt)],
 );
 
+/** One-time codes for passwordless parent login, by phone or email. Only a hash is stored. */
+export const loginCodes = pgTable(
+  "login_codes",
+  {
+    id: id(),
+    destination: text("destination").notNull(),
+    codeHash: text("code_hash").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("login_codes_destination_idx").on(t.destination, t.createdAt)],
+);
+
 export const plans = pgTable("plans", {
   key: text("key").primaryKey(),
   name: text("name").notNull(),
@@ -129,6 +162,7 @@ export const schools = pgTable(
     nextReceiptSeq: integer("next_receipt_seq").notNull().default(1),
     feeSettings: jsonb("fee_settings").$type<FeeSettings>().notNull().default({}),
     paystackSubaccount: text("paystack_subaccount"),
+    commsSettings: jsonb("comms_settings").$type<CommsSettings>().notNull().default({}),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("schools_slug_uq").on(t.slug)],
@@ -858,6 +892,176 @@ export const expenses = pgTable(
   (t) => [index("expenses_school_spent_idx").on(t.schoolId, t.spentOn), index("expenses_school_status_idx").on(t.schoolId, t.status)],
 );
 
+// ---------- Communication ----------
+
+export const AUDIENCES = ["everyone", "staff", "parents", "classes"] as const;
+export type Audience = (typeof AUDIENCES)[number];
+
+export const announcements = pgTable(
+  "announcements",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    audience: text("audience", { enum: AUDIENCES }).notNull(),
+    /** For audience "classes": parents of students in these classes, plus their class teachers. */
+    classIds: jsonb("class_ids").$type<string[]>().notNull().default([]),
+    pinned: boolean("pinned").notNull().default(false),
+    /** Channels it was also pushed through, e.g. ["email", "sms"]. */
+    channels: jsonb("channels").$type<string[]>().notNull().default([]),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    authorName: text("author_name").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("announcements_school_time_idx").on(t.schoolId, t.publishedAt)],
+);
+
+export const announcementReads = pgTable(
+  "announcement_reads",
+  {
+    schoolId: schoolId(),
+    announcementId: uuid("announcement_id")
+      .notNull()
+      .references(() => announcements.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.announcementId, t.userId] })],
+);
+
+export const EVENT_KINDS = ["event", "holiday", "exam", "meeting", "sports", "other"] as const;
+
+export const calendarEvents = pgTable(
+  "calendar_events",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    title: text("title").notNull(),
+    kind: text("kind", { enum: EVENT_KINDS }).notNull().default("event"),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on").notNull(),
+    details: text("details"),
+    /** Hidden from parents when false (staff-only events such as INSET days). */
+    forParents: boolean("for_parents").notNull().default(true),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("calendar_events_school_start_idx").on(t.schoolId, t.startsOn)],
+);
+
+/** A thread between a parent and staff, or between staff. Usually about one student. */
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    subject: text("subject").notNull(),
+    studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("conversations_school_last_idx").on(t.schoolId, t.lastMessageAt)],
+);
+
+export const conversationParticipants = pgTable(
+  "conversation_participants",
+  {
+    schoolId: schoolId(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role", { enum: ["staff", "parent"] }).notNull(),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }),
+  },
+  (t) => [primaryKey({ columns: [t.conversationId, t.userId] }), index("conversation_participants_user_idx").on(t.userId)],
+);
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    senderId: uuid("sender_id").references(() => users.id, { onDelete: "set null" }),
+    senderName: text("sender_name").notNull(),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("messages_conversation_time_idx").on(t.conversationId, t.createdAt)],
+);
+
+/** The in-app notification centre. */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    body: text("body"),
+    link: text("link"),
+    /** Dedupe key, e.g. "absence:<student>:<date>", so re-saving never alerts twice. */
+    ref: text("ref"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("notifications_user_time_idx").on(t.userId, t.createdAt), uniqueIndex("notifications_user_ref_uq").on(t.userId, t.ref)],
+);
+
+export const OUTBOUND_CHANNELS = ["sms", "whatsapp", "email"] as const;
+export type OutboundChannel = (typeof OUTBOUND_CHANNELS)[number];
+
+/** Every SMS, WhatsApp and email the school sends, queued then delivered. */
+export const outboundMessages = pgTable(
+  "outbound_messages",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    channel: text("channel", { enum: OUTBOUND_CHANNELS }).notNull(),
+    to: text("to").notNull(),
+    subject: text("subject"),
+    body: text("body").notNull(),
+    kind: text("kind").notNull(),
+    /** SMS pages charged against the school's credits. */
+    credits: integer("credits").notNull().default(0),
+    status: text("status", { enum: ["queued", "sent", "failed"] }).notNull().default("queued"),
+    error: text("error"),
+    providerRef: text("provider_ref"),
+    ref: text("ref"),
+    createdAt: createdAt(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (t) => [index("outbound_school_time_idx").on(t.schoolId, t.createdAt), index("outbound_status_idx").on(t.status, t.createdAt)],
+);
+
+/** Messaging credits: purchases add, SMS sends subtract. The balance is the sum. */
+export const creditLedger = pgTable(
+  "credit_ledger",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    delta: integer("delta").notNull(),
+    reason: text("reason").notNull(),
+    reference: text("reference"),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("credit_ledger_school_idx").on(t.schoolId, t.createdAt), uniqueIndex("credit_ledger_reference_uq").on(t.schoolId, t.reference)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -895,4 +1099,13 @@ export const TENANT_TABLES = [
   "payments",
   "payment_intents",
   "expenses",
+  "announcements",
+  "announcement_reads",
+  "calendar_events",
+  "conversations",
+  "conversation_participants",
+  "messages",
+  "notifications",
+  "outbound_messages",
+  "credit_ledger",
 ] as const;

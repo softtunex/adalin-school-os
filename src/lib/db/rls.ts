@@ -44,7 +44,10 @@ export async function applyRowLevelSecurity(db: PgDatabase<PgQueryResultHKT, Rec
     `ALTER TABLE users ENABLE ROW LEVEL SECURITY`,
     `DROP POLICY IF EXISTS tenant_members ON users`,
     `CREATE POLICY tenant_members ON users FOR SELECT TO ${APP_ROLE}
-       USING (EXISTS (SELECT 1 FROM memberships m WHERE m.user_id = users.id AND m.school_id = ${CURRENT_SCHOOL}))`,
+       USING (
+         EXISTS (SELECT 1 FROM memberships m WHERE m.user_id = users.id AND m.school_id = ${CURRENT_SCHOOL})
+         OR EXISTS (SELECT 1 FROM guardians g WHERE g.user_id = users.id AND g.school_id = ${CURRENT_SCHOOL})
+       )`,
   );
 
   for (const statement of statements) {

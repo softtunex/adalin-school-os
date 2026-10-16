@@ -5,6 +5,7 @@ import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { can, requirePermission, type Access } from "./access";
 import { getCurrentTerm, studentScope } from "./academics";
+import { absenceAlerts } from "./alerts";
 import { recordAudit } from "./audit";
 
 /** Today's date in Lagos as YYYY-MM-DD. */
@@ -144,6 +145,7 @@ export async function saveAttendance(
       entityType: "class",
       entityId: cls.id,
     });
+    await absenceAlerts(tx, access.school.id, input.records.filter((r) => r.status === "absent").map((r) => r.studentId), input.date);
     return { present: input.records.length - absent, absent };
   });
 }

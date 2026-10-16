@@ -8,6 +8,7 @@ import { formatNaira, nairaField } from "../money";
 import { requireFeature } from "../plans/entitlements";
 import { requirePermission, type Access } from "./access";
 import { lagosToday } from "./attendance";
+import { paymentAlert } from "./alerts";
 import { recordAudit } from "./audit";
 import { pickTerm } from "./fees";
 import { balanceOf, refreshInvoice, reserveNumbers } from "./invoices";
@@ -31,7 +32,7 @@ export const recordPaymentSchema = z.object({
 });
 
 /** Records cash, transfer, POS or cheque money against an invoice and issues a receipt number. */
-export async function recordPayment(db: DB, access: Access, input: z.infer<typeof recordPaymentSchema>, ip?: string | null) {
+export async function recordPayment(db: DB, access: Access, input: z.infer<typeof recordPaymentSchema>, ip?: string | null, opts: { emailReceipt?: boolean } = {}) {
   requirePermission(access, "fees:record_payment");
   requireFeature(access.plan, "fees_basic");
   if (input.paidOn > lagosToday()) throw new AppError("The payment date can't be in the future.");
@@ -66,7 +67,13 @@ export async function recordPayment(db: DB, access: Access, input: z.infer<typeo
       entityType: "payment",
       entityId: payment.id,
     });
-    return { payment, invoice: updated };
+    const alert = await paymentAlert(
+      tx,
+      access.school.id,
+      { studentId: inv.studentId, receiptNo, amountKobo: input.amount, balanceKobo: balanceOf(updated), invoiceNumber: inv.number, paidOn: input.paidOn },
+      { email: opts.emailReceipt ?? true },
+    );
+    return { payment, invoice: updated, told: alert?.told ?? 0 };
   });
 }
 
@@ -121,7 +128,8 @@ export async function settleIntent(tx: Tx, schoolId: string, reference: string, 
     })
     .returning();
   await tx.update(paymentIntents).set({ status: "succeeded", paymentId: payment.id, completedAt: new Date() }).where(eq(paymentIntents.id, intent.id));
-  await refreshInvoice(tx, inv.id);
+  const updated = await refreshInvoice(tx, inv.id);
+  await paymentAlert(tx, schoolId, { studentId: inv.studentId, receiptNo, amountKobo: paid.amountKobo, balanceKobo: balanceOf(updated), invoiceNumber: inv.number, paidOn });
   await recordAudit(tx, schoolId, null, {
     action: "fees.payment_online",
     summary: `Received ${formatNaira(paid.amountKobo)} online for ${inv.number}, receipt ${receiptNo}`,
@@ -215,39 +223,4 @@ export async function getReceipt(db: DB, access: Access, paymentId: string) {
     const lines = await tx.select().from(invoiceLines).where(eq(invoiceLines.invoiceId, row.invoice.id)).orderBy(asc(invoiceLines.sort));
     return { ...row, term, lines, balance: balanceOf(row.invoice) };
   });
-}
-
-/** Guardian emails for a student, primary first, for sending receipts. */
-export async function guardianEmails(tx: Tx, studentId: string) {
-  const rows = await tx
-    .select({ name: guardians.name, email: guardians.email })
-    .from(studentGuardians)
-    .innerJoin(guardians, eq(guardians.id, studentGuardians.guardianId))
-    .where(eq(studentGuardians.studentId, studentId))
-    .orderBy(desc(studentGuardians.isPrimary));
-  return rows.filter((r): r is { name: string; email: string } => !!r.email);
-}
-
-export async function receiptRecipients(db: DB, access: Access, studentId: string) {
-  requirePermission(access, "fees:record_payment");
-  return withTenant(db, access.school.id, async (tx) => {
-    const [s] = await tx.select({ firstName: students.firstName, lastName: students.lastName }).from(students).where(eq(students.id, studentId));
-    if (!s) throw new AppError("That student wasn't found.", "not_found");
-    return { contacts: await guardianEmails(tx, studentId), studentName: `${s.firstName} ${s.lastName}` };
-  });
-}
-
-export function receiptEmail(input: { schoolName: string; guardianName: string; studentName: string; receiptNo: string; invoiceNumber: string; amountKobo: number; balanceKobo: number; paidOn: string }) {
-  return {
-    subject: `Receipt ${input.receiptNo}: ${formatNaira(input.amountKobo)} for ${input.studentName}`,
-    text: [
-      `Dear ${input.guardianName},`,
-      "",
-      `We have received ${formatNaira(input.amountKobo)} towards ${input.studentName}'s fees (invoice ${input.invoiceNumber}) on ${input.paidOn}.`,
-      `Receipt number: ${input.receiptNo}`,
-      input.balanceKobo > 0 ? `Balance remaining: ${formatNaira(input.balanceKobo)}` : "The invoice is now fully paid. Thank you.",
-      "",
-      input.schoolName,
-    ].join("\n"),
-  };
 }

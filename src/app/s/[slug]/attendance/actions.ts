@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requestMeta, requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { deliverSoon } from "@/lib/deliver";
 import { ATTENDANCE_STATUSES } from "@/lib/db/schema";
 import { userMessage } from "@/lib/errors";
 import { saveAttendance } from "@/lib/services/attendance";
@@ -18,6 +19,7 @@ export async function saveRegisterAction(slug: string, classId: string, date: st
   try {
     const access = await requireAccess(slug);
     const result = await saveAttendance(getDb(), access, { classId, date, records: parsed.data }, (await requestMeta()).ip);
+    deliverSoon();
     revalidatePath(`/s/${slug}/attendance`);
     revalidatePath(`/s/${slug}`);
     return result;

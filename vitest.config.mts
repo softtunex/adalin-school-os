@@ -12,6 +12,8 @@ export default defineConfig({
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "test/**/*.test.ts"],
     testTimeout: 30_000,
-    hookTimeout: 60_000,
+    hookTimeout: 180_000,
+    // Each file boots its own in-memory Postgres; too many at once starves them all.
+    maxWorkers: 4,
   },
 });

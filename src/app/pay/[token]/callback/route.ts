@@ -1,4 +1,5 @@
 import { getDb } from "@/lib/db/client";
+import { deliverSoon } from "@/lib/deliver";
 import { confirmOnlinePayment } from "@/lib/services/paystack";
 
 /** Paystack sends the parent back here after checkout. The webhook settles it too; whichever arrives first wins. */
@@ -9,6 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   let ok = false;
   try {
     ok = (await confirmOnlinePayment(getDb(), reference)).ok;
+    deliverSoon();
   } catch (error) {
     console.error("[pay] callback could not confirm", reference, error);
   }

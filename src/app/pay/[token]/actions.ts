@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { appUrl } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { deliverSoon } from "@/lib/deliver";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { confirmOnlinePayment, startOnlinePayment, startPaymentSchema } from "@/lib/services/paystack";
@@ -24,6 +25,7 @@ export async function finishTestPaymentAction(token: string, reference: string, 
   let ok = false;
   try {
     ok = (await confirmOnlinePayment(getDb(), reference, { testApproved: approve })).ok;
+    deliverSoon();
   } catch {
     ok = false;
   }
