@@ -307,7 +307,7 @@ export async function copyTimetable(db: DB, access: Access, input: { fromTermId:
     const source = await tx.select().from(timetableSlots).where(eq(timetableSlots.termId, input.fromTermId));
     if (!source.length) throw new AppError("That term has no timetable to copy.", "conflict");
     await tx.delete(timetableSlots).where(eq(timetableSlots.termId, input.toTermId));
-    await tx.insert(timetableSlots).values(source.map(({ id: _id, ...s }) => ({ ...s, termId: input.toTermId })));
+    await tx.insert(timetableSlots).values(source.map((s) => ({ schoolId: s.schoolId, termId: input.toTermId, classId: s.classId, day: s.day, periodId: s.periodId, subjectId: s.subjectId, teacherId: s.teacherId, room: s.room, note: s.note })));
     await recordAudit(tx, access.school.id, actor(access, ip), { action: "timetable.copied", summary: `Copied ${source.length} timetable slots into another term` });
     return source.length;
   });
@@ -317,10 +317,26 @@ export async function copyTimetable(db: DB, access: Access, input: { fromTermId:
 
 export async function getTeacherTimetable(db: DB, access: Access, membershipId?: string | null, termId?: string | null) {
   requireFeature(access.plan, "timetable");
-  const target = membershipId && can(access, "teaching:timetable") ? membershipId : access.membershipId;
+  const manager = can(access, "teaching:timetable");
   return withTenant(db, access.school.id, async (tx) => {
     await ensureDefaultSchedule(tx, access.school.id);
     const { term, options } = await pickTerm(tx, termId);
+    let target = membershipId && manager ? membershipId : access.membershipId;
+    // Managers who don't teach open on the first teacher who does.
+    if (manager && !membershipId) {
+      const [mine] = await tx.select({ id: timetableSlots.id }).from(timetableSlots).where(and(eq(timetableSlots.termId, term.id), eq(timetableSlots.teacherId, access.membershipId))).limit(1);
+      if (!mine) {
+        const [someone] = await tx
+          .select({ teacherId: timetableSlots.teacherId, name: users.name })
+          .from(timetableSlots)
+          .innerJoin(memberships, eq(memberships.id, timetableSlots.teacherId))
+          .innerJoin(users, eq(users.id, memberships.userId))
+          .where(eq(timetableSlots.termId, term.id))
+          .orderBy(asc(users.name))
+          .limit(1);
+        if (someone?.teacherId) target = someone.teacherId;
+      }
+    }
     const { schedules } = await loadSchedules(tx);
     const rows = await tx
       .select({ slot: timetableSlots, period: bellPeriods, className: classes.name, subjectName: subjects.name })

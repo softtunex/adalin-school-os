@@ -10,6 +10,7 @@ const PATHS = {
   book: "M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3zM4 17a3 3 0 0 1 3-3h11",
   results: "M5 3h14v18H5zM9 8h6M9 12h6M9 16h3",
   wallet: "M3 7h18v12H3zM3 7l3-4h12l3 4M16 13h2",
+  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
   receipt: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3",
   trending: "M3 17l6-6 4 4 8-8M15 7h6v6",
   banknote: "M2 7h20v10H2zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 12h.01M18 12h.01",

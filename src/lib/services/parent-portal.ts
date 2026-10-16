@@ -24,6 +24,7 @@ import { AppError } from "../errors";
 import { getCurrentTerm } from "./academics";
 import { lagosToday, studentAttendanceSummary } from "./attendance";
 import { balanceOf, owesForTerm } from "./invoices";
+import { classWeek } from "./timetable";
 
 /*
  * What a parent sees. A parent has no staff membership: their access is exactly the
@@ -193,6 +194,7 @@ export async function getChildDetail(db: DB, user: { id: string }, studentId: st
         .limit(20),
       tx.select().from(calendarEvents).where(and(eq(calendarEvents.forParents, true), gte(calendarEvents.endsOn, today))).orderBy(asc(calendarEvents.startsOn)).limit(10),
     ]);
+    const timetable = current && link.classId && link.school.features.includes("timetable") ? await classWeek(tx, link.classId, current.term.id) : null;
     const withheld = new Set<string>();
     if (link.school.feeSettings.withholdResults && link.school.features.includes("debtors")) {
       for (const r of results) if ((await owesForTerm(tx, studentId, r.termId)) > 0) withheld.add(r.termId);
@@ -209,6 +211,7 @@ export async function getChildDetail(db: DB, user: { id: string }, studentId: st
       news,
       events,
       canPayOnline: link.school.features.includes("fees_online"),
+      timetable: timetable && timetable.slots.length ? timetable : null,
     };
   });
 }

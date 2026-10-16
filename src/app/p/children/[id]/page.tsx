@@ -10,6 +10,7 @@ import { getDb } from "@/lib/db/client";
 import { AppError } from "@/lib/errors";
 import { formatNaira } from "@/lib/money";
 import { getChildDetail } from "@/lib/services/parent-portal";
+import { WeekList } from "@/components/week-list";
 import { AnnouncementItem } from "../../parts";
 
 export const metadata: Metadata = { title: "Your child" };
@@ -37,7 +38,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
     }
     throw error;
   }
-  const tab = ["attendance", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
+  const tab = ["attendance", "timetable", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
   const name = [d.link.firstName, d.link.middleName, d.link.lastName].filter(Boolean).join(" ");
   const base = `/p/children/${id}`;
   const att = d.attendance && d.attendance.days ? Math.round((d.attendance.present / d.attendance.days) * 100) : null;
@@ -68,6 +69,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
         current={tab}
         tabs={[
           { key: "attendance", label: "Attendance", href: base },
+          ...(d.timetable ? [{ key: "timetable", label: "Timetable", href: `${base}?tab=timetable` }] : []),
           { key: "results", label: "Results", href: `${base}?tab=results`, count: d.results.length },
           { key: "fees", label: "Fees", href: `${base}?tab=fees` },
           { key: "news", label: "News", href: `${base}?tab=news` },
@@ -110,6 +112,10 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
             )}
           </Card>
         </div>
+      ) : null}
+
+      {tab === "timetable" && d.timetable ? (
+        <WeekList days={d.timetable.schedule.days} periods={d.timetable.schedule.periods} slots={d.timetable.slots} />
       ) : null}
 
       {tab === "results" ? (
