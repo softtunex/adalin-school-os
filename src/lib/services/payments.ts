@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, gte, ilike, lte, or, sql, sum, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { DB, Tx } from "../db/client";
-import { classes, guardians, invoiceLines, invoices, memberships, paymentIntents, payments, studentGuardians, students, users, type PaymentMethod } from "../db/schema";
+import { classes, invoiceLines, invoices, memberships, paymentIntents, payments, students, users, type PaymentMethod } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { formatNaira, nairaField } from "../money";

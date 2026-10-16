@@ -67,6 +67,11 @@ function SidebarBody({ school, user, nav, pathname }: Omit<Props, "children"> & 
                     <Icon name={item.icon} size={20} className={active ? "text-brand-ink" : undefined} />
                     <span className="flex-1">{item.label}</span>
                     {item.locked ? <Icon name="lock" size={15} className="text-muted" aria-label="Upgrade to unlock" /> : null}
+                    {!item.locked && item.badge ? (
+                      <span className="tabular grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 fs-11.5 font-bold text-white" aria-label={`${item.badge} new`}>
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
@@ -98,6 +103,7 @@ export function AppShell(props: Props) {
   // The drawer closes on navigation because it only counts as open on the page it was opened from.
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const open = openedOn === pathname;
+  const unread = props.nav.reduce((n, sec) => n + sec.items.reduce((m, i) => m + (i.locked ? 0 : (i.badge ?? 0)), 0), 0);
 
   return (
     <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--paper)_287px,var(--line)_287px,var(--line)_288px,var(--canvas)_288px)]">
@@ -109,11 +115,12 @@ export function AppShell(props: Props) {
         <button
           type="button"
           onClick={() => setOpenedOn(pathname)}
-          aria-label="Open menu"
+          aria-label={unread ? `Open menu, ${unread} new` : "Open menu"}
           aria-expanded={open}
-          className="grid size-10 place-items-center rounded-chunk border border-line-strong text-ink"
+          className="relative grid size-10 place-items-center rounded-chunk border border-line-strong text-ink"
         >
           <Icon name="menu" />
+          {unread ? <span aria-hidden className="absolute -right-1 -top-1 size-3 rounded-full border-2 border-canvas bg-brand" /> : null}
         </button>
         <SchoolMark name={props.school.name} logoUrl={props.school.logoUrl} size={32} />
         <span className="truncate fs-15 font-semibold text-ink">{props.school.name}</span>

@@ -26,6 +26,14 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    label: "Communication",
+    items: [
+      { href: "/announcements", label: "Announcements", icon: "bell", feature: "announcements", staffOnly: true },
+      { href: "/calendar", label: "Calendar", icon: "calendar", feature: "announcements", staffOnly: true },
+      { href: "/messages", label: "Messages", icon: "chat", anyOf: ["comms:message"], feature: "messaging", staffOnly: true },
+    ],
+  },
+  {
     label: "Finance",
     items: [
       { href: "/fees", label: "Fees", icon: "wallet", anyOf: ["fees:view"], feature: "fees_basic", staffOnly: true },
@@ -43,16 +51,16 @@ export const NAV: NavSection[] = [
   },
 ];
 
-export type ResolvedNavItem = { href: string; label: string; icon: IconName; locked: boolean };
+export type ResolvedNavItem = { href: string; label: string; icon: IconName; locked: boolean; badge?: number };
 
 export function resolveNav(
   slug: string,
-  ctx: { permissions: Set<Permission>; features: Set<string>; isStaff: boolean },
+  ctx: { permissions: Set<Permission>; features: Set<string>; isStaff: boolean; badges?: Record<string, number> },
 ): { label?: string; items: ResolvedNavItem[] }[] {
   return NAV.map((section) => ({
     label: section.label,
     items: section.items
       .filter((i) => (!i.staffOnly || ctx.isStaff) && (!i.anyOf || i.anyOf.some((p) => ctx.permissions.has(p))))
-      .map((i) => ({ href: `/s/${slug}${i.href}`, label: i.label, icon: i.icon, locked: !!i.feature && !ctx.features.has(i.feature) })),
+      .map((i) => ({ href: `/s/${slug}${i.href}`, label: i.label, icon: i.icon, locked: !!i.feature && !ctx.features.has(i.feature), badge: ctx.badges?.[i.href] })),
   })).filter((s) => s.items.length > 0);
 }

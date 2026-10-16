@@ -1,29 +1,33 @@
 import type { Metadata } from "next";
 import { PageBody, Topbar } from "@/components/topbar";
-import { Badge, Card } from "@/components/ui/display";
+import { UpgradeCard } from "@/components/upgrade-card";
+import { Alert, Badge, Card } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { Tabs } from "@/components/ui/tabs";
 import { requirePageAccess } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
 import { SUPPORT_WHATSAPP } from "@/lib/config";
 import { getDb } from "@/lib/db/client";
-import { formatNaira } from "@/lib/nigeria";
+import { formatNaira } from "@/lib/money";
 import { FEATURES, LIMITS, type FeatureKey, type LimitKey } from "@/lib/plans/catalog";
 import { hasFeature } from "@/lib/plans/entitlements";
 import { can, type Access } from "@/lib/services/access";
+import { CREDIT_PACKS, getMessaging } from "@/lib/services/credits";
 import { listBanks, paystackMode } from "@/lib/services/paystack";
 import { listPlans } from "@/lib/services/school-profile";
 import { LogoCard } from "./logo-card";
+import { BuyCredits, CommsSettingsForm } from "./messaging-forms";
 import { FeeRulesForm, SettlementForm } from "./payments-forms";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string }> }) {
+export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
-  const { tab = canProfile ? "profile" : "payments" } = await searchParams;
+  const sp = await searchParams;
+  const tab = sp.tab ?? (canProfile ? "profile" : can(access, "fees:manage") ? "payments" : "messaging");
   const s = access.school;
   const base = `/s/${slug}/settings`;
 
@@ -37,11 +41,14 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canProfile ? [{ key: "profile", label: "School profile", href: base }] : []),
             ...(can(access, "academics:view") ? [{ key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` }] : []),
             ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
+            ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
+        {tab === "messaging" && can(access, "comms:announce") ? (
+          <MessagingTab slug={slug} access={access} bought={sp.bought} failed={!!sp.failed} />
+        ) : tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
           <PaymentsTab slug={slug} access={access} />
         ) : !canProfile ? null : tab === "plan" ? (
           <PlanTab currentKey={access.plan.key} canBill={can(access, "school:billing")} />
@@ -107,6 +114,82 @@ async function PaymentsTab({ slug, access }: { slug: string; access: Access }) {
           editable={can(access, "fees:manage")}
           settings={{ withholdResults: !!fs.withholdResults, autoReminders: !!fs.autoReminders, reminderEveryDays: fs.reminderEveryDays ?? 7, invoiceNote: fs.invoiceNote ?? "" }}
         />
+      </div>
+    </div>
+  );
+}
+
+async function MessagingTab({ slug, access, bought, failed }: { slug: string; access: Access; bought?: string; failed: boolean }) {
+  const sms = hasFeature(access.plan, "sms");
+  const c = access.school.commsSettings;
+  const data = sms ? await getMessaging(getDb(), access) : null;
+  const sent = data?.byChannel.filter((r) => r.status === "sent").reduce((n, r) => n + r.n, 0) ?? 0;
+  const failedN = data?.byChannel.filter((r) => r.status === "failed").reduce((n, r) => n + r.n, 0) ?? 0;
+  const used = data?.byChannel.reduce((n, r) => n + (r.credits ?? 0), 0) ?? 0;
+  return (
+    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div>
+        <h2 className="fs-16 font-semibold">Messaging</h2>
+        <p className="mt-1 fs-14 text-muted">SMS credits, automatic alerts to parents, and when parents can message staff.</p>
+      </div>
+      <div className="flex flex-col gap-5">
+        {bought ? <Alert tone="success">{bought === "1" ? "Payment received. Your credits have been added." : `${Number(bought).toLocaleString()} credits added.`}</Alert> : null}
+        {failed ? <Alert tone="danger">That payment didn&apos;t go through. You haven&apos;t been charged.</Alert> : null}
+        {data ? (
+          <Card className="flex flex-col gap-5 p-5 sm:p-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="fs-14 text-muted">SMS credits</p>
+                <p className="tabular fs-32 font-semibold leading-none text-ink">{data.unlimited ? "Unlimited" : data.balance.toLocaleString()}</p>
+              </div>
+              <p className="fs-13.5 text-muted">
+                Last 30 days: {sent.toLocaleString()} sent · {used.toLocaleString()} credits{failedN ? ` · ${failedN} failed` : ""}
+              </p>
+            </div>
+            {!data.unlimited ? (
+              <BuyCredits
+                slug={slug}
+                canBuy={can(access, "comms:credits")}
+                packs={CREDIT_PACKS.map((p) => ({ key: p.key, credits: p.credits, price: formatNaira(p.priceKobo), each: `₦${(p.priceKobo / 100 / p.credits).toFixed(2).replace(/\.00$/, "")}` }))}
+              />
+            ) : null}
+            <p className="fs-13 text-muted">One credit is one SMS of up to 160 characters. Messages that fail to send are refunded automatically.</p>
+          </Card>
+        ) : (
+          <UpgradeCard slug={slug} feature="sms" text="Text parents about absences, results and fees, even those not on the app." />
+        )}
+        <CommsSettingsForm
+          slug={slug}
+          sms={sms}
+          editable={can(access, "comms:announce")}
+          settings={{
+            senderId: c.senderId ?? "",
+            absenceAlerts: c.absenceAlerts !== false,
+            resultAlerts: c.resultAlerts !== false,
+            paymentAlerts: c.paymentAlerts !== false,
+            smsAlerts: !!c.smsAlerts,
+            parentMessaging: c.parentMessaging !== false,
+            hours: c.messagingHours ?? null,
+          }}
+        />
+        {data && data.recent.length ? (
+          <Card className="overflow-hidden">
+            <h2 className="px-5 pt-4 fs-16 font-semibold">Recently sent</h2>
+            <ul className="mt-2 flex flex-col divide-y divide-line">
+              {data.recent.map((m) => (
+                <li key={m.id} className="flex flex-wrap items-center gap-3 px-5 py-2.5 fs-14">
+                  <Badge tone={m.channel === "email" ? "blue" : "violet"}>{m.channel === "email" ? "Email" : m.channel === "whatsapp" ? "WhatsApp" : "SMS"}</Badge>
+                  <span className="tabular min-w-0 flex-1 truncate text-body">
+                    {m.to} · {m.subject ?? m.body}
+                  </span>
+                  <span className={m.status === "failed" ? "text-danger" : "text-muted"} title={m.error ?? undefined}>
+                    {m.status === "failed" ? (m.error ?? "Failed") : m.status === "queued" ? "Sending" : "Sent"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ) : null}
       </div>
     </div>
   );

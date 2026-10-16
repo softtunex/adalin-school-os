@@ -78,6 +78,11 @@ export default async function StudentPage({
         actions={
           <>
             {can(access, "students:deactivate") ? <StudentStatusMenu slug={slug} student={{ id, name, status: s.status }} /> : null}
+            {can(access, "comms:message") && hasFeature(access.plan, "messaging") && guardians.some((g) => g.guardian.userId) ? (
+              <ButtonLink href={`/s/${slug}/messages/new?student=${id}`} variant="secondary">
+                <Icon name="chat" size={17} /> <span className="hidden sm:inline">Message parents</span>
+              </ButtonLink>
+            ) : null}
             {canUpdate ? (
               <ButtonLink href={`${base}/edit`} variant="secondary">
                 <Icon name="edit" size={17} /> Edit details

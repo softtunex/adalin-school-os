@@ -6,6 +6,7 @@ import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { requireFeature } from "../plans/entitlements";
 import { can, requirePermission, type Access } from "./access";
+import { studentScope } from "./academics";
 import { notifyUsers, schoolComms } from "./notify";
 import { enqueue } from "./outbox";
 import { requireChild } from "./parent-portal";
@@ -135,6 +136,8 @@ export async function startStaffConversation(db: DB, access: Access, input: z.in
   return withTenant(db, access.school.id, async (tx) => {
     const [student] = await tx.select().from(students).where(eq(students.id, input.studentId));
     if (!student) throw new AppError("That student wasn't found.", "not_found");
+    const scope = await studentScope(tx, access);
+    if (scope !== "all" && (!student.classId || !scope.includes(student.classId))) throw new AppError("You can only message parents of children you teach.", "forbidden");
     const parents = await tx
       .select({ userId: guardians.userId })
       .from(studentGuardians)
@@ -296,5 +299,28 @@ export async function staffUnreadCount(db: DB, access: Access) {
         ),
       );
     return row.n;
+  });
+}
+
+/** Children this staff member can write to the parents of, and whether any parent is on the app. */
+export async function messageableStudents(db: DB, access: Access) {
+  requireFeature(access.plan, "messaging");
+  requirePermission(access, "comms:message");
+  return withTenant(db, access.school.id, async (tx) => {
+    const scope = await studentScope(tx, access);
+    if (scope !== "all" && !scope.length) return [];
+    const rows = await tx
+      .select({
+        id: students.id,
+        firstName: students.firstName,
+        lastName: students.lastName,
+        className: classes.name,
+        onApp: sql<boolean>`exists (select 1 from ${studentGuardians} sg join ${guardians} g on g.id = sg.guardian_id where sg.student_id = ${students.id} and g.user_id is not null)`,
+      })
+      .from(students)
+      .leftJoin(classes, eq(classes.id, students.classId))
+      .where(and(eq(students.status, "active"), scope === "all" ? sql`true` : inArray(students.classId, scope)))
+      .orderBy(asc(classes.name), asc(students.firstName));
+    return rows;
   });
 }
