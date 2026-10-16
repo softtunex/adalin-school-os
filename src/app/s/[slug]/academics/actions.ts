@@ -20,6 +20,7 @@ import {
   updateClass,
   updateTermDates,
 } from "@/lib/services/academics";
+import { setClassElectives } from "@/lib/services/electives";
 import { fieldErrors } from "@/lib/validation";
 
 async function run(slug: string, fn: (ctx: { access: Awaited<ReturnType<typeof requireAccess>>; ip: string | null }) => Promise<unknown>, success: string): Promise<FormState> {
@@ -121,4 +122,12 @@ export async function updateTermDatesAction(slug: string, termId: string, _prev:
 
 export async function assignTeacherAction(slug: string, classId: string, subjectId: string, membershipId: string): Promise<FormState> {
   return run(slug, ({ access, ip }) => assignSubjectTeacher(getDb(), access, { classId, subjectId, membershipId: membershipId || null }, ip), "Teacher assigned.");
+}
+
+const picksSchema = z.array(z.object({ studentId: z.string().uuid(), subjectId: z.string().uuid() })).max(20000);
+
+export async function saveElectivesAction(slug: string, classId: string, picks: unknown): Promise<FormState> {
+  const parsed = picksSchema.safeParse(picks);
+  if (!parsed.success || !z.string().uuid().safeParse(classId).success) return { error: "The choices couldn't be read. Reload and try again." };
+  return run(slug, ({ access, ip }) => setClassElectives(getDb(), access, classId, parsed.data, ip), "Elective subjects saved.");
 }

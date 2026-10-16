@@ -405,6 +405,21 @@ export const enrollments = pgTable(
   (t) => [index("enrollments_student_idx").on(t.studentId), index("enrollments_session_class_idx").on(t.sessionId, t.classId)],
 );
 
+/** Elective subjects a student takes. Compulsory subjects for their level apply automatically. */
+export const studentSubjects = pgTable(
+  "student_subjects",
+  {
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    subjectId: uuid("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.studentId, t.subjectId] }), index("student_subjects_subject_idx").on(t.subjectId)],
+);
+
 // ---------- Attendance ----------
 
 export const ATTENDANCE_STATUSES = ["present", "late", "absent", "excused"] as const;
@@ -618,4 +633,5 @@ export const TENANT_TABLES = [
   "class_results",
   "term_reports",
   "result_pins",
+  "student_subjects",
 ] as const;

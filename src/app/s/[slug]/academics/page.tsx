@@ -12,6 +12,9 @@ import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { can } from "@/lib/services/access";
 import { getAcademicOverview } from "@/lib/services/academics";
+import { getElectiveMatrix } from "@/lib/services/electives";
+import type { Access } from "@/lib/services/access";
+import { ElectivesGrid } from "./electives-grid";
 import {
   AddArmButton,
   AddLevelButton,
@@ -76,7 +79,7 @@ export default async function AcademicsPage({
     );
   }
 
-  const tab = ["classes", "subjects", "terms", "teachers"].includes(sp.tab ?? "") ? sp.tab! : "classes";
+  const tab = ["classes", "subjects", "terms", "teachers", "electives"].includes(sp.tab ?? "") ? sp.tab! : "classes";
   const classes = data.levels.flatMap((l) => l.classes);
   const staffName = new Map(data.staff.map((s) => [s.membershipId, s.name]));
   const totalStudents = classes.reduce((n, c) => n + c.studentCount, 0);
@@ -121,6 +124,7 @@ export default async function AcademicsPage({
             { key: "subjects", label: "Subjects", href: `${base}?tab=subjects`, count: data.subjects.length },
             { key: "terms", label: "Sessions & terms", href: `${base}?tab=terms` },
             { key: "teachers", label: "Subject teachers", href: `${base}?tab=teachers` },
+            { key: "electives", label: "Electives", href: `${base}?tab=electives` },
           ]}
         />
 
@@ -292,6 +296,7 @@ export default async function AcademicsPage({
         ) : null}
 
         {tab === "teachers" ? <TeachersTab slug={slug} sp={sp} data={data} canManage={canManage} /> : null}
+        {tab === "electives" ? <ElectivesTab slug={slug} classId={sp.class} data={data} access={access} /> : null}
       </PageBody>
     </>
   );
@@ -349,6 +354,41 @@ function TeachersTab({
             ))}
           </tbody>
         </Table>
+      )}
+    </TableCard>
+  );
+}
+
+async function ElectivesTab({ slug, classId, data, access }: { slug: string; classId?: string; data: Awaited<ReturnType<typeof getAcademicOverview>>; access: Access }) {
+  const classesWithElectives = data.levels
+    .filter((l) => data.levelSubjects.some((ls) => ls.levelId === l.id && ls.isElective))
+    .flatMap((l) => l.classes);
+  if (classesWithElectives.length === 0) {
+    return (
+      <TableCard>
+        <EmptyState icon="bookOpen" title="No elective subjects yet">
+          Mark a subject as elective for a class level in the Subjects tab, then choose which students take it here.
+        </EmptyState>
+      </TableCard>
+    );
+  }
+  const selected = classesWithElectives.find((c) => c.id === classId) ?? classesWithElectives[0];
+  const matrix = await getElectiveMatrix(getDb(), access, selected.id);
+  return (
+    <TableCard
+      title={
+        <span className="flex flex-wrap items-center gap-2.5">
+          {matrix.class.name}
+          <Badge>{matrix.electives.length} electives</Badge>
+        </span>
+      }
+      toolbar={<FilterSelect label="Class" param="class" includeAll={false} options={classesWithElectives.map((c) => ({ value: c.id, label: c.name }))} />}
+    >
+      <p className="px-5 pb-3 text-[14px] text-muted">Tick the elective subjects each student takes. Compulsory subjects are added automatically. Only ticked students appear on an elective&apos;s score sheet.</p>
+      {matrix.students.length === 0 ? (
+        <EmptyState icon="graduation" title="No students in this class">Add students first.</EmptyState>
+      ) : (
+        <ElectivesGrid key={matrix.class.id} slug={slug} classId={matrix.class.id} electives={matrix.electives} students={matrix.students} initial={matrix.picks} editable={can(access, "students:update")} />
       )}
     </TableCard>
   );

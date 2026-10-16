@@ -10,6 +10,7 @@ import {
   scores,
   scoreSheets,
   students,
+  studentSubjects,
   subjects,
   teacherAssignments,
   termReports,
@@ -26,6 +27,7 @@ import { getCurrentTerm, studentScope } from "./academics";
 import { loadAssessmentConfig } from "./assessment";
 import { classAttendanceTotals } from "./attendance";
 import { recordAudit } from "./audit";
+import { subjectRoster } from "./electives";
 
 function actor(access: Access, ip?: string | null) {
   return { userId: access.user.id, name: access.user.name, ip };
@@ -100,7 +102,7 @@ export async function listMySheets(db: DB, access: Access) {
     }
     if (pairs.length === 0) return { term: current, sheets: [] };
     const classIds = [...new Set(pairs.map((p) => p.classId))];
-    const [classRows, subjectRows, sheetRows, scoreCounts, rollCounts, assignmentRows, resultRows] = await Promise.all([
+    const [classRows, subjectRows, sheetRows, scoreCounts, rollCounts, levelLinks, picks, assignmentRows, resultRows] = await Promise.all([
       tx.select({ id: classes.id, name: classes.name, sort: classLevels.sort }).from(classes).innerJoin(classLevels, eq(classLevels.id, classes.levelId)).where(inArray(classes.id, classIds)),
       tx.select({ id: subjects.id, name: subjects.name, sort: subjects.sort }).from(subjects),
       tx.select().from(scoreSheets).where(and(eq(scoreSheets.termId, current.term.id), inArray(scoreSheets.classId, classIds))),
@@ -109,6 +111,12 @@ export async function listMySheets(db: DB, access: Access) {
         .from(scores)
         .where(and(eq(scores.termId, current.term.id), inArray(scores.classId, classIds))),
       tx.select({ classId: students.classId, id: students.id }).from(students).where(and(eq(students.status, "active"), inArray(students.classId, classIds))),
+      tx
+        .select({ classId: classes.id, subjectId: levelSubjects.subjectId, isElective: levelSubjects.isElective })
+        .from(classes)
+        .innerJoin(levelSubjects, eq(levelSubjects.levelId, classes.levelId))
+        .where(inArray(classes.id, classIds)),
+      tx.select({ studentId: studentSubjects.studentId, subjectId: studentSubjects.subjectId }).from(studentSubjects),
       tx
         .select({ classId: teacherAssignments.classId, subjectId: teacherAssignments.subjectId, teacher: users.name })
         .from(teacherAssignments)
@@ -123,7 +131,9 @@ export async function listMySheets(db: DB, access: Access) {
       .map((p) => {
         const sheet = sheetRows.find((s) => s.classId === p.classId && s.subjectId === p.subjectId);
         const scored = scoreCounts.filter((s) => s.classId === p.classId && s.subjectId === p.subjectId).length;
-        const roll = rollCounts.filter((r) => r.classId === p.classId).length;
+        const elective = levelLinks.find((l) => l.classId === p.classId && l.subjectId === p.subjectId)?.isElective;
+        const classRoll = rollCounts.filter((r) => r.classId === p.classId);
+        const roll = elective ? classRoll.filter((r) => picks.some((k) => k.studentId === r.id && k.subjectId === p.subjectId)).length : classRoll.length;
         return {
           classId: p.classId,
           className: className.get(p.classId)?.name ?? "",
@@ -156,11 +166,7 @@ export async function getScoreSheet(db: DB, access: Access, classId: string, sub
     if (!cls || !subject) throw new AppError("That class or subject wasn't found.", "not_found");
     const config = await loadAssessmentConfig(tx, access.school.id);
     const [roster, scoreRows, [sheet], classResult] = await Promise.all([
-      tx
-        .select({ id: students.id, firstName: students.firstName, lastName: students.lastName, admissionNo: students.admissionNo })
-        .from(students)
-        .where(and(eq(students.classId, classId), eq(students.status, "active")))
-        .orderBy(asc(students.lastName), asc(students.firstName)),
+      subjectRoster(tx, classId, subjectId),
       tx.select().from(scores).where(and(eq(scores.termId, current.term.id), eq(scores.classId, classId), eq(scores.subjectId, subjectId))),
       tx.select().from(scoreSheets).where(and(eq(scoreSheets.termId, current.term.id), eq(scoreSheets.classId, classId), eq(scoreSheets.subjectId, subjectId))),
       classResultRow(tx, access.school.id, current.term.id, classId),
@@ -210,15 +216,13 @@ export async function saveScores(
     const config = await loadAssessmentConfig(tx, access.school.id);
     const maxBy = new Map(config.components.map((c) => [c.id, c]));
     const studentIds = [...new Set(input.entries.map((e) => e.studentId))];
-    const inClass = studentIds.length
-      ? new Set((await tx.select({ id: students.id }).from(students).where(and(inArray(students.id, studentIds), eq(students.classId, input.classId)))).map((s) => s.id))
-      : new Set<string>();
+    const inClass = studentIds.length ? new Set((await subjectRoster(tx, input.classId, input.subjectId)).map((s) => s.id)) : new Set<string>();
 
     let saved = 0;
     for (const e of input.entries) {
       const comp = maxBy.get(e.componentId);
       if (!comp) throw new AppError("That assessment column no longer exists. Reload the sheet.", "conflict");
-      if (!inClass.has(e.studentId)) throw new AppError("A student on this sheet has moved class. Reload the sheet.", "conflict");
+      if (!inClass.has(e.studentId)) throw new AppError("A student on this sheet has moved class or dropped the subject. Reload the sheet.", "conflict");
       if (e.score === null) {
         await tx
           .delete(scores)

@@ -3,9 +3,9 @@
  * JSS 1 Gold and JSS 1 Diamond, so the Attendance and Results screens have real data.
  * Run with the dev server stopped (the local database allows one process at a time).
  */
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { createDatabaseFromEnv } from "../src/lib/db/client";
-import { attendanceDays, attendanceRecords, classes, levelSubjects, scores, students, termReports } from "../src/lib/db/schema";
+import { attendanceDays, attendanceRecords, classes, levelSubjects, scores, students, studentSubjects, subjects, termReports } from "../src/lib/db/schema";
 import { withTenant } from "../src/lib/db/tenant";
 import { loadAccess } from "../src/lib/services/access";
 import { findUserByEmail } from "../src/lib/services/accounts";
@@ -70,9 +70,18 @@ async function main() {
     for (const cls of jss1) {
       const offered = await tx.select().from(levelSubjects).where(eq(levelSubjects.levelId, cls.levelId));
       const roll = await tx.select().from(students).where(and(eq(students.classId, cls.id), eq(students.status, "active")));
+      const subjectNames = new Map((await tx.select({ id: subjects.id, name: subjects.name }).from(subjects)).map((x) => [x.id, x.name]));
       for (const [si, s] of roll.entries()) {
         const ability = 0.45 + seeded(si + cls.name.length) * 0.45;
-        for (const [oi, o] of offered.entries()) {
+        // Electives: CRS or IRS by religion; other electives are left unpicked.
+        const religious = s.religion === "Islam" ? "Islamic Religious Studies" : "Christian Religious Studies";
+        const picked = offered.filter((o) => o.isElective && subjectNames.get(o.subjectId) === religious).map((o) => o.subjectId);
+        if (picked.length) await tx.insert(studentSubjects).values(picked.map((subjectId) => ({ schoolId: access.school.id, studentId: s.id, subjectId }))).onConflictDoNothing();
+        const takes = offered.filter((o) => !o.isElective || picked.includes(o.subjectId));
+        const electiveIds = offered.filter((o) => o.isElective).map((o) => o.subjectId);
+        const dropped = electiveIds.filter((id) => !picked.includes(id));
+        if (dropped.length) await tx.delete(scores).where(and(eq(scores.studentId, s.id), inArray(scores.subjectId, dropped)));
+        for (const [oi, o] of takes.entries()) {
           await tx
             .insert(scores)
             .values(
