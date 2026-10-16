@@ -19,6 +19,8 @@ export const NAV: NavSection[] = [
   {
     items: [
       { href: "", label: "Overview", icon: "grid" },
+      { href: "/attendance", label: "Attendance", icon: "calendarCheck", anyOf: ["attendance:take", "attendance:edit_past", "attendance:report"], feature: "attendance", staffOnly: true },
+      { href: "/results", label: "Results", icon: "results", anyOf: ["results:enter", "results:view"], feature: "score_entry", staffOnly: true },
       { href: "/students", label: "Students", icon: "graduation", anyOf: ["students:view"], staffOnly: true },
       { href: "/academics", label: "Academics", icon: "bookOpen", anyOf: ["academics:view"], staffOnly: true },
     ],
