@@ -330,7 +330,7 @@ export async function voidInvoice(db: DB, access: Access, input: { invoiceId: st
 
 // ---------- Reading ----------
 
-export type InvoiceFilter = { termId?: string | null; q?: string; classId?: string; status?: string; page?: number };
+export type InvoiceFilter = { termId?: string | null; q?: string; classId?: string; status?: string; page?: number; limit?: number };
 
 function invoiceFilters(termId: string, f: InvoiceFilter): SQL[] {
   const where: SQL[] = [eq(invoices.termId, termId)];
@@ -386,8 +386,8 @@ export async function listInvoices(db: DB, access: Access, f: InvoiceFilter) {
         .leftJoin(classes, eq(classes.id, invoices.classId))
         .where(where)
         .orderBy(desc(invoices.createdAt), desc(invoices.number))
-        .limit(INVOICE_PAGE_SIZE)
-        .offset((page - 1) * INVOICE_PAGE_SIZE),
+        .limit(f.limit ?? INVOICE_PAGE_SIZE)
+        .offset((page - 1) * (f.limit ?? INVOICE_PAGE_SIZE)),
       tx.select({ total: count() }).from(invoices).innerJoin(students, eq(students.id, invoices.studentId)).where(where),
       termSummary(tx, term.id),
     ]);
@@ -484,7 +484,7 @@ export async function listStudentInvoices(db: DB, access: Access, studentId: str
 
 export const DEBTOR_PAGE_SIZE = 25;
 
-export async function listDebtors(db: DB, access: Access, f: { termId?: string | null; classId?: string; q?: string; overdue?: boolean; page?: number }) {
+export async function listDebtors(db: DB, access: Access, f: { termId?: string | null; classId?: string; q?: string; overdue?: boolean; page?: number; limit?: number }) {
   requirePermission(access, "fees:view");
   requireFeature(access.plan, "debtors");
   const page = Math.max(1, f.page ?? 1);
@@ -500,8 +500,8 @@ export async function listDebtors(db: DB, access: Access, f: { termId?: string |
         .leftJoin(classes, eq(classes.id, invoices.classId))
         .where(where)
         .orderBy(desc(balance), asc(students.lastName))
-        .limit(DEBTOR_PAGE_SIZE)
-        .offset((page - 1) * DEBTOR_PAGE_SIZE),
+        .limit(f.limit ?? DEBTOR_PAGE_SIZE)
+        .offset((page - 1) * (f.limit ?? DEBTOR_PAGE_SIZE)),
       tx
         .select({ total: count(), owed: sql<number>`coalesce(sum(${balance}), 0)`.mapWith(Number) })
         .from(invoices)

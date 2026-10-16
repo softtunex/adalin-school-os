@@ -133,7 +133,7 @@ export async function settleIntent(tx: Tx, schoolId: string, reference: string, 
 
 // ---------- Reading ----------
 
-export type PaymentFilter = { from?: string; to?: string; method?: string; q?: string; status?: string; page?: number };
+export type PaymentFilter = { from?: string; to?: string; method?: string; q?: string; status?: string; page?: number; limit?: number };
 
 export async function listPayments(db: DB, access: Access, f: PaymentFilter) {
   requirePermission(access, "fees:view");
@@ -177,8 +177,8 @@ export async function listPayments(db: DB, access: Access, f: PaymentFilter) {
         .leftJoin(users, eq(users.id, memberships.userId))
         .where(cond)
         .orderBy(desc(payments.paidOn), desc(payments.createdAt))
-        .limit(PAYMENT_PAGE_SIZE)
-        .offset((page - 1) * PAYMENT_PAGE_SIZE),
+        .limit(f.limit ?? PAYMENT_PAGE_SIZE)
+        .offset((page - 1) * (f.limit ?? PAYMENT_PAGE_SIZE)),
       tx
         .select({ total: count(), amount: sql<number>`coalesce(sum(${payments.amountKobo}), 0)`.mapWith(Number) })
         .from(payments)
