@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import { getDb } from "@/lib/db/client";
 import { parentNotifications } from "@/lib/services/parent-portal";
 import { MarkAllRead } from "./mark-all-read";
+import { formatWhen } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Updates" };
 
@@ -45,7 +46,7 @@ export default async function ParentNotifications() {
                     <span className={cn("block fs-15 text-ink", !n.readAt ? "font-bold" : "font-semibold")}>{n.title}</span>
                     {n.body ? <span className="line-clamp-2 block fs-14 text-body">{n.body}</span> : null}
                     <span className="block fs-12.5 text-muted">
-                      {schoolName} · {n.createdAt.toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" })}
+                      {schoolName} · {formatWhen(n.createdAt)}
                     </span>
                   </span>
                   {!n.readAt ? <span className="mt-2 size-2.5 shrink-0 rounded-full bg-brand" aria-label="New" /> : null}

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
+import { formatWhen } from "@/lib/dates";
 import type { FormState } from "@/lib/form-state";
 import { initialFormState } from "@/lib/form-state";
 import { SubmitButton } from "./ui/button";
@@ -12,10 +13,7 @@ import { Icon } from "./ui/icons";
 type Msg = { id: string; senderId: string | null; senderName: string; body: string; createdAt: string };
 
 function when(iso: string) {
-  const d = new Date(iso);
-  const lagos = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" });
-  const today = lagos(new Date()) === lagos(d);
-  return d.toLocaleString("en-NG", today ? { hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" } : { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" });
+  return formatWhen(new Date(iso), { relative: false });
 }
 
 /** A conversation: bubbles, a reply box, and a quiet refresh so new replies show up without reloading. */

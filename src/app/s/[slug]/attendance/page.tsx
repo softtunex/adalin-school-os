@@ -10,10 +10,10 @@ import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { lagosToday, listAttendanceClasses } from "@/lib/services/attendance";
 import { DatePicker } from "./date-picker";
+import { formatTime } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Attendance" };
 
-const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });
 const longDate = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
 
 export default async function AttendancePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ date?: string }> }) {
@@ -97,7 +97,7 @@ export default async function AttendancePage({ params, searchParams }: { params:
                           {c.present} present · {c.late} late · {c.absent} absent{c.excused ? ` · ${c.excused} excused` : ""}
                         </p>
                         <p className="mt-0.5 fs-12.5 text-muted">
-                          By {c.takenBy ?? "staff"} at {c.takenAt ? timeFmt.format(c.takenAt) : ""}
+                          By {c.takenBy ?? "staff"} at {c.takenAt ? formatTime(c.takenAt) : ""}
                         </p>
                       </>
                     ) : (

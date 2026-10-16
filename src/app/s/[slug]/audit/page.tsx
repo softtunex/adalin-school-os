@@ -7,11 +7,11 @@ import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { getLimit, hasFeature } from "@/lib/plans/entitlements";
 import { AUDIT_CATEGORIES, AUDIT_PAGE_SIZE, categoryOf, isImportant, listAuditLog } from "@/lib/services/audit-log";
+import { formatTime } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Audit log" };
 
 const dayFmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Lagos" });
-const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos" });
 
 function actionTitle(action: string) {
   const [, verb = action] = action.split(".");
@@ -103,7 +103,7 @@ export default async function AuditPage({
                     <tr key={e.id} className="hover:bg-paper">
                       <Td className="whitespace-nowrap">
                         <p className="tabular font-medium">{dayFmt.format(e.createdAt)}</p>
-                        <p className="tabular fs-13 text-muted">{timeFmt.format(e.createdAt)} WAT</p>
+                        <p className="tabular fs-13 text-muted">{formatTime(e.createdAt)}</p>
                       </Td>
                       <Td className="whitespace-nowrap font-medium">{actionTitle(e.action)}</Td>
                       <Td className="max-w-[360px] text-body">{e.summary}</Td>

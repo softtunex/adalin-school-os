@@ -53,7 +53,7 @@ export function createDatabaseFromEnv(): Database {
   if (process.env.NODE_ENV === "production" && process.env.ALLOW_LOCAL_DB !== "1") {
     throw new Error("DATABASE_URL is required in production.");
   }
-  const dataDir = path.join(process.cwd(), ".data", "pglite");
+  const dataDir = process.env.PGLITE_DIR ?? path.join(process.cwd(), ".data", "pglite");
   mkdirSync(path.dirname(dataDir), { recursive: true });
   return createPgliteDatabase(dataDir);
 }

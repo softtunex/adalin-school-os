@@ -5,19 +5,12 @@ import { Avatar, Card, EmptyState } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { requireUser } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
+import { formatShort } from "@/lib/dates";
 import { getDb } from "@/lib/db/client";
 import { parentInbox } from "@/lib/services/messaging";
 import { myChildren } from "@/lib/services/parent-portal";
 
 export const metadata: Metadata = { title: "Messages" };
-
-function ago(d: Date) {
-  const mins = Math.round((Date.now() - d.getTime()) / 60_000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m`;
-  if (mins < 1440) return `${Math.round(mins / 60)}h`;
-  return d.toLocaleDateString("en-NG", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
-}
 
 export default async function ParentMessages() {
   const user = await requireUser();
@@ -49,7 +42,7 @@ export default async function ParentMessages() {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className={cn("truncate fs-15 text-ink", m.unread ? "font-bold" : "font-semibold")}>{m.staff ?? m.schoolName}</span>
-                      <span className="shrink-0 fs-12.5 text-muted">{ago(m.c.lastMessageAt)}</span>
+                      <span className="shrink-0 fs-12.5 text-muted">{formatShort(m.c.lastMessageAt)}</span>
                     </span>
                     <span className="block truncate fs-14 font-medium text-body">
                       {m.c.subject}

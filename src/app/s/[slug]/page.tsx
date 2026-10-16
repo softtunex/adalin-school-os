@@ -11,6 +11,7 @@ import { getDb } from "@/lib/db/client";
 import { getLimit } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
 import { getOverview } from "@/lib/services/overview";
+import { formatWhen } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Overview" };
 
@@ -189,7 +190,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
                           <span className="font-medium">{e.actorName ?? "System"}</span> <span className="text-body">{e.summary.charAt(0).toLowerCase() + e.summary.slice(1)}</span>
                         </p>
                         <p className="tabular fs-12.5 text-muted">
-                          {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: tz }).format(e.createdAt)}
+                          {formatWhen(e.createdAt)}
                         </p>
                       </div>
                     </li>

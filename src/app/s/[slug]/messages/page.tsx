@@ -8,20 +8,13 @@ import { Icon } from "@/components/ui/icons";
 import { Tabs } from "@/components/ui/tabs";
 import { requirePageAccess } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
+import { formatShort } from "@/lib/dates";
 import { getDb } from "@/lib/db/client";
 import { hasFeature } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
 import { staffInbox } from "@/lib/services/messaging";
 
 export const metadata: Metadata = { title: "Messages" };
-
-function ago(d: Date) {
-  const mins = Math.round((Date.now() - d.getTime()) / 60_000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m ago`;
-  if (mins < 1440) return `${Math.round(mins / 60)}h ago`;
-  return d.toLocaleDateString("en-NG", { day: "numeric", month: "short", timeZone: "Africa/Lagos" });
-}
 
 export default async function MessagesPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ view?: string }> }) {
   const { slug } = await params;
@@ -80,7 +73,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
                           {m.parents ?? m.colleagues ?? "Staff"}
                           {m.studentName ? <span className="font-normal text-muted"> · {m.studentName}</span> : null}
                         </span>
-                        <span className="shrink-0 fs-12.5 text-muted">{ago(m.c.lastMessageAt)}</span>
+                        <span className="shrink-0 fs-12.5 text-muted">{formatShort(m.c.lastMessageAt)}</span>
                       </span>
                       <span className="block truncate fs-14 font-medium text-body">{m.c.subject}</span>
                       <span className={cn("block truncate fs-14", m.unread ? "text-ink" : "text-muted")}>

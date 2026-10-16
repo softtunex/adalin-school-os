@@ -13,6 +13,7 @@ import { describeAudience, listAnnouncements, parentAppReach } from "@/lib/servi
 import { creditBalance } from "@/lib/services/outbox";
 import { clearStaffBadge } from "@/lib/services/staff-badges";
 import { AnnouncementMenu, ComposeButton } from "./announcements-client";
+import { formatWhen } from "@/lib/dates";
 
 export const metadata: Metadata = { title: "Announcements" };
 
@@ -69,7 +70,7 @@ export default async function AnnouncementsPage({ params }: { params: Promise<{ 
                         {a.pinned ? <Badge tone="brand">Pinned</Badge> : null}
                       </div>
                       <p className="fs-13 text-muted">
-                        {a.authorName} · {a.publishedAt.toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" })}
+                        {a.authorName} · {formatWhen(a.publishedAt)}
                       </p>
                     </div>
                     {canPost ? <AnnouncementMenu slug={slug} id={a.id} title={a.title} /> : null}
