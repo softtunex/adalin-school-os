@@ -13,6 +13,8 @@ import { hasFeature } from "@/lib/plans/entitlements";
 import { can, type Access } from "@/lib/services/access";
 import { getMonthSummary, getMyDay, getRegister, lagosClock, LEAVE_LABEL, listLeave, type DayStatus } from "@/lib/services/hr";
 import { CancelLeave, ClockCard, LeaveDecision, MarkDay, RequestLeaveButton } from "./hr-client";
+import { formatNaira } from "@/lib/money";
+import { monthLabel, myPayslips } from "@/lib/services/payroll";
 
 export const metadata: Metadata = { title: "Attendance and leave" };
 
@@ -58,24 +60,26 @@ export default async function HrPage({ params, searchParams }: { params: Promise
   }
   const manager = can(access, "staff:attendance");
   const approver = can(access, "staff:leave");
-  const tab = sp.tab === "register" && manager ? "register" : sp.tab === "month" && manager ? "month" : sp.tab === "leave" && approver ? "leave" : "me";
+  const pay = hasFeature(access.plan, "payroll");
+  const tab = sp.tab === "register" && manager ? "register" : sp.tab === "month" && manager ? "month" : sp.tab === "leave" && approver ? "leave" : sp.tab === "pay" && pay ? "pay" : "me";
   const base = `/s/${slug}/hr`;
   return (
     <>
       <Topbar title="Attendance and leave" context={access.school.name} />
       <PageBody>
-        {manager || approver ? (
+        {manager || approver || pay ? (
           <Tabs
             current={tab}
             tabs={[
               { key: "me", label: "My day", href: base },
+              ...(pay ? [{ key: "pay", label: "My payslips", href: `${base}?tab=pay` }] : []),
               ...(manager ? [{ key: "register", label: "Today's register", href: `${base}?tab=register` }] : []),
               ...(manager ? [{ key: "month", label: "Monthly", href: `${base}?tab=month` }] : []),
               ...(approver ? [{ key: "leave", label: "Leave requests", href: `${base}?tab=leave` }] : []),
             ]}
           />
         ) : null}
-        {tab === "register" ? <Register slug={slug} access={access} date={sp.date} /> : tab === "month" ? <Month slug={slug} access={access} month={sp.month} /> : tab === "leave" ? <Leave slug={slug} access={access} status={sp.status} /> : <MyDay slug={slug} access={access} />}
+        {tab === "pay" ? <MyPay slug={slug} access={access} /> : tab === "register" ? <Register slug={slug} access={access} date={sp.date} /> : tab === "month" ? <Month slug={slug} access={access} month={sp.month} /> : tab === "leave" ? <Leave slug={slug} access={access} status={sp.status} /> : <MyDay slug={slug} access={access} />}
       </PageBody>
     </>
   );
@@ -169,6 +173,48 @@ async function MyDay({ slug, access }: { slug: string; access: Access }) {
         </ul>
       </Card>
     </>
+  );
+}
+
+async function MyPay({ slug, access }: { slug: string; access: Access }) {
+  const slips = await myPayslips(getDb(), access);
+  return (
+    <TableCard title="My payslips">
+      {slips.length === 0 ? (
+        <EmptyState icon="banknote" title="No payslips yet">
+          Your payslip appears here each month once the payroll is approved.
+        </EmptyState>
+      ) : (
+        <Table>
+          <thead>
+            <tr>
+              <Th>Month</Th>
+              <Th className="text-right">Gross</Th>
+              <Th className="text-right">Deductions</Th>
+              <Th className="text-right">Take-home</Th>
+              <Th className="w-28">
+                <span className="sr-only">Download</span>
+              </Th>
+            </tr>
+          </thead>
+          <tbody>
+            {slips.map(({ slip, month }) => (
+              <tr key={slip.id} className="hover:bg-paper">
+                <Td className="font-medium text-ink">{monthLabel(month)}</Td>
+                <Td className="tabular text-right text-body">{formatNaira(slip.grossKobo)}</Td>
+                <Td className="tabular text-right text-body">{formatNaira(slip.grossKobo - slip.netKobo)}</Td>
+                <Td className="tabular text-right font-semibold text-ink">{formatNaira(slip.netKobo)}</Td>
+                <Td className="text-right">
+                  <a href={`/s/${slug}/payslips/${slip.id}`} target="_blank" rel="noopener" className="fs-14 font-semibold text-brand-ink hover:underline">
+                    Payslip
+                  </a>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      )}
+    </TableCard>
   );
 }
 

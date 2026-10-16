@@ -20,7 +20,8 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className="m-auto w-[min(580px,calc(100vw-32px))] rounded-[20px] border border-line bg-canvas p-0 text-body shadow-[0_24px_64px_rgba(0,0,0,0.18)] backdrop:bg-black/40 backdrop:backdrop-blur-[2px]"
+      // text-left: a dialog opened from a right-aligned table cell would otherwise inherit it.
+      className="m-auto w-[min(580px,calc(100vw-32px))] rounded-[20px] border border-line bg-canvas p-0 text-left font-normal text-body shadow-[0_24px_64px_rgba(0,0,0,0.18)] backdrop:bg-black/40 backdrop:backdrop-blur-[2px]"
     >
       <div className="flex items-center justify-between gap-4 px-6 pb-2 pt-5">
         <h2 className="fs-18 font-semibold">{title}</h2>

@@ -17,6 +17,8 @@ import { listBanks, paystackMode } from "@/lib/services/paystack";
 import { listPlans } from "@/lib/services/school-profile";
 import { AdmissionSettings } from "../admissions/admission-settings";
 import { HrSettingsForm } from "../hr/hr-settings-form";
+import { PayrollSettingsForm } from "../payroll/payroll-client";
+import { payrollSettings } from "@/lib/services/payroll";
 import { LEAVE_KINDS } from "@/lib/db/schema";
 import { hrSettings, LEAVE_LABEL } from "@/lib/services/hr";
 import { LogoCard } from "./logo-card";
@@ -28,11 +30,12 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
   const sp = await searchParams;
   const canAdmissions = can(access, "admissions:manage") && hasFeature(access.plan, "admissions");
   const canHr = (can(access, "staff:update") || can(access, "staff:leave")) && hasFeature(access.plan, "staff_attendance");
+  const canPayroll = can(access, "expenses:payroll") && hasFeature(access.plan, "payroll");
   const tab = sp.tab ?? (canProfile ? "profile" : can(access, "fees:manage") ? "payments" : can(access, "comms:announce") ? "messaging" : "admissions");
   const s = access.school;
   const base = `/s/${slug}/settings`;
@@ -50,11 +53,14 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
             ...(canAdmissions ? [{ key: "admissions", label: "Admissions", href: `${base}?tab=admissions` }] : []),
             ...(canHr ? [{ key: "hr", label: "Staff & HR", href: `${base}?tab=hr` }] : []),
+            ...(canPayroll ? [{ key: "payroll", label: "Payroll", href: `${base}?tab=payroll` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "hr" && canHr ? (
+        {tab === "payroll" && canPayroll ? (
+          <PayrollSettingsForm slug={slug} settings={payrollSettings(s.payrollSettings)} editable />
+        ) : tab === "hr" && canHr ? (
           <HrSettingsForm
             slug={slug}
             settings={hrSettings(s.hrSettings)}

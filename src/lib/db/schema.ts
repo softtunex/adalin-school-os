@@ -76,6 +76,20 @@ export type HrSettings = {
   allowances?: Partial<Record<LeaveKind, number>>;
 };
 
+export type PayrollSettings = {
+  /** Day of the month salaries are paid. */
+  payDay?: number;
+  /** Defaults for new pay profiles. */
+  paye?: boolean;
+  pension?: boolean;
+  nhf?: boolean;
+  /** Record each paid run in Expenses as "Salaries and wages". */
+  recordExpense?: boolean;
+};
+
+/** A named amount on a payslip: an allowance, a deduction, a bonus. */
+export type PayLine = { name: string; kobo: number };
+
 export const LEAVE_KINDS = ["annual", "sick", "casual", "maternity", "paternity", "compassionate", "study", "unpaid"] as const;
 export type LeaveKind = (typeof LEAVE_KINDS)[number];
 
@@ -199,6 +213,7 @@ export const schools = pgTable(
     commsSettings: jsonb("comms_settings").$type<CommsSettings>().notNull().default({}),
     admissionSettings: jsonb("admission_settings").$type<AdmissionSettings>().notNull().default({}),
     hrSettings: jsonb("hr_settings").$type<HrSettings>().notNull().default({}),
+    payrollSettings: jsonb("payroll_settings").$type<PayrollSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1512,6 +1527,90 @@ export const leaveRequests = pgTable(
   (t) => [index("leave_requests_member_idx").on(t.membershipId, t.startsOn), index("leave_requests_status_idx").on(t.schoolId, t.status)],
 );
 
+// ---------- Payroll ----------
+
+export const staffPay = pgTable(
+  "staff_pay",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    membershipId: uuid("membership_id")
+      .notNull()
+      .references(() => memberships.id, { onDelete: "cascade" }),
+    basicKobo: kobo("basic_kobo").notNull().default(0),
+    /** Monthly allowances, e.g. housing, transport. */
+    allowances: jsonb("allowances").$type<PayLine[]>().notNull().default([]),
+    /** Monthly standing deductions, e.g. loan repayment, co-operative. */
+    deductions: jsonb("deductions").$type<PayLine[]>().notNull().default([]),
+    pension: boolean("pension").notNull().default(true),
+    nhf: boolean("nhf").notNull().default(false),
+    paye: boolean("paye").notNull().default(true),
+    /** Yearly rent, for the rent relief in PAYE. */
+    annualRentKobo: kobo("annual_rent_kobo").notNull().default(0),
+    bankName: text("bank_name"),
+    accountNumber: text("account_number"),
+    accountName: text("account_name"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("staff_pay_member_uq").on(t.membershipId)],
+);
+
+export const payrollRuns = pgTable(
+  "payroll_runs",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    /** "YYYY-MM". */
+    month: text("month").notNull(),
+    status: text("status", { enum: ["draft", "approved", "paid"] }).notNull().default("draft"),
+    grossKobo: kobo("gross_kobo").notNull().default(0),
+    netKobo: kobo("net_kobo").notNull().default(0),
+    payeKobo: kobo("paye_kobo").notNull().default(0),
+    pensionKobo: kobo("pension_kobo").notNull().default(0),
+    employerPensionKobo: kobo("employer_pension_kobo").notNull().default(0),
+    nhfKobo: kobo("nhf_kobo").notNull().default(0),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    approvedBy: uuid("approved_by").references(() => memberships.id, { onDelete: "set null" }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    expenseId: uuid("expense_id").references(() => expenses.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("payroll_runs_month_uq").on(t.schoolId, t.month)],
+);
+
+export const payslips = pgTable(
+  "payslips",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    runId: uuid("run_id")
+      .notNull()
+      .references(() => payrollRuns.id, { onDelete: "cascade" }),
+    membershipId: uuid("membership_id")
+      .notNull()
+      .references(() => memberships.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    jobTitle: text("job_title"),
+    bankName: text("bank_name"),
+    accountNumber: text("account_number"),
+    accountName: text("account_name"),
+    basicKobo: kobo("basic_kobo").notNull(),
+    allowances: jsonb("allowances").$type<PayLine[]>().notNull().default([]),
+    /** One-off earnings this month (bonus, overtime). */
+    extras: jsonb("extras").$type<PayLine[]>().notNull().default([]),
+    deductions: jsonb("deductions").$type<PayLine[]>().notNull().default([]),
+    grossKobo: kobo("gross_kobo").notNull(),
+    pensionKobo: kobo("pension_kobo").notNull().default(0),
+    employerPensionKobo: kobo("employer_pension_kobo").notNull().default(0),
+    nhfKobo: kobo("nhf_kobo").notNull().default(0),
+    payeKobo: kobo("paye_kobo").notNull().default(0),
+    netKobo: kobo("net_kobo").notNull(),
+    settings: jsonb("settings").$type<{ pension: boolean; nhf: boolean; paye: boolean; annualRentKobo: number }>().notNull(),
+  },
+  (t) => [uniqueIndex("payslips_run_member_uq").on(t.runId, t.membershipId)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1576,4 +1675,7 @@ export const TENANT_TABLES = [
   "applicants",
   "staff_attendance",
   "leave_requests",
+  "staff_pay",
+  "payroll_runs",
+  "payslips",
 ] as const;

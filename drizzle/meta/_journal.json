@@ -64,6 +64,13 @@
       "when": 1792186276060,
       "tag": "0008_staff_attendance_and_leave",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792191791059,
+      "tag": "0009_payroll",
+      "breakpoints": true
     }
   ]
 }

@@ -27,7 +27,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm db:migrate
-      - run: pnpm db:seed && pnpm db:seed-results && pnpm db:seed-fees && pnpm db:seed-comms && pnpm db:seed-timetable && pnpm db:seed-students && pnpm db:seed-teaching && pnpm db:seed-cbt && pnpm db:seed-materials && pnpm db:seed-admissions && pnpm db:seed-analytics && pnpm db:seed-hr
+      - run: pnpm db:seed && pnpm db:seed-results && pnpm db:seed-fees && pnpm db:seed-comms && pnpm db:seed-timetable && pnpm db:seed-students && pnpm db:seed-teaching && pnpm db:seed-cbt && pnpm db:seed-materials && pnpm db:seed-admissions && pnpm db:seed-analytics && pnpm db:seed-hr && pnpm db:seed-payroll
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - name: Browser tests

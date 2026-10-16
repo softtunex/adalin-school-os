@@ -18,7 +18,28 @@ export function ngn(kobo: number) {
   return `NGN ${(kobo / 100).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-const ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const ONES = [
+  "",
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+  "thirteen",
+  "fourteen",
+  "fifteen",
+  "sixteen",
+  "seventeen",
+  "eighteen",
+  "nineteen",
+];
 const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
 
 function under1000(n: number): string {
@@ -96,7 +117,19 @@ const s = StyleSheet.create({
   words: { fontSize: 9, color: BODY, marginTop: 4, fontFamily: "Helvetica-Oblique", textAlign: "center" },
   grid: { marginTop: 14, flexDirection: "row", flexWrap: "wrap", borderWidth: 1, borderColor: LINE, borderRadius: 4 },
   cell: { width: "50%", padding: 8, borderBottomWidth: 1, borderRightWidth: 1, borderColor: LINE },
-  stamp: { position: "absolute", top: 120, right: 50, borderWidth: 3, borderRadius: 6, paddingVertical: 4, paddingHorizontal: 12, fontSize: 22, fontFamily: "Helvetica-Bold", transform: "rotate(-12deg)", opacity: 0.85 },
+  stamp: {
+    position: "absolute",
+    top: 120,
+    right: 50,
+    borderWidth: 3,
+    borderRadius: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    fontSize: 22,
+    fontFamily: "Helvetica-Bold",
+    transform: "rotate(-12deg)",
+    opacity: 0.85,
+  },
 });
 
 export type SchoolHeader = { name: string; address: string | null; phone: string | null; email: string | null; logo: Buffer | string | null; initials: string };
@@ -173,7 +206,12 @@ export function InvoicePdf({ doc }: { doc: InvoiceDoc }) {
               {doc.title} · {doc.term}
             </Text>
           </View>
-          <Meta items={[["Issued", doc.issuedOn], ["Due", doc.dueOn ?? "On receipt"]]} />
+          <Meta
+            items={[
+              ["Issued", doc.issuedOn],
+              ["Due", doc.dueOn ?? "On receipt"],
+            ]}
+          />
         </View>
         <View style={s.billTo}>
           <View style={s.box}>
@@ -341,14 +379,16 @@ export function OfferLetterPdf({ doc }: { doc: OfferLetterDoc }) {
           {doc.examScore !== null ? `, following a score of ${doc.examScore} in our entrance examination` : ""}. Congratulations.
         </Text>
         <Text style={para}>
-          To accept this offer, please confirm on your application page by {doc.acceptBy}, after which the school will complete registration and share the fee schedule and resumption date. If we do
-          not hear from you by then, the place may be offered to another child.
+          To accept this offer, please confirm on your application page by {doc.acceptBy}, after which the school will complete registration and share the fee schedule and
+          resumption date. If we do not hear from you by then, the place may be offered to another child.
         </Text>
         <View style={[s.pay, { marginTop: 16 }]}>
           <Text style={s.boxLabel}>Accept or decline online</Text>
           <Text style={{ fontSize: 9.5, color: INK }}>{doc.statusUrl}</Text>
         </View>
-        <Text style={para}>We look forward to welcoming {doc.child} to {doc.school.name}.</Text>
+        <Text style={para}>
+          We look forward to welcoming {doc.child} to {doc.school.name}.
+        </Text>
         <View style={{ marginTop: 36 }}>
           <View style={{ width: 180, borderTopWidth: 1, borderTopColor: INK, paddingTop: 4 }}>
             <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: INK }}>{doc.principal ?? "The Principal"}</Text>
@@ -356,6 +396,78 @@ export function OfferLetterPdf({ doc }: { doc: OfferLetterDoc }) {
           </View>
         </View>
         <Footer left={`${doc.school.name} · ${doc.ref}`} />
+      </Page>
+    </Document>
+  );
+}
+
+export type PayslipDoc = {
+  school: SchoolHeader;
+  month: string;
+  name: string;
+  jobTitle: string | null;
+  bank: string | null;
+  earnings: { name: string; kobo: number }[];
+  deductions: { name: string; kobo: number }[];
+  gross: number;
+  net: number;
+  employerPension: number;
+};
+
+function PayBlock({ title, rows, total }: { title: string; rows: { name: string; kobo: number }[]; total: number }) {
+  return (
+    <View style={[s.table, { flex: 1, marginTop: 0 }]}>
+      <View style={s.headRow}>
+        <Text style={[s.th, s.desc]}>{title}</Text>
+        <Text style={[s.th, { width: 110, textAlign: "right" }]}>Amount</Text>
+      </View>
+      {rows.map((r, i) => (
+        <View key={i} style={s.row}>
+          <Text style={[s.td, s.desc]}>{r.name}</Text>
+          <Text style={[s.td, { width: 110, textAlign: "right" }]}>{ngn(r.kobo)}</Text>
+        </View>
+      ))}
+      <View style={[s.row, { borderBottomWidth: 0, backgroundColor: PAPER }]}>
+        <Text style={[s.td, s.desc, { fontFamily: "Helvetica-Bold" }]}>Total</Text>
+        <Text style={[s.td, { width: 110, textAlign: "right", fontFamily: "Helvetica-Bold" }]}>{ngn(total)}</Text>
+      </View>
+    </View>
+  );
+}
+
+export function PayslipPdf({ doc }: { doc: PayslipDoc }) {
+  const totalDeductions = doc.deductions.reduce((t, d) => t + d.kobo, 0);
+  return (
+    <Document title={`Payslip ${doc.month} ${doc.name}`} author={doc.school.name}>
+      <Page size="A4" style={s.page}>
+        <Header school={doc.school} />
+        <View style={s.docTitleRow}>
+          <View>
+            <Text style={s.docTitle}>PAYSLIP</Text>
+            <Text style={s.docNo}>{doc.month}</Text>
+          </View>
+          <Meta
+            items={[
+              ["Paid to", doc.name],
+              ["Role", doc.jobTitle ?? "Staff"],
+            ]}
+          />
+        </View>
+        <View style={{ marginTop: 18, flexDirection: "row", gap: 12 }}>
+          <PayBlock title="Earnings" rows={doc.earnings} total={doc.gross} />
+          <PayBlock title="Deductions" rows={doc.deductions} total={totalDeductions} />
+        </View>
+        <View style={s.amountBox}>
+          <Text style={s.metaLabel}>Net pay</Text>
+          <Text style={s.amountBig}>{ngn(doc.net)}</Text>
+          <Text style={s.words}>{amountInWords(doc.net)}</Text>
+        </View>
+        <View style={[s.pay, { marginTop: 14 }]}>
+          <Text style={s.boxLabel}>Paid into</Text>
+          <Text style={{ fontSize: 9.5, color: INK }}>{doc.bank ?? "No bank account on file"}</Text>
+          {doc.employerPension ? <Text style={[s.small, { marginTop: 6 }]}>The school also paid {ngn(doc.employerPension)} into your pension this month.</Text> : null}
+        </View>
+        <Footer left={`${doc.school.name} · Payslip ${doc.month}`} />
       </Page>
     </Document>
   );
