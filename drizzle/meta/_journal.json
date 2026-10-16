@@ -71,6 +71,13 @@
       "when": 1792191791059,
       "tag": "0009_payroll",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792193711902,
+      "tag": "0010_discipline",
+      "breakpoints": true
     }
   ]
 }

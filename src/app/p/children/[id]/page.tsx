@@ -10,6 +10,8 @@ import { getDb } from "@/lib/db/client";
 import { AppError } from "@/lib/errors";
 import { formatNaira } from "@/lib/money";
 import { getChildHomework } from "@/lib/services/assignments";
+import { getChildConduct } from "@/lib/services/discipline";
+import { ConductList } from "@/components/conduct-list";
 import { getChildDetail } from "@/lib/services/parent-portal";
 import { formatDue } from "@/lib/dates";
 import { FileLinks } from "@/components/file-uploader";
@@ -43,7 +45,8 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
     throw error;
   }
   const homework = await getChildHomework(getDb(), user.id, id);
-  const tab = ["attendance", "timetable", "homework", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
+  const conduct = await getChildConduct(getDb(), user.id, id);
+  const tab = ["attendance", "timetable", "homework", "conduct", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
   const name = [d.link.firstName, d.link.middleName, d.link.lastName].filter(Boolean).join(" ");
   const base = `/p/children/${id}`;
   const att = d.attendance && d.attendance.days ? Math.round((d.attendance.present / d.attendance.days) * 100) : null;
@@ -76,6 +79,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           { key: "attendance", label: "Attendance", href: base },
           ...(d.timetable ? [{ key: "timetable", label: "Timetable", href: `${base}?tab=timetable` }] : []),
           ...(homework ? [{ key: "homework", label: "Homework", href: `${base}?tab=homework`, count: homework.filter((h) => h.status === "to_do" || h.status === "overdue").length || undefined }] : []),
+          ...(conduct ? [{ key: "conduct", label: "Conduct", href: `${base}?tab=conduct` }] : []),
           { key: "results", label: "Results", href: `${base}?tab=results`, count: d.results.length },
           { key: "fees", label: "Fees", href: `${base}?tab=fees` },
           { key: "news", label: "News", href: `${base}?tab=news` },
@@ -152,6 +156,8 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           )}
         </Card>
       ) : null}
+
+      {tab === "conduct" && conduct ? <ConductList conduct={conduct} name={d.link.firstName} /> : null}
 
       {tab === "results" ? (
         <Card className="p-5">

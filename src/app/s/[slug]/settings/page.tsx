@@ -18,6 +18,8 @@ import { listPlans } from "@/lib/services/school-profile";
 import { AdmissionSettings } from "../admissions/admission-settings";
 import { HrSettingsForm } from "../hr/hr-settings-form";
 import { PayrollSettingsForm } from "../payroll/payroll-client";
+import { DisciplineSettingsForm } from "../discipline/discipline-client";
+import { disciplineSettings } from "@/lib/services/discipline";
 import { payrollSettings } from "@/lib/services/payroll";
 import { LEAVE_KINDS } from "@/lib/db/schema";
 import { hrSettings, LEAVE_LABEL } from "@/lib/services/hr";
@@ -30,12 +32,13 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
   const sp = await searchParams;
   const canAdmissions = can(access, "admissions:manage") && hasFeature(access.plan, "admissions");
   const canHr = (can(access, "staff:update") || can(access, "staff:leave")) && hasFeature(access.plan, "staff_attendance");
   const canPayroll = can(access, "expenses:payroll") && hasFeature(access.plan, "payroll");
+  const canDiscipline = can(access, "operations:discipline") && hasFeature(access.plan, "discipline");
   const tab = sp.tab ?? (canProfile ? "profile" : can(access, "fees:manage") ? "payments" : can(access, "comms:announce") ? "messaging" : "admissions");
   const s = access.school;
   const base = `/s/${slug}/settings`;
@@ -54,11 +57,14 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canAdmissions ? [{ key: "admissions", label: "Admissions", href: `${base}?tab=admissions` }] : []),
             ...(canHr ? [{ key: "hr", label: "Staff & HR", href: `${base}?tab=hr` }] : []),
             ...(canPayroll ? [{ key: "payroll", label: "Payroll", href: `${base}?tab=payroll` }] : []),
+            ...(canDiscipline ? [{ key: "behaviour", label: "Behaviour", href: `${base}?tab=behaviour` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "payroll" && canPayroll ? (
+        {tab === "behaviour" && canDiscipline ? (
+          <DisciplineSettingsForm slug={slug} settings={disciplineSettings(s.disciplineSettings)} editable />
+        ) : tab === "payroll" && canPayroll ? (
           <PayrollSettingsForm slug={slug} settings={payrollSettings(s.payrollSettings)} editable />
         ) : tab === "hr" && canHr ? (
           <HrSettingsForm

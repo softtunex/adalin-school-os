@@ -18,6 +18,10 @@ import { fullName, getStudent } from "@/lib/services/students";
 import { InvoiceStatusBadge } from "../../fees/shared";
 import { OneOffInvoiceButton, StudentDiscounts } from "./fees-tab";
 import { AddGuardianButton, GuardianActions, StudentStatusMenu } from "./profile-client";
+import { ConductList } from "@/components/conduct-list";
+import { lagosToday } from "@/lib/services/attendance";
+import { behaviourStudents, disciplineSettings, studentConduct } from "@/lib/services/discipline";
+import { RecordButton } from "../../discipline/discipline-client";
 
 export const metadata: Metadata = { title: "Student" };
 
@@ -59,7 +63,12 @@ export default async function StudentPage({
   const base = `/s/${slug}/students/${id}`;
   const showFees = can(access, "fees:view") && hasFeature(access.plan, "fees_basic");
   const fees = showFees ? await getStudentFees(getDb(), access, id) : null;
-  const tab = ["details", "parents", "history", ...(fees ? ["fees"] : [])].includes(sp.tab ?? "") ? sp.tab! : "details";
+  const showConduct = hasFeature(access.plan, "discipline") && access.isStaff;
+  const tab = ["details", "parents", "history", ...(fees ? ["fees"] : []), ...(showConduct ? ["conduct"] : [])].includes(sp.tab ?? "") ? sp.tab! : "details";
+  const conduct = tab === "conduct" ? await studentConduct(getDb(), access, id) : null;
+  const pupils = tab === "conduct" ? await behaviourStudents(getDb(), access) : [];
+  const me = pupils.find((p) => p.id === id);
+  const ds = disciplineSettings(access.school.disciplineSettings);
   const canUpdate = can(access, "students:update");
   const canMedical = can(access, "students:view_medical");
 
@@ -128,6 +137,7 @@ export default async function StudentPage({
                 { key: "parents", label: "Parents & guardians", href: `${base}?tab=parents`, count: guardians.length },
                 { key: "history", label: "Class history", href: `${base}?tab=history`, count: history.length },
                 ...(fees ? [{ key: "fees", label: "Fees", href: `${base}?tab=fees`, count: fees.invoices.length }] : []),
+                ...(showConduct ? [{ key: "conduct", label: "Conduct", href: `${base}?tab=conduct` }] : []),
               ]}
             />
 
@@ -256,6 +266,14 @@ export default async function StudentPage({
                   />
                 ) : null}
               </div>
+            ) : null}
+
+            {tab === "conduct" && conduct ? (
+              <ConductList
+                conduct={conduct}
+                name={s.firstName}
+                action={me ? <RecordButton slug={slug} pupils={pupils} fixed={me} merits={ds.meritCategories} incidents={ds.incidentCategories} today={lagosToday()} label="Record" /> : null}
+              />
             ) : null}
 
             {tab === "history" ? (

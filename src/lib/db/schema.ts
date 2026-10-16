@@ -87,6 +87,15 @@ export type PayrollSettings = {
   recordExpense?: boolean;
 };
 
+export type DisciplineSettings = {
+  meritCategories?: string[];
+  incidentCategories?: string[];
+  /** Which incidents parents hear about automatically. */
+  notifyIncidents?: "serious" | "moderate" | "all" | "none";
+  /** Tell parents about merits too. */
+  notifyMerits?: boolean;
+};
+
 /** A named amount on a payslip: an allowance, a deduction, a bonus. */
 export type PayLine = { name: string; kobo: number };
 
@@ -214,6 +223,7 @@ export const schools = pgTable(
     admissionSettings: jsonb("admission_settings").$type<AdmissionSettings>().notNull().default({}),
     hrSettings: jsonb("hr_settings").$type<HrSettings>().notNull().default({}),
     payrollSettings: jsonb("payroll_settings").$type<PayrollSettings>().notNull().default({}),
+    disciplineSettings: jsonb("discipline_settings").$type<DisciplineSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1611,6 +1621,38 @@ export const payslips = pgTable(
   (t) => [uniqueIndex("payslips_run_member_uq").on(t.runId, t.membershipId)],
 );
 
+// ---------- Discipline and behaviour ----------
+
+export const BEHAVIOUR_SEVERITIES = ["minor", "moderate", "serious"] as const;
+
+export const behaviourRecords = pgTable(
+  "behaviour_records",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    termId: uuid("term_id").references(() => terms.id, { onDelete: "set null" }),
+    classId: uuid("class_id").references(() => classes.id, { onDelete: "set null" }),
+    kind: text("kind", { enum: ["merit", "incident"] }).notNull(),
+    category: text("category").notNull(),
+    severity: text("severity", { enum: BEHAVIOUR_SEVERITIES }),
+    /** Positive for merits, negative for incidents. */
+    points: integer("points").notNull().default(0),
+    description: text("description").notNull().default(""),
+    actionTaken: text("action_taken"),
+    occurredOn: date("occurred_on").notNull(),
+    status: text("status", { enum: ["open", "resolved"] }).notNull().default("resolved"),
+    parentNotifiedAt: timestamp("parent_notified_at", { withTimezone: true }),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    resolvedBy: uuid("resolved_by").references(() => memberships.id, { onDelete: "set null" }),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("behaviour_student_idx").on(t.studentId, t.occurredOn), index("behaviour_school_term_idx").on(t.schoolId, t.termId, t.kind)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1678,4 +1720,5 @@ export const TENANT_TABLES = [
   "staff_pay",
   "payroll_runs",
   "payslips",
+  "behaviour_records",
 ] as const;
