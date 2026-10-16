@@ -9,8 +9,14 @@ import { Icon } from "@/components/ui/icons";
 import { Tabs } from "@/components/ui/tabs";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { formatNaira } from "@/lib/money";
+import { hasFeature } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
+import { describeScheme } from "@/lib/services/fees";
+import { getStudentFees } from "@/lib/services/invoices";
 import { fullName, getStudent } from "@/lib/services/students";
+import { InvoiceStatusBadge } from "../../fees/shared";
+import { OneOffInvoiceButton, StudentDiscounts } from "./fees-tab";
 import { AddGuardianButton, GuardianActions, StudentStatusMenu } from "./profile-client";
 
 export const metadata: Metadata = { title: "Student" };
@@ -51,7 +57,9 @@ export default async function StudentPage({
   const { student: s, guardians, history, siblings } = profile;
   const name = fullName(s);
   const base = `/s/${slug}/students/${id}`;
-  const tab = ["details", "parents", "history"].includes(sp.tab ?? "") ? sp.tab! : "details";
+  const showFees = can(access, "fees:view") && hasFeature(access.plan, "fees_basic");
+  const fees = showFees ? await getStudentFees(getDb(), access, id) : null;
+  const tab = ["details", "parents", "history", ...(fees ? ["fees"] : [])].includes(sp.tab ?? "") ? sp.tab! : "details";
   const canUpdate = can(access, "students:update");
   const canMedical = can(access, "students:view_medical");
 
@@ -114,6 +122,7 @@ export default async function StudentPage({
                 { key: "details", label: "Details", href: base },
                 { key: "parents", label: "Parents & guardians", href: `${base}?tab=parents`, count: guardians.length },
                 { key: "history", label: "Class history", href: `${base}?tab=history`, count: history.length },
+                ...(fees ? [{ key: "fees", label: "Fees", href: `${base}?tab=fees`, count: fees.invoices.length }] : []),
               ]}
             />
 
@@ -198,6 +207,52 @@ export default async function StudentPage({
               </div>
             ) : null}
 
+            {tab === "fees" && fees ? (
+              <div className="flex flex-col gap-5">
+                <Card className="p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="fs-15.5 font-semibold">Invoices</h3>
+                      <p className="mt-0.5 fs-14 text-muted">
+                        {fees.owing > 0 ? `${formatNaira(fees.owing)} outstanding` : "Nothing outstanding"} · {formatNaira(fees.paid)} paid in total
+                      </p>
+                    </div>
+                    {can(access, "fees:invoice") && fees.term ? <OneOffInvoiceButton slug={slug} studentId={id} termId={fees.term.id} items={fees.items} /> : null}
+                  </div>
+                  {fees.invoices.length === 0 ? (
+                    <p className="mt-4 fs-14.5 text-muted">No invoices yet. Term invoices are raised for the whole school from Fees.</p>
+                  ) : (
+                    <ul className="mt-3 flex flex-col divide-y divide-line">
+                      {fees.invoices.map((inv) => (
+                        <li key={inv.id}>
+                          <Link href={`/s/${slug}/fees/invoices/${inv.id}`} className="flex flex-wrap items-center gap-3 py-3 hover:text-blue">
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-medium text-ink">{inv.title}</span>
+                              <span className="block font-mono fs-13 text-muted">{inv.number}</span>
+                            </span>
+                            <span className="tabular text-right">
+                              <span className="block fs-14.5 font-semibold text-ink">{inv.status === "void" ? "—" : formatNaira(Math.max(0, inv.balance))}</span>
+                              <span className="block fs-12.5 text-muted">of {formatNaira(inv.chargesKobo - inv.discountKobo)}</span>
+                            </span>
+                            <InvoiceStatusBadge status={inv.status} />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+                {hasFeature(access.plan, "debtors") ? (
+                  <StudentDiscounts
+                    slug={slug}
+                    studentId={id}
+                    editable={can(access, "fees:discount")}
+                    assigned={fees.assigned}
+                    schemes={fees.schemes.map((sc) => ({ id: sc.id, name: sc.name, description: describeScheme(sc, sc.itemId ? fees.items.find((i) => i.id === sc.itemId)?.name : null) }))}
+                  />
+                ) : null}
+              </div>
+            ) : null}
+
             {tab === "history" ? (
               <Card className="p-6">
                 {history.length === 0 ? (
@@ -235,8 +290,20 @@ export default async function StudentPage({
                   <span className="text-body">Results appear once scores are entered.</span>
                 </li>
                 <li className="flex items-center gap-3">
-                  <IconChip icon="wallet" tone="warning" size={34} />
-                  <span className="text-body">Fees appear once fee structures are set.</span>
+                  <IconChip icon="wallet" tone={fees && fees.owing > 0 ? "warning" : "success"} size={34} />
+                  {fees && fees.invoices.length ? (
+                    <Link href={`${base}?tab=fees`} className="text-body hover:text-blue">
+                      {fees.owing > 0 ? (
+                        <>
+                          Owes <span className="tabular font-semibold text-ink">{formatNaira(fees.owing)}</span>
+                        </>
+                      ) : (
+                        "Fees fully paid"
+                      )}
+                    </Link>
+                  ) : (
+                    <span className="text-body">Fees appear once invoices are raised.</span>
+                  )}
                 </li>
               </ul>
             </Card>

@@ -471,12 +471,28 @@ export async function getInvoice(db: DB, access: Access, invoiceId: string) {
   });
 }
 
-export async function listStudentInvoices(db: DB, access: Access, studentId: string) {
+/** The Fees tab on a student's profile: their invoices, what they owe, and their discounts. */
+export async function getStudentFees(db: DB, access: Access, studentId: string) {
   requirePermission(access, "fees:view");
+  requireFeature(access.plan, "fees_basic");
   return withTenant(db, access.school.id, async (tx) => {
-    const rows = await tx.select().from(invoices).where(eq(invoices.studentId, studentId)).orderBy(desc(invoices.createdAt));
-    const owing = rows.filter((r) => r.status !== "void").reduce((n, r) => n + Math.max(0, balanceOf(r)), 0);
-    return { invoices: rows.map((r) => ({ ...r, balance: balanceOf(r) })), owing };
+    const [rows, schemes, assigned, items, current] = await Promise.all([
+      tx.select().from(invoices).where(eq(invoices.studentId, studentId)).orderBy(desc(invoices.createdAt)),
+      tx.select().from(discountSchemes).where(eq(discountSchemes.isActive, true)).orderBy(asc(discountSchemes.name)),
+      tx.select({ schemeId: studentDiscounts.schemeId }).from(studentDiscounts).where(eq(studentDiscounts.studentId, studentId)),
+      tx.select({ id: feeItems.id, name: feeItems.name }).from(feeItems).orderBy(asc(feeItems.sort), asc(feeItems.name)),
+      pickTerm(tx).catch(() => null),
+    ]);
+    const live = rows.filter((r) => r.status !== "void");
+    return {
+      invoices: rows.map((r) => ({ ...r, balance: balanceOf(r) })),
+      owing: live.reduce((n, r) => n + Math.max(0, balanceOf(r)), 0),
+      paid: live.reduce((n, r) => n + r.paidKobo, 0),
+      schemes,
+      assigned: assigned.map((a) => a.schemeId),
+      items,
+      term: current?.term ?? null,
+    };
   });
 }
 

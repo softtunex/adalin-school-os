@@ -38,7 +38,7 @@ export const NAV: NavSection[] = [
       { href: "/staff", label: "Staff", icon: "users", anyOf: ["staff:view"], staffOnly: true },
       { href: "/roles", label: "Roles & permissions", icon: "shield", anyOf: ["roles:view"], staffOnly: true },
       { href: "/audit", label: "Audit log", icon: "history", anyOf: ["audit:view"], feature: "audit_log", staffOnly: true },
-      { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing"], staffOnly: true },
+      { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing", "fees:manage"], staffOnly: true },
     ],
   },
 ];

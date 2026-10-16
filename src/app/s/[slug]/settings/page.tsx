@@ -9,17 +9,21 @@ import { SUPPORT_WHATSAPP } from "@/lib/config";
 import { getDb } from "@/lib/db/client";
 import { formatNaira } from "@/lib/nigeria";
 import { FEATURES, LIMITS, type FeatureKey, type LimitKey } from "@/lib/plans/catalog";
-import { can } from "@/lib/services/access";
+import { hasFeature } from "@/lib/plans/entitlements";
+import { can, type Access } from "@/lib/services/access";
+import { listBanks, paystackMode } from "@/lib/services/paystack";
 import { listPlans } from "@/lib/services/school-profile";
 import { LogoCard } from "./logo-card";
+import { FeeRulesForm, SettlementForm } from "./payments-forms";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { slug } = await params;
-  const { tab = "profile" } = await searchParams;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage"]);
+  const canProfile = can(access, "school:update") || can(access, "school:billing");
+  const { tab = canProfile ? "profile" : "payments" } = await searchParams;
   const s = access.school;
   const base = `/s/${slug}/settings`;
 
@@ -30,13 +34,16 @@ export default async function SettingsPage({ params, searchParams }: { params: P
         <Tabs
           current={tab}
           tabs={[
-            { key: "profile", label: "School profile", href: base },
-            { key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` },
-            { key: "plan", label: "Plan & billing", href: `${base}?tab=plan` },
+            ...(canProfile ? [{ key: "profile", label: "School profile", href: base }] : []),
+            ...(can(access, "academics:view") ? [{ key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` }] : []),
+            ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
+            ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "plan" ? (
+        {tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
+          <PaymentsTab slug={slug} access={access} />
+        ) : !canProfile ? null : tab === "plan" ? (
           <PlanTab currentKey={access.plan.key} canBill={can(access, "school:billing")} />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
@@ -70,6 +77,38 @@ export default async function SettingsPage({ params, searchParams }: { params: P
         )}
       </PageBody>
     </>
+  );
+}
+
+async function PaymentsTab({ slug, access }: { slug: string; access: Access }) {
+  const mode = paystackMode();
+  const banks = await listBanks().catch(() => []);
+  const fs = access.school.feeSettings;
+  const online = hasFeature(access.plan, "fees_online");
+  return (
+    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="flex flex-col gap-3">
+        <h2 className="fs-16 font-semibold">Payments</h2>
+        <p className="fs-14 text-muted">Your school&apos;s bank account and how fee collection works.</p>
+        <div className="flex flex-col gap-1.5 rounded-chunk border border-line p-3 fs-13.5">
+          <span className="flex items-center justify-between gap-2">
+            Online payment
+            <Badge tone={!online ? "neutral" : mode === "live" && access.school.paystackSubaccount ? "success" : mode === "off" ? "neutral" : "blue"}>
+              {!online ? "Standard plan" : mode === "off" ? "Not switched on" : !access.school.paystackSubaccount ? "Needs bank account" : mode === "test" ? "Test mode" : "Live"}
+            </Badge>
+          </span>
+        </div>
+      </div>
+      <div className="flex flex-col gap-5">
+        <SettlementForm slug={slug} banks={banks} mode={mode} current={fs.bank ?? null} editable={can(access, "school:billing")} />
+        <FeeRulesForm
+          slug={slug}
+          standard={hasFeature(access.plan, "debtors")}
+          editable={can(access, "fees:manage")}
+          settings={{ withholdResults: !!fs.withholdResults, autoReminders: !!fs.autoReminders, reminderEveryDays: fs.reminderEveryDays ?? 7, invoiceNote: fs.invoiceNote ?? "" }}
+        />
+      </div>
+    </div>
   );
 }
 
