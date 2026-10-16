@@ -4,9 +4,9 @@
  * published JSS 1 Gold results. Run with the dev server stopped, after db:seed,
  * db:seed-results and db:seed-fees.
  */
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { createDatabaseFromEnv } from "../src/lib/db/client";
-import { announcements, classes, guardians, studentGuardians, students, users } from "../src/lib/db/schema";
+import { announcements, classes, guardians, invoices, studentGuardians, students, users } from "../src/lib/db/schema";
 import { withTenant } from "../src/lib/db/tenant";
 import { drainOutbox } from "../src/lib/services/outbox";
 import { loadAccess } from "../src/lib/services/access";
@@ -61,6 +61,22 @@ async function main() {
   }
   const parent = { id: parentId, name: child.guardian.name };
 
+  // A second child in senior school, still owing fees, so the parent app shows several children.
+  const sibling = await withTenant(db, owner.school.id, async (tx) => {
+    const owing = await tx
+      .select({ s: students, className: classes.name })
+      .from(invoices)
+      .innerJoin(students, eq(students.id, invoices.studentId))
+      .innerJoin(classes, eq(classes.id, students.classId))
+      .where(and(inArray(invoices.status, ["unpaid", "partial"]), ne(students.classId, child.classId)));
+    const pick = owing.find((o) => o.className.startsWith("SS")) ?? owing[0];
+    if (!pick) return null;
+    await tx.update(students).set({ lastName: child.student.lastName }).where(eq(students.id, pick.s.id));
+    await tx.update(studentGuardians).set({ isPrimary: false }).where(eq(studentGuardians.studentId, pick.s.id));
+    await tx.insert(studentGuardians).values({ schoolId: owner.school.id, studentId: pick.s.id, guardianId: child.guardian.id, relationship: "Mother", isPrimary: true }).onConflictDoNothing();
+    return `${pick.s.firstName} ${child.student.lastName} (${pick.className})`;
+  });
+
   await saveCommsSettings(db, owner, { absenceAlerts: true, resultAlerts: true, paymentAlerts: true, smsAlerts: true, parentMessaging: true, limitHours: false });
   await addCredits(db, owner.school.id, 1_500, "demo-credits", "Demo credits");
 
@@ -112,7 +128,7 @@ async function main() {
     console.warn("Results not published:", (error as Error).message);
   }
 
-  console.log(`Done. Parent login: ${child.guardian.phone} (${child.guardian.name}, parent of ${child.student.firstName} ${child.student.lastName}).`);
+  console.log(`Done. Parent login: ${child.guardian.phone} (${child.guardian.name}, parent of ${child.student.firstName} ${child.student.lastName}${sibling ? ` and ${sibling}` : ""}).`);
   await drainOutbox(db, async (m) => (console.info(`[${m.channel}] ${m.to}`), { ok: true, ref: "seed" }), 5000);
   await database.close();
 }
