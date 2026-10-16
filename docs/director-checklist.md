@@ -5,6 +5,11 @@ Collected during the build so work never stops for a question. Handed over at th
 ## Accounts and access
 
 1. ~~GitHub repo~~ Done: `softtunex/adalin-school-os`.
+2. **Neon Postgres database** (free tier is fine to start): the connection string goes in `DATABASE_URL` on Vercel.
+3. **Vercel project** linked to the GitHub repo, so every push deploys.
+4. **Resend API key** for emails (invitations, password resets). Adalin already uses Resend; a key for this project and a verified sending domain.
+5. **Cloudinary account** for school logos and, later, student photos and documents: cloud name, API key and API secret. Uploads only work on the live site once these are set.
+6. **Domain** for the product once the name is decided (e.g. `schoolos.ng`), with each school on its own subdomain later.
 
 ## Assets
 

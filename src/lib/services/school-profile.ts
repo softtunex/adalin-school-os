@@ -35,6 +35,14 @@ export const schoolProfileSchema = z.object({
   city: optional(80),
   state: optional(80),
   country: z.string().trim().min(2).max(80).default("Nigeria"),
+  admissionPrefix: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine((v) => v === "" || /^[A-Z0-9]{1,8}$/.test(v), "Use up to 8 letters or numbers, e.g. GFC.")
+    .transform((v) => (v === "" ? null : v))
+    .nullable()
+    .optional(),
 });
 
 export type SchoolProfileInput = z.infer<typeof schoolProfileSchema>;
@@ -55,6 +63,7 @@ export async function updateSchoolProfile(db: DB, access: Access, input: SchoolP
         city: input.city ?? null,
         state: input.state ?? null,
         country: input.country,
+        admissionPrefix: input.admissionPrefix ?? null,
       })
       .where(eq(schools.id, access.school.id));
     if (input.address && input.phone && input.schoolType) await markOnboarding(tx, access.school.id, "profile");
@@ -63,6 +72,17 @@ export async function updateSchoolProfile(db: DB, access: Access, input: SchoolP
       summary: "Updated the school profile",
       entityType: "school",
       entityId: access.school.id,
+    });
+  });
+}
+
+export async function setSchoolLogo(db: DB, access: Access, logoUrl: string | null, ip?: string | null) {
+  requirePermission(access, "school:update");
+  await withTenant(db, access.school.id, async (tx) => {
+    await tx.update(schools).set({ logoUrl }).where(eq(schools.id, access.school.id));
+    await recordAudit(tx, access.school.id, { userId: access.user.id, name: access.user.name, ip }, {
+      action: "school.logo",
+      summary: logoUrl ? "Uploaded a new school logo" : "Removed the school logo",
     });
   });
 }

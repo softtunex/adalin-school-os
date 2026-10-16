@@ -11,6 +11,7 @@ import { formatNaira } from "@/lib/nigeria";
 import { FEATURES, LIMITS, type FeatureKey, type LimitKey } from "@/lib/plans/catalog";
 import { can } from "@/lib/services/access";
 import { listPlans } from "@/lib/services/school-profile";
+import { LogoCard } from "./logo-card";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -42,6 +43,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
               <h2 className="text-[16px] font-semibold">School profile</h2>
               <p className="mt-1 text-[14px] text-muted">Shown on report cards, receipts and the parent app. Complete it to tick off the first setup step.</p>
             </div>
+            <div className="flex flex-col gap-5">
+            {can(access, "school:update") ? <LogoCard slug={slug} name={s.name} logoUrl={s.logoUrl} /> : null}
             <Card className="p-5 sm:p-6">
               <ProfileForm
                 slug={slug}
@@ -57,9 +60,11 @@ export default async function SettingsPage({ params, searchParams }: { params: P
                   city: s.city ?? "",
                   state: s.state ?? "",
                   country: s.country,
+                  admissionPrefix: s.admissionPrefix ?? "",
                 }}
               />
             </Card>
+            </div>
           </div>
         )}
       </PageBody>

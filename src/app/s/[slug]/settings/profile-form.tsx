@@ -8,7 +8,7 @@ import { initialFormState } from "@/lib/form-state";
 import { CURRICULA, NIGERIAN_STATES, SCHOOL_TYPES } from "@/lib/nigeria";
 import { saveProfileAction } from "./actions";
 
-type Profile = Record<"name" | "motto" | "schoolType" | "curriculum" | "email" | "phone" | "address" | "city" | "state" | "country", string>;
+type Profile = Record<"name" | "motto" | "schoolType" | "curriculum" | "email" | "phone" | "address" | "city" | "state" | "country" | "admissionPrefix", string>;
 
 export function ProfileForm({ slug, profile, readOnly }: { slug: string; profile: Profile; readOnly: boolean }) {
   const [state, action] = useActionState(saveProfileAction.bind(null, slug), initialFormState);
@@ -76,6 +76,15 @@ export function ProfileForm({ slug, profile, readOnly }: { slug: string; profile
         )}
         <Field label="Country" htmlFor="country" error={fe.country}>
           <Input id="country" name="country" defaultValue={v.country || "Nigeria"} />
+        </Field>
+        <Field
+          label="Admission number prefix"
+          htmlFor="admissionPrefix"
+          error={fe.admissionPrefix}
+          hint={`New students get numbers like ${(v.admissionPrefix || "GFC").toUpperCase()}/${new Date().getFullYear()}/0001. Leave empty to use your school's initials.`}
+          className="sm:col-span-2"
+        >
+          <Input id="admissionPrefix" name="admissionPrefix" defaultValue={v.admissionPrefix} maxLength={8} className="uppercase sm:max-w-[200px]" placeholder="e.g. GFC" />
         </Field>
       </fieldset>
       {readOnly ? null : (
