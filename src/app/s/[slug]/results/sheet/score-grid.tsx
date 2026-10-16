@@ -150,19 +150,19 @@ export function ScoreGrid({
       {error ? <Alert tone="danger">{error}</Alert> : null}
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-separate border-spacing-0 text-[14.5px]">
+          <table className="w-full min-w-[640px] border-separate border-spacing-0 fs-14.5">
             <thead>
               <tr>
-                <th className="sticky left-0 z-10 bg-paper px-4 py-3 text-left text-[13.5px] font-medium text-muted">Student</th>
+                <th className="sticky left-0 z-10 bg-paper px-4 py-3 text-left fs-13.5 font-medium text-muted">Student</th>
                 {components.map((c) => (
-                  <th key={c.id} className="bg-paper px-2 py-3 text-center text-[13.5px] font-medium text-muted">
+                  <th key={c.id} className="bg-paper px-2 py-3 text-center fs-13.5 font-medium text-muted">
                     {c.name}
-                    <span className="block text-[12px] font-normal">/ {c.maxScore}</span>
+                    <span className="block fs-12 font-normal">/ {c.maxScore}</span>
                   </th>
                 ))}
-                <th className="bg-paper px-3 py-3 text-center text-[13.5px] font-medium text-muted">Total</th>
-                <th className="bg-paper px-3 py-3 text-center text-[13.5px] font-medium text-muted">Grade</th>
-                <th className="bg-paper px-3 py-3 text-center text-[13.5px] font-medium text-muted">Pos.</th>
+                <th className="bg-paper px-3 py-3 text-center fs-13.5 font-medium text-muted">Total</th>
+                <th className="bg-paper px-3 py-3 text-center fs-13.5 font-medium text-muted">Grade</th>
+                <th className="bg-paper px-3 py-3 text-center fs-13.5 font-medium text-muted">Pos.</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +174,7 @@ export function ScoreGrid({
                   <tr key={s.id} className="group hover:bg-paper">
                     <td className="sticky left-0 z-10 border-b border-line bg-canvas px-4 py-2 group-hover:bg-paper">
                       <p className="max-w-[220px] truncate font-medium text-ink">{s.name}</p>
-                      <p className="font-mono text-[12px] text-muted">{s.admissionNo}</p>
+                      <p className="font-mono fs-12 text-muted">{s.admissionNo}</p>
                     </td>
                     {components.map((c, col) => {
                       const k = key(s.id, c.id);
@@ -214,7 +214,7 @@ export function ScoreGrid({
                             }}
                             onFocus={(e) => e.currentTarget.select()}
                             className={cn(
-                              "tabular h-10 w-[72px] rounded-[10px] border text-center text-[15px] font-medium text-ink focus:outline-none disabled:bg-sunken disabled:text-body",
+                              "tabular h-10 w-[72px] rounded-[10px] border text-center fs-15 font-medium text-ink focus:outline-none disabled:bg-sunken disabled:text-body",
                               bad ? "border-danger bg-danger-wash focus:shadow-[0_0_0_3px_var(--danger-wash)]" : "border-line-strong bg-canvas focus:border-blue focus:shadow-[0_0_0_3px_var(--blue-wash)]",
                             )}
                           />
@@ -223,7 +223,7 @@ export function ScoreGrid({
                     })}
                     <td className="tabular border-b border-line px-3 py-2 text-center font-semibold text-ink">{total ?? "—"}</td>
                     <td className="border-b border-line px-3 py-2 text-center">
-                      {band ? <span className={cn("inline-grid h-7 min-w-9 place-items-center rounded-md px-1.5 text-[13px] font-bold", band.passes ? "bg-success-wash text-success" : "bg-danger-wash text-danger")}>{band.grade}</span> : <span className="text-muted">—</span>}
+                      {band ? <span className={cn("inline-grid h-7 min-w-9 place-items-center rounded-md px-1.5 fs-13 font-bold", band.passes ? "bg-success-wash text-success" : "bg-danger-wash text-danger")}>{band.grade}</span> : <span className="text-muted">—</span>}
                     </td>
                     <td className="tabular border-b border-line px-3 py-2 text-center text-body">{pos ?? "—"}</td>
                   </tr>
@@ -236,7 +236,7 @@ export function ScoreGrid({
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] backdrop-blur lg:left-[288px] sm:px-8">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3">
-          <p className="flex items-center gap-2 text-[14px] text-body" aria-live="polite">
+          <p className="flex items-center gap-2 fs-14 text-body" aria-live="polite">
             {saveState === "saving" ? (
               <>
                 <Icon name="refresh" size={16} className="animate-spin text-muted" /> Saving…

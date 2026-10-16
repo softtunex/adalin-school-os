@@ -28,7 +28,7 @@ export function ConfirmDialog({
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <div className="flex flex-col gap-5">
-        <div className="text-[15px] text-body">{children}</div>
+        <div className="fs-15 text-body">{children}</div>
         {error ? <Alert tone="danger">{error}</Alert> : null}
         <div className="flex flex-wrap justify-end gap-2.5">
           <Button variant="secondary" onClick={onClose}>

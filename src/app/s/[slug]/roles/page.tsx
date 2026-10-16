@@ -56,8 +56,8 @@ export default async function RolesPage({ params }: { params: Promise<{ slug: st
         ].map((section) => (
           <section key={section.title} aria-label={section.title} className="flex flex-col gap-3">
             <div>
-              <h2 className="text-[17px] font-semibold">{section.title}</h2>
-              <p className="text-[14px] text-muted">{section.text}</p>
+              <h2 className="fs-17 font-semibold">{section.title}</h2>
+              <p className="fs-14 text-muted">{section.text}</p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {section.list.map((role) => (
@@ -66,13 +66,13 @@ export default async function RolesPage({ params }: { params: Promise<{ slug: st
                     <IconChip icon={role.key === "owner" ? "badgeCheck" : role.kind === "portal" ? "user" : role.isSystem ? "shield" : "star"} tone={role.key === "owner" ? "brand" : role.isSystem ? "neutral" : "violet"} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-[16px] font-semibold">{role.name}</h3>
+                        <h3 className="fs-16 font-semibold">{role.name}</h3>
                         {role.isSystem ? null : <Badge tone="violet">Custom</Badge>}
                       </div>
-                      <p className="mt-0.5 text-[14px] text-muted">{role.description || "Custom role"}</p>
+                      <p className="mt-0.5 fs-14 text-muted">{role.description || "Custom role"}</p>
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-4 text-[13.5px] text-body">
+                  <div className="mt-4 flex items-center gap-4 fs-13.5 text-body">
                     <span className="tabular inline-flex items-center gap-1.5">
                       <Icon name="users" size={16} className="text-muted" />
                       {role.memberCount} {role.memberCount === 1 ? "person" : "people"}
@@ -83,15 +83,15 @@ export default async function RolesPage({ params }: { params: Promise<{ slug: st
                     </span>
                   </div>
                   <details className="group mt-4 rounded-chunk border border-line">
-                    <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-[14px] font-medium text-ink hover:bg-paper">
+                    <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 fs-14 font-medium text-ink hover:bg-paper">
                       What this role can do
                       <Icon name="chevronDown" size={17} className="text-muted transition-transform group-open:rotate-180" />
                     </summary>
                     <div className="flex flex-col gap-3 border-t border-line px-3 py-3">
                       {groupPermissions(role.permissions).map(([group, labels]) => (
                         <div key={group}>
-                          <p className="text-[12.5px] font-medium text-muted">{group}</p>
-                          <p className="mt-0.5 text-[13.5px] text-body">{labels.join(" · ")}</p>
+                          <p className="fs-12.5 font-medium text-muted">{group}</p>
+                          <p className="mt-0.5 fs-13.5 text-body">{labels.join(" · ")}</p>
                         </div>
                       ))}
                     </div>

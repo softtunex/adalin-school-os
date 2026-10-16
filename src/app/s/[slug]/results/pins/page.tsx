@@ -50,7 +50,7 @@ export default async function PinsPage({ params }: { params: Promise<{ slug: str
           <PinGenerator slug={slug} schoolName={access.school.name} checkUrl={checkUrl} />
           <TableCard title="Where parents check results">
             <div className="flex flex-col gap-3 px-5 pb-5">
-              <p className="text-[14px] text-muted">Print this address on your PIN cards and share it on WhatsApp. Results only show once a class is published.</p>
+              <p className="fs-14 text-muted">Print this address on your PIN cards and share it on WhatsApp. Results only show once a class is published.</p>
               <CopyField value={checkUrl} label="Result checker link" />
             </div>
           </TableCard>
@@ -75,7 +75,7 @@ export default async function PinsPage({ params }: { params: Promise<{ slug: str
               <tbody>
                 {batches.map((b) => (
                   <tr key={b.batch} className="hover:bg-paper">
-                    <Td className="font-mono text-[13px]">{b.batch}</Td>
+                    <Td className="font-mono fs-13">{b.batch}</Td>
                     <Td>
                       {b.termName}, {b.sessionName}
                     </Td>

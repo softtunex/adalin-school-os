@@ -67,7 +67,7 @@ export function SetupWizard({ slug, defaultSession, defaultTemplate }: { slug: s
     <form action={action} className="mt-6 flex flex-col gap-6" noValidate>
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
       <fieldset>
-        <legend className="mb-2 text-[14px] font-medium text-ink">Curriculum</legend>
+        <legend className="mb-2 fs-14 font-medium text-ink">Curriculum</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {(Object.keys(TEMPLATES) as TemplateKey[]).map((key) => (
             <label
@@ -80,7 +80,7 @@ export function SetupWizard({ slug, defaultSession, defaultTemplate }: { slug: s
               <input type="radio" name="template" value={key} checked={template === key} onChange={() => setTemplate(key)} className="size-4 accent-[var(--brand)]" />
               <span>
                 <span className="block font-semibold text-ink">{TEMPLATES[key].label}</span>
-                <span className="block text-[13px] text-muted">{TEMPLATES[key].termNames.join(", ")}</span>
+                <span className="block fs-13 text-muted">{TEMPLATES[key].termNames.join(", ")}</span>
               </span>
             </label>
           ))}
@@ -88,13 +88,13 @@ export function SetupWizard({ slug, defaultSession, defaultTemplate }: { slug: s
       </fieldset>
 
       <fieldset key={template}>
-        <legend className="mb-2 text-[14px] font-medium text-ink">Sections your school runs</legend>
+        <legend className="mb-2 fs-14 font-medium text-ink">Sections your school runs</legend>
         <div className="grid gap-2 sm:grid-cols-2">
           {t.sections.map((s) => (
             <Checkbox key={s.section} name="sections" value={s.section} defaultChecked={s.section !== "creche"} label={s.label} description={s.levels.join(", ")} />
           ))}
         </div>
-        {fe.sections ? <p className="mt-2 text-[13.5px] font-medium text-danger">{fe.sections}</p> : null}
+        {fe.sections ? <p className="mt-2 fs-13.5 font-medium text-danger">{fe.sections}</p> : null}
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -265,11 +265,11 @@ function SubjectForm({ slug, levels, subject, onDone }: { slug: string; levels: 
         </Field>
       </div>
       <fieldset>
-        <legend className="mb-2 text-[14px] font-medium text-ink">Offered in</legend>
+        <legend className="mb-2 fs-14 font-medium text-ink">Offered in</legend>
         <div className="flex flex-col divide-y divide-line rounded-chunk border border-line-strong">
           {levels.map((l) => (
             <div key={l.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-              <label className="flex cursor-pointer items-center gap-2.5 text-[14.5px] text-ink">
+              <label className="flex cursor-pointer items-center gap-2.5 fs-14.5 text-ink">
                 <input
                   type="checkbox"
                   name="levelIds"
@@ -285,7 +285,7 @@ function SubjectForm({ slug, levels, subject, onDone }: { slug: string; levels: 
                 />
                 {l.name}
               </label>
-              <label className={cn("flex items-center gap-2 text-[13px]", offered.has(l.id) ? "text-body" : "text-line-strong")}>
+              <label className={cn("flex items-center gap-2 fs-13", offered.has(l.id) ? "text-body" : "text-line-strong")}>
                 <input type="checkbox" name="electiveLevelIds" value={l.id} disabled={!offered.has(l.id)} defaultChecked={subject?.electiveLevelIds.includes(l.id)} className="size-4 accent-[var(--violet)]" />
                 Elective
               </label>
@@ -447,13 +447,13 @@ export function TeacherSelect({
           </option>
         ))}
       </Select>
-      {pending ? <span className="text-[13px] text-muted">Saving…</span> : null}
+      {pending ? <span className="fs-13 text-muted">Saving…</span> : null}
       {!pending && status === "saved" ? (
-        <span className="inline-flex items-center gap-1 text-[13px] text-success">
+        <span className="inline-flex items-center gap-1 fs-13 text-success">
           <Icon name="check" size={15} strokeWidth={2.6} /> Saved
         </span>
       ) : null}
-      {!pending && status === "error" ? <span className="text-[13px] text-danger">Couldn&apos;t save</span> : null}
+      {!pending && status === "error" ? <span className="fs-13 text-danger">Couldn&apos;t save</span> : null}
     </div>
   );
 }

@@ -86,8 +86,8 @@ export function PromotionBoard({
         <span className="grid size-16 place-items-center rounded-full bg-success text-white shadow-[0_4px_0_var(--success-deep)]">
           <Icon name="check" size={32} strokeWidth={2.6} />
         </span>
-        <h2 className="mt-5 font-display text-[30px] font-black">Welcome to {toSession.name}</h2>
-        <p className="mt-2 text-[15px] text-muted">
+        <h2 className="mt-5 font-display fs-30 font-black">Welcome to {toSession.name}</h2>
+        <p className="mt-2 fs-15 text-muted">
           {result.counts.promote} promoted · {result.counts.repeat} repeating · {result.counts.graduate} graduated · {result.counts.withdraw} withdrawn
         </p>
         <ButtonLink href={`/s/${slug}/students`} className="mt-7">
@@ -101,8 +101,8 @@ export function PromotionBoard({
     return (
       <Card className="flex flex-col items-center px-6 py-14 text-center">
         <IconChip icon="checkCircle" tone="success" size={56} />
-        <h2 className="mt-4 text-[18px] font-semibold">Nobody left to move</h2>
-        <p className="mt-1 max-w-[46ch] text-[14.5px] text-muted">
+        <h2 className="mt-4 fs-18 font-semibold">Nobody left to move</h2>
+        <p className="mt-1 max-w-[46ch] fs-14.5 text-muted">
           {alreadyMoved ? `${alreadyMoved} students are already in ${toSession.name}.` : "There are no active students in classes."}
         </p>
       </Card>
@@ -126,7 +126,7 @@ export function PromotionBoard({
             </span>
           }
           toolbar={
-            <label className="flex items-center gap-2 text-[14px] text-muted">
+            <label className="flex items-center gap-2 fs-14 text-muted">
               Set all to
               <Select
                 aria-label={`Set all in ${g.className}`}
@@ -159,7 +159,7 @@ export function PromotionBoard({
                   <tr key={s.id} className="hover:bg-paper">
                     <Td>
                       <p className="font-medium">{s.name}</p>
-                      <p className="font-mono text-[12.5px] text-muted">{s.admissionNo}</p>
+                      <p className="font-mono fs-12.5 text-muted">{s.admissionNo}</p>
                     </Td>
                     <Td>
                       <Select
@@ -188,7 +188,7 @@ export function PromotionBoard({
                           ))}
                         </Select>
                       ) : (
-                        <span className="text-[14px] text-muted">{d.action === "graduate" ? "Leaves as a graduate" : "Leaves the school"}</span>
+                        <span className="fs-14 text-muted">{d.action === "graduate" ? "Leaves as a graduate" : "Leaves the school"}</span>
                       )}
                     </Td>
                   </tr>
@@ -201,7 +201,7 @@ export function PromotionBoard({
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] backdrop-blur lg:left-[288px] sm:px-8">
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3">
-          <p className="tabular text-[14px] text-body">
+          <p className="tabular fs-14 text-body">
             <span className="font-semibold text-ink">{total} students</span> · {counts.promote} promote · {counts.repeat} repeat · {counts.graduate} graduate · {counts.withdraw} withdraw
           </p>
           <Button onClick={() => setConfirm(true)} disabled={missingClass > 0}>
@@ -212,10 +212,10 @@ export function PromotionBoard({
 
       <Modal open={confirm} onClose={() => setConfirm(false)} title={`Move ${total} students into ${toSession.name}?`}>
         <div className="flex flex-col gap-5">
-          <ul className="grid grid-cols-2 gap-3 text-[14px]">
+          <ul className="grid grid-cols-2 gap-3 fs-14">
             {(Object.keys(LABEL) as Action[]).map((a) => (
               <li key={a} className="rounded-chunk border border-line p-3">
-                <p className="tabular text-[22px] font-semibold text-ink">{counts[a]}</p>
+                <p className="tabular fs-22 font-semibold text-ink">{counts[a]}</p>
                 <p className="text-muted">{LABEL[a]}</p>
               </li>
             ))}
@@ -224,7 +224,7 @@ export function PromotionBoard({
             <input type="checkbox" checked={makeCurrent} onChange={(e) => setMakeCurrent(e.target.checked)} className="mt-0.5 size-[18px] accent-[var(--brand)]" />
             <span>
               <span className="block font-medium text-ink">Make {toSession.name} the current session</span>
-              <span className="block text-[13.5px] text-muted">Its First Term becomes the current term straight away.</span>
+              <span className="block fs-13.5 text-muted">Its First Term becomes the current term straight away.</span>
             </span>
           </label>
           {result.error ? <Alert tone="danger">{result.error}</Alert> : null}

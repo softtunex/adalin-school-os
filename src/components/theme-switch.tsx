@@ -35,7 +35,7 @@ export function ThemeSwitch({ initial }: { initial: Theme }) {
           aria-checked={current === o.value}
           onClick={() => choose(o.value)}
           className={cn(
-            "inline-flex h-9 items-center gap-2 rounded-[9px] px-3.5 text-[14px] font-medium text-muted transition-colors hover:text-ink",
+            "inline-flex h-9 items-center gap-2 rounded-[9px] px-3.5 fs-14 font-medium text-muted transition-colors hover:text-ink",
             current === o.value && "bg-canvas text-ink shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
           )}
         >

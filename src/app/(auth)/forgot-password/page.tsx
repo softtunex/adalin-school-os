@@ -12,15 +12,15 @@ export default function ForgotPasswordPage() {
   const [state, action] = useActionState(forgotPasswordAction, initialFormState);
   return (
     <>
-      <h1 className="font-display text-[32px] font-black leading-tight tracking-[-0.02em]">Forgot your password?</h1>
-      <p className="mt-1 text-[15.5px] text-muted">Enter your email and we&apos;ll send a link to set a new one.</p>
+      <h1 className="font-display fs-32 font-black leading-tight tracking-[-0.02em]">Forgot your password?</h1>
+      <p className="mt-1 fs-15.5 text-muted">Enter your email and we&apos;ll send a link to set a new one.</p>
       <form action={action} className="mt-8 flex flex-col gap-5" noValidate>
         {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
         {state.success ? (
           <Alert tone="success" title="Check your email">
             {state.success}
             {state.data?.devLink ? (
-              <a href={state.data.devLink} className="mt-2 block break-all font-mono text-[12.5px] text-blue underline">
+              <a href={state.data.devLink} className="mt-2 block break-all font-mono fs-12.5 text-blue underline">
                 Development only: {state.data.devLink}
               </a>
             ) : null}
@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
           Send reset link
         </SubmitButton>
       </form>
-      <Link href="/login" className="mt-8 text-center text-[15px] font-semibold text-blue hover:underline">
+      <Link href="/login" className="mt-8 text-center fs-15 font-semibold text-blue hover:underline">
         Back to log in
       </Link>
     </>

@@ -29,11 +29,11 @@ export default async function ResultCheckPage({ params, searchParams }: { params
             // eslint-disable-next-line @next/next/no-img-element
             <img src={school.logoUrl} alt="" className="size-20 rounded-full border border-line object-cover" />
           ) : (
-            <span className="grid size-20 place-items-center rounded-full bg-brand text-[26px] font-bold text-white shadow-[0_3px_0_var(--brand-deep)]">{initials(school.name)}</span>
+            <span className="grid size-20 place-items-center rounded-full bg-brand fs-26 font-bold text-white shadow-[0_3px_0_var(--brand-deep)]">{initials(school.name)}</span>
           )}
-          <h1 className="mt-4 font-display text-[28px] font-black leading-tight">{school.name}</h1>
-          {school.motto ? <p className="text-[14px] italic text-muted">{school.motto}</p> : null}
-          <p className="mt-3 text-[15px] text-body">Enter the admission number and the PIN from your result card.</p>
+          <h1 className="mt-4 font-display fs-28 font-black leading-tight">{school.name}</h1>
+          {school.motto ? <p className="fs-14 italic text-muted">{school.motto}</p> : null}
+          <p className="mt-3 fs-15 text-body">Enter the admission number and the PIN from your result card.</p>
         </div>
 
         <form action={`/r/${slug}/check`} method="post" className="mt-8 flex flex-col gap-5 rounded-card border border-line bg-canvas p-6 shadow-card">
@@ -47,7 +47,7 @@ export default async function ResultCheckPage({ params, searchParams }: { params
           <CheckButton />
         </form>
 
-        <div className="mt-10 flex items-center justify-center gap-2 text-[13px] text-muted">
+        <div className="mt-10 flex items-center justify-center gap-2 fs-13 text-muted">
           <Kola className="h-7 w-6" /> Powered by School OS
         </div>
       </div>

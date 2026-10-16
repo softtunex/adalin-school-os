@@ -129,7 +129,7 @@ export default async function StaffPage({
                             <p className="font-medium text-ink">
                               {m.name} {isSelf ? <span className="font-normal text-muted">(you)</span> : null}
                             </p>
-                            <p className="truncate text-[13px] text-muted">{m.email}</p>
+                            <p className="truncate fs-13 text-muted">{m.email}</p>
                           </div>
                         </div>
                       </Td>
@@ -196,7 +196,7 @@ export default async function StaffPage({
                     <tr key={inv.id} className="hover:bg-paper">
                       <Td>
                         <p className="font-medium">{inv.name}</p>
-                        <p className="text-[13px] text-muted">{inv.email}</p>
+                        <p className="fs-13 text-muted">{inv.email}</p>
                       </Td>
                       <Td className="tabular text-body">{dateFmt.format(inv.createdAt)}</Td>
                       <Td>

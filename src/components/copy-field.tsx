@@ -27,7 +27,7 @@ export function CopyField({ value, label }: { value: string; label: string }) {
         value={value}
         aria-label={label}
         onFocus={(e) => e.currentTarget.select()}
-        className="h-11 min-w-0 flex-1 rounded-chunk border-2 border-line bg-paper px-3 font-mono text-[12.5px] text-ink"
+        className="h-11 min-w-0 flex-1 rounded-chunk border-2 border-line bg-paper px-3 font-mono fs-12.5 text-ink"
       />
       <Button variant="secondary" onClick={copy} aria-live="polite">
         <Icon name={copied ? "check" : "copy"} size={17} />

@@ -42,7 +42,7 @@ function AddGuardianForm({ slug, studentId, onDone }: { slug: string; studentId:
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
-      <p className="text-[14px] text-muted">If this parent already has a child in the school, enter the same phone number and they&apos;ll be linked as one parent.</p>
+      <p className="fs-14 text-muted">If this parent already has a child in the school, enter the same phone number and they&apos;ll be linked as one parent.</p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Full name" htmlFor="g-name" error={fe.name}>
           <Input id="g-name" name="name" defaultValue={v.name} aria-invalid={!!fe.name} />

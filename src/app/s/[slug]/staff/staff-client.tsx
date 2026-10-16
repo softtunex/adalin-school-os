@@ -17,13 +17,13 @@ export type RoleOption = { id: string; name: string; description: string };
 function RolePicker({ roles, selected, error }: { roles: RoleOption[]; selected?: string[]; error?: string }) {
   return (
     <fieldset className="flex flex-col gap-2">
-      <legend className="mb-1.5 text-[14px] font-medium text-ink">Roles</legend>
+      <legend className="mb-1.5 fs-14 font-medium text-ink">Roles</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {roles.map((r) => (
           <Checkbox key={r.id} name="roleIds" value={r.id} defaultChecked={selected?.includes(r.id)} label={r.name} description={r.description} />
         ))}
       </div>
-      {error ? <p className="text-[13.5px] font-medium text-danger">{error}</p> : null}
+      {error ? <p className="fs-13.5 font-medium text-danger">{error}</p> : null}
     </fieldset>
   );
 }

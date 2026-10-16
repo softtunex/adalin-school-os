@@ -41,7 +41,18 @@
   --shadow-card: 0 1px 2px rgba(20, 20, 20, 0.04);
   --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2384848b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 
+  /* Text size multiplier. Every fs-* size scales by it; changed per person in their account. */
+  --fs: 0.93;
+
   color-scheme: light;
+}
+
+:root[data-text-size="small"] {
+  --fs: 0.87;
+}
+
+:root[data-text-size="large"] {
+  --fs: 1;
 }
 
 :root[data-theme="dark"] {
@@ -127,6 +138,7 @@
     background: var(--canvas);
     color: var(--body);
     font-family: var(--font-sans);
+    font-size: calc(16px * var(--fs));
   }
 
   h1,
@@ -144,8 +156,12 @@
   }
 }
 
+@utility fs-* {
+  font-size: calc(--value(number) * 1px * var(--fs));
+}
+
 .label-caps {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

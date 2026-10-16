@@ -20,7 +20,7 @@ export function LoginForm({ next }: { next: string }) {
       <Field label="Password" htmlFor="password" error={state.fieldErrors?.password}>
         <Input id="password" name="password" type="password" autoComplete="current-password" required aria-invalid={!!state.fieldErrors?.password} />
       </Field>
-      <Link href="/forgot-password" className="-mt-2 self-end text-[14px] font-bold text-blue hover:underline">
+      <Link href="/forgot-password" className="-mt-2 self-end fs-14 font-bold text-blue hover:underline">
         Forgot password?
       </Link>
       <SubmitButton size="lg" pendingText="Logging in…">

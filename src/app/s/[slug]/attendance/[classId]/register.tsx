@@ -117,7 +117,7 @@ export function Register({ slug, classId, className, date, readOnly, taken, init
 
       {!readOnly ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[14px] text-muted">Everyone starts as present. Tap the few who aren&apos;t.</p>
+          <p className="fs-14 text-muted">Everyone starts as present. Tap the few who aren&apos;t.</p>
           <Button
             variant="secondary"
             size="sm"
@@ -134,11 +134,11 @@ export function Register({ slug, classId, className, date, readOnly, taken, init
       <Card className="divide-y divide-line">
         {rows.map((r, i) => (
           <div key={r.id} className={cn("flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5", r.status === "absent" && "bg-danger-wash/60")}>
-            <span className="tabular w-6 text-right text-[13px] text-muted">{i + 1}</span>
+            <span className="tabular w-6 text-right fs-13 text-muted">{i + 1}</span>
             <Avatar name={r.name} size={38} />
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium text-ink">{r.name}</p>
-              <p className="font-mono text-[12px] text-muted">{r.admissionNo}</p>
+              <p className="font-mono fs-12 text-muted">{r.admissionNo}</p>
             </div>
             <div role="radiogroup" aria-label={`Attendance for ${r.name}`} className="flex basis-full gap-1.5 sm:basis-auto">
               {OPTIONS.map((o) => {
@@ -154,7 +154,7 @@ export function Register({ slug, classId, className, date, readOnly, taken, init
                     disabled={readOnly}
                     onClick={() => setStatus(r.id, o.value)}
                     className={cn(
-                      "grid h-11 flex-1 place-items-center rounded-[12px] border-2 text-[14px] font-extrabold sm:w-11 sm:flex-none transition-[transform,box-shadow] active:translate-y-[3px] active:shadow-none disabled:cursor-default disabled:active:translate-y-0",
+                      "grid h-11 flex-1 place-items-center rounded-[12px] border-2 fs-14 font-extrabold sm:w-11 sm:flex-none transition-[transform,box-shadow] active:translate-y-[3px] active:shadow-none disabled:cursor-default disabled:active:translate-y-0",
                       on ? o.on : "border-line-strong bg-canvas text-muted shadow-[0_3px_0_var(--line-strong)] hover:text-ink",
                     )}
                   >
@@ -175,7 +175,7 @@ export function Register({ slug, classId, className, date, readOnly, taken, init
                   setRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, note } : x)));
                   setDirty(true);
                 }}
-                className="h-10 w-full rounded-chunk border border-line-strong bg-canvas px-3 text-[14px] sm:ml-[92px]"
+                className="h-10 w-full rounded-chunk border border-line-strong bg-canvas px-3 fs-14 sm:ml-[92px]"
               />
             ) : null}
           </div>
@@ -185,7 +185,7 @@ export function Register({ slug, classId, className, date, readOnly, taken, init
       {!readOnly ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] backdrop-blur lg:left-[288px] sm:px-8">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3">
-            <p className="tabular text-[14px] text-body">
+            <p className="tabular fs-14 text-body">
               <span className="font-semibold text-success">{(counts.present ?? 0) + (counts.late ?? 0)} in</span>
               {" · "}
               <span className={counts.absent ? "font-semibold text-danger" : undefined}>{counts.absent ?? 0} absent</span>

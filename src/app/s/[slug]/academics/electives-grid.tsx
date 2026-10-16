@@ -53,20 +53,20 @@ export function ElectivesGrid({ slug, classId, electives, students, initial, edi
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
       {state.success && !dirty ? <Alert tone="success">{state.success}</Alert> : null}
       <div className="overflow-x-auto px-3 pb-3 sm:px-4">
-        <table className="w-full border-separate border-spacing-0 text-[14px]">
+        <table className="w-full border-separate border-spacing-0 fs-14">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 min-w-[200px] rounded-l-[10px] bg-paper px-4 py-3 text-left text-[13.5px] font-medium text-muted">Student</th>
+              <th className="sticky left-0 z-10 min-w-[200px] rounded-l-[10px] bg-paper px-4 py-3 text-left fs-13.5 font-medium text-muted">Student</th>
               {electives.map((e) => (
-                <th key={e.id} className="min-w-[96px] bg-paper px-2 py-2 text-center text-[13px] font-medium text-muted last:rounded-r-[10px]" title={e.name}>
+                <th key={e.id} className="min-w-[96px] bg-paper px-2 py-2 text-center fs-13 font-medium text-muted last:rounded-r-[10px]" title={e.name}>
                   <span className="block truncate text-ink">{e.code ?? e.name}</span>
-                  <span className="tabular block text-[12px]">{counts[e.id]} taking</span>
+                  <span className="tabular block fs-12">{counts[e.id]} taking</span>
                   {editable ? (
                     <span className="mt-1 flex justify-center gap-1">
-                      <button type="button" onClick={() => setColumn(e.id, true)} className="rounded-md px-1.5 text-[11.5px] font-medium text-blue hover:bg-blue-wash">
+                      <button type="button" onClick={() => setColumn(e.id, true)} className="rounded-md px-1.5 fs-11.5 font-medium text-blue hover:bg-blue-wash">
                         All
                       </button>
-                      <button type="button" onClick={() => setColumn(e.id, false)} className="rounded-md px-1.5 text-[11.5px] font-medium text-muted hover:bg-sunken">
+                      <button type="button" onClick={() => setColumn(e.id, false)} className="rounded-md px-1.5 fs-11.5 font-medium text-muted hover:bg-sunken">
                         None
                       </button>
                     </span>
@@ -82,7 +82,7 @@ export function ElectivesGrid({ slug, classId, electives, students, initial, edi
                   <p className="font-medium text-ink">
                     {s.lastName} {s.firstName}
                   </p>
-                  <p className="font-mono text-[12px] text-muted">{s.admissionNo}</p>
+                  <p className="font-mono fs-12 text-muted">{s.admissionNo}</p>
                 </td>
                 {electives.map((e) => {
                   const k = `${s.id}|${e.id}`;
@@ -106,7 +106,7 @@ export function ElectivesGrid({ slug, classId, electives, students, initial, edi
       </div>
       {editable ? (
         <div className="flex items-center justify-end gap-3 px-5 pb-5">
-          {dirty ? <span className="text-[13.5px] text-muted">Unsaved changes</span> : null}
+          {dirty ? <span className="fs-13.5 text-muted">Unsaved changes</span> : null}
           <Button
             disabled={pending || !dirty}
             onClick={() =>

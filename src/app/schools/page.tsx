@@ -25,11 +25,11 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
       <div className="flex items-center justify-between">
         <Logo href="/schools" />
         <form action={logoutAction}>
-          <button className="text-[14px] font-bold text-muted hover:text-ink">Log out</button>
+          <button className="fs-14 font-bold text-muted hover:text-ink">Log out</button>
         </form>
       </div>
-      <h1 className="mt-12 text-[30px] font-black tracking-[-0.03em]">Choose a school</h1>
-      <p className="mt-1 text-[15.5px] text-muted">Signed in as {user.email}</p>
+      <h1 className="mt-12 fs-30 font-black tracking-[-0.03em]">Choose a school</h1>
+      <p className="mt-1 fs-15.5 text-muted">Signed in as {user.email}</p>
 
       <div className="mt-8 flex flex-col gap-3">
         {schools.length === 0 ? (
@@ -42,8 +42,8 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
               <Card className="flex items-center gap-4 p-4 transition-colors group-hover:border-brand">
                 <Avatar name={s.name} size={44} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[16px] font-extrabold text-ink">{s.name}</span>
-                  {s.id === last?.id ? <span className="text-[13px] font-semibold text-muted">Last opened</span> : null}
+                  <span className="block truncate fs-16 font-extrabold text-ink">{s.name}</span>
+                  {s.id === last?.id ? <span className="fs-13 font-semibold text-muted">Last opened</span> : null}
                 </span>
                 <Icon name="arrowRight" className="text-muted group-hover:text-brand" />
               </Card>

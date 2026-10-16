@@ -71,7 +71,7 @@ export function SearchInput({ placeholder = "Search…", param = "q", className 
           clearTimeout(timer.current);
           timer.current = setTimeout(() => update({ [param]: v.trim() || null }), 300);
         }}
-        className="h-10 w-full rounded-chunk border border-line-strong bg-canvas pl-10 pr-3 text-[14.5px] text-ink placeholder:text-muted focus:border-blue focus:shadow-[0_0_0_3px_var(--blue-wash)] focus:outline-none"
+        className="h-10 w-full rounded-chunk border border-line-strong bg-canvas pl-10 pr-3 fs-14.5 text-ink placeholder:text-muted focus:border-blue focus:shadow-[0_0_0_3px_var(--blue-wash)] focus:outline-none"
       />
       </label>
     </form>
@@ -82,7 +82,7 @@ export function FilterSelect({ label, param, options, includeAll = true }: { lab
   const { update, params } = useQueryUpdater();
   const current = params.get(param) ?? "";
   return (
-    <label className="relative flex h-10 items-center rounded-chunk border border-line-strong bg-canvas pl-3 text-[14px] focus-within:border-blue">
+    <label className="relative flex h-10 items-center rounded-chunk border border-line-strong bg-canvas pl-3 fs-14 focus-within:border-blue">
       <span className="text-muted">{label}</span>
       <select
         value={current}
@@ -105,7 +105,7 @@ export function ToolbarLink({ href, icon, children }: { href: string; icon: Icon
   return (
     <a
       href={href}
-      className="inline-flex h-10 items-center gap-2 rounded-chunk border border-line-strong bg-canvas px-3.5 text-[14px] font-medium text-ink transition-colors hover:bg-paper"
+      className="inline-flex h-10 items-center gap-2 rounded-chunk border border-line-strong bg-canvas px-3.5 fs-14 font-medium text-ink transition-colors hover:bg-paper"
     >
       <Icon name={icon} size={17} />
       {children}
@@ -138,11 +138,11 @@ export function Pagination({ page, pageSize, total, noun = "results" }: { page: 
     const qs = next.toString();
     return qs ? `${pathname}?${qs}` : pathname;
   };
-  const item = "grid h-9 min-w-9 place-items-center rounded-[9px] px-2 text-[14px] font-medium tabular";
+  const item = "grid h-9 min-w-9 place-items-center rounded-[9px] px-2 fs-14 font-medium tabular";
 
   return (
     <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3">
-      <p className="tabular text-[13.5px] text-muted">
+      <p className="tabular fs-13.5 text-muted">
         {total === 0 ? `No ${noun}` : `Showing ${from}–${to} of ${total} ${noun}`}
       </p>
       {pages > 1 ? (
@@ -235,7 +235,7 @@ export function RowMenu({ items, label = "More actions" }: { items: MenuItem[]; 
                 item.onSelect();
               }}
               className={cn(
-                "flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2 text-left text-[14px] font-medium transition-colors disabled:opacity-50",
+                "flex w-full items-center gap-2.5 rounded-[9px] px-3 py-2 text-left fs-14 font-medium transition-colors disabled:opacity-50",
                 item.danger ? "text-danger hover:bg-danger-wash" : "text-ink hover:bg-sunken",
               )}
             >

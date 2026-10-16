@@ -64,7 +64,7 @@ export default async function ScoreSheetPage({ params, searchParams }: { params:
         actions={statusBadge}
       />
       <PageBody>
-        <p className="text-[14px] text-muted">
+        <p className="fs-14 text-muted">
           {sheet.term.term.name}, {sheet.term.session.name} session · {sheet.components.map((c) => `${c.name} (${c.maxScore})`).join(" + ")}
         </p>
         {sheet.classStatus === "approved" || sheet.classStatus === "published" ? (

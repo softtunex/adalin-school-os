@@ -93,6 +93,8 @@ export function ReportCards({ data }: { data: ReportCardData }) {
           <Page key={st.admissionNo} size="A4" style={s.page}>
             {data.watermark ? <Text style={s.watermark} fixed>School OS · Free plan</Text> : null}
             <View style={s.header}>
+              {/* react-pdf images have no alt attribute; the school name sits beside the logo. */}
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
               {data.school.logo ? <Image src={data.school.logo} style={s.logo} /> : <Text style={s.crest}>{data.school.initials}</Text>}
               <View style={{ flex: 1 }}>
                 <Text style={s.schoolName}>{data.school.name.toUpperCase()}</Text>

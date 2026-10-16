@@ -45,8 +45,8 @@ export default async function RegisterPage({ params, searchParams }: { params: P
       />
       <PageBody>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[15px] font-medium text-ink">{longDate.format(new Date(`${date}T00:00:00Z`))}</p>
-          {sheet.taken ? <p className="text-[13.5px] text-muted">Already taken. Changes overwrite the saved register.</p> : null}
+          <p className="fs-15 font-medium text-ink">{longDate.format(new Date(`${date}T00:00:00Z`))}</p>
+          {sheet.taken ? <p className="fs-13.5 text-muted">Already taken. Changes overwrite the saved register.</p> : null}
         </div>
         {!sheet.canEdit ? <Alert tone="warning">Only admins can change attendance for past days. You can view it below.</Alert> : null}
         {sheet.students.length === 0 ? (

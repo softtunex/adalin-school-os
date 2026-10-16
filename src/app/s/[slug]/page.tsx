@@ -62,11 +62,11 @@ export default async function OverviewPage({ params, searchParams }: { params: P
         <div className="relative flex items-center overflow-hidden rounded-card border border-brand/15 bg-brand-wash px-6 py-6 sm:px-8">
           <div aria-hidden className="absolute -right-10 -top-16 size-56 rounded-full bg-brand/10" />
           <div className="relative min-w-0 flex-1">
-            <p className="text-[14px] font-medium text-brand-ink">{dateLine}</p>
-            <h2 className="mt-1 font-display text-[30px] font-black leading-tight tracking-[-0.01em] sm:text-[34px]">
+            <p className="fs-14 font-medium text-brand-ink">{dateLine}</p>
+            <h2 className="mt-1 font-display fs-30 font-black leading-tight tracking-[-0.01em] sm:fs-34">
               {greeting()}, {firstName}!
             </h2>
-            <p className="mt-1.5 max-w-[52ch] text-[15px] text-body">
+            <p className="mt-1.5 max-w-[52ch] fs-15 text-body">
               {data.term && data.session
                 ? `It's ${data.term.name.toLowerCase()} of the ${data.session.name} session at ${access.school.name}.`
                 : `Welcome to ${access.school.name}. Let's get your school set up.`}
@@ -118,8 +118,8 @@ export default async function OverviewPage({ params, searchParams }: { params: P
             {visible.length > 0 && done < visible.length ? (
               <Card>
                 <div className="flex items-center justify-between gap-4 px-5 pt-5">
-                  <h2 className="text-[16px] font-semibold">Setup checklist</h2>
-                  <span className="tabular text-[13.5px] text-muted">
+                  <h2 className="fs-16 font-semibold">Setup checklist</h2>
+                  <span className="tabular fs-13.5 text-muted">
                     {done}/{visible.length}
                   </span>
                 </div>
@@ -139,7 +139,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
                         )}
                         <span className="min-w-0 flex-1">
                           <span className={step.done ? "block font-medium text-muted line-through decoration-line-strong" : "block font-medium text-ink"}>{step.title}</span>
-                          <span className="block text-[13.5px] text-muted">{step.text}</span>
+                          <span className="block fs-13.5 text-muted">{step.text}</span>
                         </span>
                         {step.done ? <Badge tone="success">Done</Badge> : <Icon name="chevronRight" size={18} className="text-muted" />}
                       </Link>
@@ -159,7 +159,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
                         <IconChip icon={a.icon} tone={a.tone} size={44} />
                         <span className="min-w-0 flex-1">
                           <span className="block font-semibold text-ink">{a.title}</span>
-                          <span className="block text-[13.5px] text-muted">{a.text}</span>
+                          <span className="block fs-13.5 text-muted">{a.text}</span>
                         </span>
                         <Icon name="arrowRight" size={18} className="text-muted transition-transform group-hover:translate-x-0.5" />
                       </Card>
@@ -172,23 +172,23 @@ export default async function OverviewPage({ params, searchParams }: { params: P
           {data.activity ? (
             <Card className="self-start">
               <div className="flex items-center justify-between gap-4 px-5 pt-5">
-                <h2 className="text-[16px] font-semibold">Recent activity</h2>
-                <Link href={`${base}/audit`} className="text-[13.5px] font-medium text-blue hover:underline">
+                <h2 className="fs-16 font-semibold">Recent activity</h2>
+                <Link href={`${base}/audit`} className="fs-13.5 font-medium text-blue hover:underline">
                   View all
                 </Link>
               </div>
               {data.activity.length === 0 ? (
-                <p className="px-5 py-8 text-[14px] text-muted">Changes will show up here.</p>
+                <p className="px-5 py-8 fs-14 text-muted">Changes will show up here.</p>
               ) : (
                 <ol className="flex flex-col px-5 pb-3 pt-2">
                   {data.activity.map((e) => (
                     <li key={e.id} className="flex gap-3 border-b border-line py-3 last:border-b-0">
                       <Avatar name={e.actorName ?? "System"} size={32} muted />
                       <div className="min-w-0">
-                        <p className="text-[14px] text-ink">
+                        <p className="fs-14 text-ink">
                           <span className="font-medium">{e.actorName ?? "System"}</span> <span className="text-body">{e.summary.charAt(0).toLowerCase() + e.summary.slice(1)}</span>
                         </p>
-                        <p className="tabular text-[12.5px] text-muted">
+                        <p className="tabular fs-12.5 text-muted">
                           {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: tz }).format(e.createdAt)}
                         </p>
                       </div>

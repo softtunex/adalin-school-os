@@ -65,7 +65,7 @@ export default async function ClassResultsPage({ params, searchParams }: { param
         }
       />
       <PageBody>
-        <p className="-mt-2 text-[14px] text-muted">
+        <p className="-mt-2 fs-14 text-muted">
           {data.term.term.name}, {data.term.session.name} session
         </p>
         <WorkflowBar
@@ -106,7 +106,7 @@ export default async function ClassResultsPage({ params, searchParams }: { param
           ) : (
             <TableCard title="Broadsheet" toolbar={<ToolbarLink href={`${base}/broadsheet.csv`} icon="download">Export CSV</ToolbarLink>}>
               <div className="overflow-x-auto px-3 pb-3 sm:px-4">
-                <table className="w-full border-separate border-spacing-0 text-[14px]">
+                <table className="w-full border-separate border-spacing-0 fs-14">
                   <thead>
                     <tr>
                       <Th className="sticky left-0 z-10 w-12">Pos.</Th>
@@ -128,7 +128,7 @@ export default async function ClassResultsPage({ params, searchParams }: { param
                           <p className="font-medium">
                             {s.lastName} {s.firstName}
                           </p>
-                          <p className="font-mono text-[12px] text-muted">{s.admissionNo}</p>
+                          <p className="font-mono fs-12 text-muted">{s.admissionNo}</p>
                         </Td>
                         {data.subjects.map((sub) => {
                           const r = s.result.subjects[sub.id];
@@ -136,7 +136,7 @@ export default async function ClassResultsPage({ params, searchParams }: { param
                           return (
                             <Td key={sub.id} className="tabular text-center">
                               {r?.total ?? <span className="text-muted">—</span>}
-                              {r?.grade ? <span className={cn("block text-[11.5px] font-semibold", failed ? "text-danger" : "text-muted")}>{r.grade}</span> : null}
+                              {r?.grade ? <span className={cn("block fs-11.5 font-semibold", failed ? "text-danger" : "text-muted")}>{r.grade}</span> : null}
                             </Td>
                           );
                         })}

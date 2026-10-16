@@ -10,10 +10,10 @@ export function UpgradeCard({ slug, feature, text, title }: { slug: string; feat
         <Icon name="upgrade" size={22} strokeWidth={2.6} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[16px] font-semibold text-ink">
+        <p className="fs-16 font-semibold text-ink">
           {title ?? (feature ? `${FEATURES[feature]} is on the ${plan?.name ?? "higher"} plan` : "Upgrade your plan")}
         </p>
-        {text ? <p className="text-[14.5px] text-body">{text}</p> : null}
+        {text ? <p className="fs-14.5 text-body">{text}</p> : null}
       </div>
       <ButtonLink href={`/s/${slug}/settings?tab=plan`} size="sm">
         See plans

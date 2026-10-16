@@ -40,8 +40,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
         ) : (
           <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
             <div>
-              <h2 className="text-[16px] font-semibold">School profile</h2>
-              <p className="mt-1 text-[14px] text-muted">Shown on report cards, receipts and the parent app. Complete it to tick off the first setup step.</p>
+              <h2 className="fs-16 font-semibold">School profile</h2>
+              <p className="mt-1 fs-14 text-muted">Shown on report cards, receipts and the parent app. Complete it to tick off the first setup step.</p>
             </div>
             <div className="flex flex-col gap-5">
             {can(access, "school:update") ? <LogoCard slug={slug} name={s.name} logoUrl={s.logoUrl} /> : null}
@@ -78,11 +78,11 @@ async function PlanTab({ currentKey, canBill }: { currentKey: string; canBill: b
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold">Plans</h2>
-          <p className="mt-1 text-[14px] text-muted">Priced per student, per term. You only pay for students on roll.</p>
+          <h2 className="fs-16 font-semibold">Plans</h2>
+          <p className="mt-1 fs-14 text-muted">Priced per student, per term. You only pay for students on roll.</p>
         </div>
         {canBill ? (
-          <p className="text-[14px] text-muted">
+          <p className="fs-14 text-muted">
             To change plan, message us on WhatsApp: <span className="select-all font-semibold text-ink">{SUPPORT_WHATSAPP}</span>
           </p>
         ) : null}
@@ -95,14 +95,14 @@ async function PlanTab({ currentKey, canBill }: { currentKey: string; canBill: b
           return (
             <Card key={p.key} className={cn("flex flex-col gap-3 p-5", current && "border-brand shadow-[0_4px_0_var(--brand)]")}>
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-[17px] font-semibold">{p.name}</h3>
+                <h3 className="fs-17 font-semibold">{p.name}</h3>
                 {current ? <Badge tone="brand">Current</Badge> : null}
               </div>
-              <p className="tabular text-[24px] font-semibold tracking-[-0.02em] text-ink">
+              <p className="tabular fs-24 font-semibold tracking-[-0.02em] text-ink">
                 {p.pricePerStudentKobo === null ? "Custom" : p.pricePerStudentKobo === 0 ? "Free" : formatNaira(p.pricePerStudentKobo)}
-                {p.pricePerStudentKobo ? <span className="block text-[13px] font-normal tracking-normal text-muted">per student / term</span> : null}
+                {p.pricePerStudentKobo ? <span className="block fs-13 font-normal tracking-normal text-muted">per student / term</span> : null}
               </p>
-              <ul className="flex flex-col gap-1.5 border-t border-line pt-3 text-[13.5px]">
+              <ul className="flex flex-col gap-1.5 border-t border-line pt-3 fs-13.5">
                 {Object.entries(p.limits).map(([k, n]) =>
                   k === "audit_days" ? null : (
                     <li key={k} className="font-medium text-ink">

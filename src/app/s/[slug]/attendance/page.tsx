@@ -69,8 +69,8 @@ export default async function AttendancePage({ params, searchParams }: { params:
                   <Card key={c.id} className="flex flex-col p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-[17px] font-semibold">{c.name}</h2>
-                        <p className="text-[13.5px] text-muted">{c.students} students</p>
+                        <h2 className="fs-17 font-semibold">{c.name}</h2>
+                        <p className="fs-13.5 text-muted">{c.students} students</p>
                       </div>
                       <div className="flex flex-wrap justify-end gap-1.5">
                         {c.isMine ? <Badge tone="brand">Your class</Badge> : null}
@@ -93,15 +93,15 @@ export default async function AttendancePage({ params, searchParams }: { params:
                           <div className="bg-blue" style={{ width: `${(c.excused / total) * 100}%` }} />
                           <div className="bg-danger" style={{ width: `${(c.absent / total) * 100}%` }} />
                         </div>
-                        <p className="tabular mt-2 text-[13px] text-body">
+                        <p className="tabular mt-2 fs-13 text-body">
                           {c.present} present · {c.late} late · {c.absent} absent{c.excused ? ` · ${c.excused} excused` : ""}
                         </p>
-                        <p className="mt-0.5 text-[12.5px] text-muted">
+                        <p className="mt-0.5 fs-12.5 text-muted">
                           By {c.takenBy ?? "staff"} at {c.takenAt ? timeFmt.format(c.takenAt) : ""}
                         </p>
                       </>
                     ) : (
-                      <p className="mt-4 text-[13.5px] text-muted">{isToday ? "Everyone starts as present. It takes a few seconds." : "No register was taken on this day."}</p>
+                      <p className="mt-4 fs-13.5 text-muted">{isToday ? "Everyone starts as present. It takes a few seconds." : "No register was taken on this day."}</p>
                     )}
                     <div className="mt-auto pt-5">
                       <ButtonLink href={`${base}/${c.id}${isToday ? "" : `?date=${date}`}`} variant={c.taken ? "secondary" : "primary"} className="w-full">
@@ -114,7 +114,7 @@ export default async function AttendancePage({ params, searchParams }: { params:
               })}
             </div>
             {!isToday ? (
-              <Link href={base} className="self-start text-[14px] font-medium text-blue hover:underline">
+              <Link href={base} className="self-start fs-14 font-medium text-blue hover:underline">
                 Back to today
               </Link>
             ) : null}

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Nunito } from "next/font/google";
 import type { ReactNode } from "react";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
-import { getTheme } from "@/lib/theme";
+import { getTextSize, getTheme } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -24,9 +24,9 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const theme = await getTheme();
+  const [theme, textSize] = await Promise.all([getTheme(), getTextSize()]);
   return (
-    <html lang="en" data-theme={theme} className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}>
+    <html lang="en" data-theme={theme} data-text-size={textSize === "default" ? undefined : textSize} className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

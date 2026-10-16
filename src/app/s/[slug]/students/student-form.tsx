@@ -21,8 +21,8 @@ function Section({ title, text, children }: { title: string; text: string; child
   return (
     <div className="grid gap-4 border-b border-line py-6 first:pt-0 last:border-b-0 last:pb-0 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8">
       <div>
-        <h2 className="text-[15.5px] font-semibold">{title}</h2>
-        <p className="mt-1 text-[13.5px] text-muted">{text}</p>
+        <h2 className="fs-15.5 font-semibold">{title}</h2>
+        <p className="mt-1 fs-13.5 text-muted">{text}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">{children}</div>
     </div>
@@ -95,7 +95,7 @@ export function StudentForm({
             <Input id="dateOfBirth" name="dateOfBirth" type="date" defaultValue={v.dateOfBirth} aria-invalid={!!fe.dateOfBirth} />
           </Field>
           <fieldset className="flex flex-col gap-1.5 sm:col-span-2">
-            <legend className="mb-1.5 text-[14px] font-medium text-ink">Gender</legend>
+            <legend className="mb-1.5 fs-14 font-medium text-ink">Gender</legend>
             <div className="flex gap-2">
               {[
                 ["female", "Female"],
@@ -104,7 +104,7 @@ export function StudentForm({
                 <label
                   key={value}
                   className={cn(
-                    "flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-chunk border-2 text-[14.5px] font-semibold transition-colors sm:max-w-[160px]",
+                    "flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-chunk border-2 fs-14.5 font-semibold transition-colors sm:max-w-[160px]",
                     gender === value ? "border-brand bg-brand-wash text-brand-ink" : "border-line-strong text-body hover:bg-paper",
                   )}
                 >
@@ -113,7 +113,7 @@ export function StudentForm({
                 </label>
               ))}
             </div>
-            {fe.gender ? <p className="text-[13.5px] font-medium text-danger">{fe.gender}</p> : null}
+            {fe.gender ? <p className="fs-13.5 font-medium text-danger">{fe.gender}</p> : null}
           </fieldset>
         </Section>
 
@@ -196,7 +196,7 @@ export function StudentForm({
               </Section>
             ) : (
               <div className="pt-4 lg:pl-[272px]">
-                <button type="button" onClick={() => setSecond(true)} className="inline-flex items-center gap-2 text-[14.5px] font-semibold text-blue hover:underline">
+                <button type="button" onClick={() => setSecond(true)} className="inline-flex items-center gap-2 fs-14.5 font-semibold text-blue hover:underline">
                   <Icon name="plus" size={17} strokeWidth={2.4} /> Add a second parent or guardian
                 </button>
               </div>

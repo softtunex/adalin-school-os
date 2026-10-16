@@ -57,9 +57,9 @@ export default async function AcademicsPage({
             <Card className="overflow-hidden">
               <div className="grid lg:grid-cols-[1fr_380px]">
                 <div className="p-6 sm:p-8">
-                  <p className="text-[13px] font-bold uppercase tracking-[0.06em] text-brand-ink">One-click setup</p>
-                  <h2 className="mt-1 font-display text-[30px] font-black leading-tight">Set up your classes and subjects</h2>
-                  <p className="mt-2 max-w-[56ch] text-[15px] text-muted">
+                  <p className="fs-13 font-bold uppercase tracking-[0.06em] text-brand-ink">One-click setup</p>
+                  <h2 className="mt-1 font-display fs-30 font-black leading-tight">Set up your classes and subjects</h2>
+                  <p className="mt-2 max-w-[56ch] fs-15 text-muted">
                     Pick your curriculum and the sections you run. We&apos;ll create every class, the three terms and the standard subjects. You can rename, add or remove anything afterwards.
                   </p>
                   <SetupWizard slug={slug} defaultSession={sessionNameFor()} defaultTemplate={access.school.curriculum === "british" ? "british" : "nigerian"} />
@@ -223,7 +223,7 @@ export default async function AcademicsPage({
                   return (
                     <tr key={s.id} className="hover:bg-paper">
                       <Td className="font-medium">{s.name}</Td>
-                      <Td className="font-mono text-[13px] text-body">{s.code ?? "—"}</Td>
+                      <Td className="font-mono fs-13 text-body">{s.code ?? "—"}</Td>
                       <Td>
                         <div className="flex max-w-[560px] flex-wrap gap-1.5">
                           {links.length === 0 ? <span className="text-muted">Not offered yet</span> : null}
@@ -388,7 +388,7 @@ async function ElectivesTab({ slug, classId, data, access }: { slug: string; cla
       }
       toolbar={<FilterSelect label="Class" param="class" includeAll={false} options={classesWithElectives.map((c) => ({ value: c.id, label: c.name }))} />}
     >
-      <p className="px-5 pb-3 text-[14px] text-muted">Tick the elective subjects each student takes. Compulsory subjects are added automatically. Only ticked students appear on an elective&apos;s score sheet.</p>
+      <p className="px-5 pb-3 fs-14 text-muted">Tick the elective subjects each student takes. Compulsory subjects are added automatically. Only ticked students appear on an elective&apos;s score sheet.</p>
       {matrix.students.length === 0 ? (
         <EmptyState icon="graduation" title="No students in this class">Add students first.</EmptyState>
       ) : (

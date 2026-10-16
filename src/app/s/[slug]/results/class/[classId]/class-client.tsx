@@ -74,13 +74,13 @@ export function WorkflowBar({
             <li key={s.key} className="flex flex-1 items-center gap-2 last:flex-none">
               <span
                 className={cn(
-                  "grid size-8 shrink-0 place-items-center rounded-full text-[13px] font-bold",
+                  "grid size-8 shrink-0 place-items-center rounded-full fs-13 font-bold",
                   done ? "bg-success text-white" : current ? "bg-brand text-white shadow-[0_2px_0_var(--brand-deep)]" : "bg-sunken text-muted",
                 )}
               >
                 {done ? <Icon name="check" size={15} strokeWidth={2.8} /> : i + 1}
               </span>
-              <span className={cn("whitespace-nowrap text-[13.5px] font-medium", done || current ? "text-ink" : "text-muted")}>{s.label}</span>
+              <span className={cn("whitespace-nowrap fs-13.5 font-medium", done || current ? "text-ink" : "text-muted")}>{s.label}</span>
               {i < steps.length - 1 ? <span className={cn("mx-1 hidden h-0.5 flex-1 rounded-full sm:block", i < currentIndex ? "bg-success" : "bg-line")} /> : null}
             </li>
           );
@@ -88,7 +88,7 @@ export function WorkflowBar({
       </ol>
       <div className="flex flex-wrap items-center gap-2">
         {status === "open" ? (
-          <span className="text-[13px] text-muted">
+          <span className="fs-13 text-muted">
             {submitted}/{subjects} sheets · {commentsDone}/{students} comments
           </span>
         ) : null}
@@ -168,11 +168,11 @@ export function ReportEditor({
         <Avatar name={student.name} size={38} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium text-ink">{student.name}</span>
-          <span className="block text-[13px] text-muted">
+          <span className="block fs-13 text-muted">
             {student.position ? `${student.position} · average ${student.average}` : "No scores yet"}
           </span>
         </span>
-        <span className="hidden text-[13px] text-muted sm:block">
+        <span className="hidden fs-13 text-muted sm:block">
           {report.classTeacherComment || teacher ? "Comment written" : "No comment"} · {rated}/{total} ratings
         </span>
         <Icon name="chevronDown" size={18} className={cn("text-muted transition-transform", open && "rotate-180")} />
@@ -185,10 +185,10 @@ export function ReportEditor({
           <div className="grid gap-5 md:grid-cols-2">
             {(["affective", "psychomotor"] as const).map((group) => (
               <fieldset key={group} className="flex flex-col gap-2">
-                <legend className="mb-1 text-[14px] font-medium text-ink">{group === "affective" ? "Behaviour" : "Skills"}</legend>
+                <legend className="mb-1 fs-14 font-medium text-ink">{group === "affective" ? "Behaviour" : "Skills"}</legend>
                 {RATING_TRAITS[group].map((trait) => (
                   <div key={trait} className="flex items-center justify-between gap-3">
-                    <span className="text-[14px] text-body">{trait}</span>
+                    <span className="fs-14 text-body">{trait}</span>
                     <div className="flex gap-1" role="radiogroup" aria-label={trait}>
                       {RATING_SCALE.map((r) => (
                         <button
@@ -200,7 +200,7 @@ export function ReportEditor({
                           disabled={!canComment}
                           onClick={() => setRatings((prev) => ({ ...prev, [trait]: r.value }))}
                           className={cn(
-                            "grid size-8 place-items-center rounded-[9px] border text-[13px] font-bold transition-colors disabled:cursor-default",
+                            "grid size-8 place-items-center rounded-[9px] border fs-13 font-bold transition-colors disabled:cursor-default",
                             ratings[trait] === r.value ? "border-brand bg-brand text-white" : "border-line-strong text-muted hover:text-ink",
                           )}
                         >
@@ -218,12 +218,12 @@ export function ReportEditor({
           </Field>
           {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <a href={pdfHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-[14px] font-medium text-blue hover:underline">
+            <a href={pdfHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 fs-14 font-medium text-blue hover:underline">
               <Icon name="download" size={16} /> Preview report card
             </a>
             <div className="flex items-center gap-3">
               {state.success && !pending ? (
-                <span className="inline-flex items-center gap-1 text-[13px] text-success">
+                <span className="inline-flex items-center gap-1 fs-13 text-success">
                   <Icon name="check" size={15} strokeWidth={2.6} /> Saved
                 </span>
               ) : null}

@@ -86,7 +86,7 @@ export default async function StudentsPage({
       />
       <PageBody>
         {list.scoped ? (
-          <p className="text-[14px] text-muted">Showing students in the classes you teach.</p>
+          <p className="fs-14 text-muted">Showing students in the classes you teach.</p>
         ) : null}
         <StatGrid>
           <StatCard
@@ -165,7 +165,7 @@ export default async function StudentsPage({
                         <Avatar name={`${s.firstName} ${s.lastName}`} size={40} />
                         <span className="min-w-0">
                           <span className="block truncate font-medium text-ink">{name}</span>
-                          <span className="block truncate text-[13px] text-muted">
+                          <span className="block truncate fs-13 text-muted">
                             {s.className ?? "No class"} · <span className="font-mono">{s.admissionNo}</span>
                           </span>
                         </span>
@@ -206,7 +206,7 @@ export default async function StudentsPage({
                           <Avatar name={`${s.firstName} ${s.lastName}`} size={36} />
                           <span className="min-w-0">
                             <span className="block font-medium text-ink group-hover:text-blue">{name}</span>
-                            <span className="tabular block font-mono text-[12.5px] text-muted">{s.admissionNo}</span>
+                            <span className="tabular block font-mono fs-12.5 text-muted">{s.admissionNo}</span>
                           </span>
                         </Link>
                       </Td>
@@ -219,7 +219,7 @@ export default async function StudentsPage({
                         {s.guardian ? (
                           <>
                             <p className="text-ink">{s.guardian.name}</p>
-                            <p className="tabular text-[13px] text-muted">{formatPhone(s.guardian.phone) ?? "No phone"}</p>
+                            <p className="tabular fs-13 text-muted">{formatPhone(s.guardian.phone) ?? "No phone"}</p>
                           </>
                         ) : (
                           <Badge tone="warning">No contact</Badge>
@@ -249,7 +249,7 @@ export default async function StudentsPage({
         </TableCard>
 
         {!filtered && list.rows.length > 0 && stats.noGuardian > 0 && canCreate ? (
-          <Card className="flex flex-wrap items-center gap-3 p-4 text-[14px] text-body">
+          <Card className="flex flex-wrap items-center gap-3 p-4 fs-14 text-body">
             <Icon name="info" size={18} className="text-warning" />
             {stats.noGuardian} active {stats.noGuardian === 1 ? "student has" : "students have"} no parent contact. Open their profile to add one so fee reminders and results can reach home.
           </Card>

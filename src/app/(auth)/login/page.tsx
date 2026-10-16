@@ -11,10 +11,10 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getCurrentUser()) redirect(safeNext(next));
   return (
     <>
-      <h1 className="font-display text-[32px] font-black leading-tight tracking-[-0.02em]">Welcome back</h1>
-      <p className="mt-1 text-[15.5px] text-muted">Log in to your school.</p>
+      <h1 className="font-display fs-32 font-black leading-tight tracking-[-0.02em]">Welcome back</h1>
+      <p className="mt-1 fs-15.5 text-muted">Log in to your school.</p>
       <LoginForm next={safeNext(next)} />
-      <p className="mt-8 text-center text-[15px] text-muted">
+      <p className="mt-8 text-center fs-15 text-muted">
         New school?{" "}
         <Link href="/signup" className="font-semibold text-blue hover:underline">
           Create a free account

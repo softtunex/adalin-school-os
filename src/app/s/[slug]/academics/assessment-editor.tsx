@@ -23,8 +23,8 @@ export function ComponentsEditor({ slug, initial, locked, editable }: { slug: st
     <Card className="flex flex-col gap-5 p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-[16px] font-semibold">Continuous assessment and exam</h2>
-          <p className="mt-0.5 text-[14px] text-muted">The columns teachers fill in. Maximum scores must add up to 100.</p>
+          <h2 className="fs-16 font-semibold">Continuous assessment and exam</h2>
+          <p className="mt-0.5 fs-14 text-muted">The columns teachers fill in. Maximum scores must add up to 100.</p>
         </div>
         <Badge tone={sum === 100 ? "success" : "danger"}>Total {sum} / 100</Badge>
       </div>
@@ -32,7 +32,7 @@ export function ComponentsEditor({ slug, initial, locked, editable }: { slug: st
       <div className="flex flex-col gap-2">
         {rows.map((r, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sunken text-[13px] font-semibold text-body">{i + 1}</span>
+            <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sunken fs-13 font-semibold text-body">{i + 1}</span>
             <Input
               aria-label={`Component ${i + 1} name`}
               value={r.name}
@@ -102,12 +102,12 @@ export function BandsEditor({ slug, initial, editable }: { slug: string; initial
   return (
     <Card className="flex flex-col gap-5 p-5 sm:p-6">
       <div>
-        <h2 className="text-[16px] font-semibold">Grading scale</h2>
-        <p className="mt-0.5 text-[14px] text-muted">Each grade starts at its minimum score and runs up to the next grade.</p>
+        <h2 className="fs-16 font-semibold">Grading scale</h2>
+        <p className="mt-0.5 fs-14 text-muted">Each grade starts at its minimum score and runs up to the next grade.</p>
       </div>
       {editable ? (
         <div className="flex flex-wrap gap-2">
-          <span className="self-center text-[13.5px] text-muted">Start from:</span>
+          <span className="self-center fs-13.5 text-muted">Start from:</span>
           {Object.entries(GRADING_PRESETS).map(([key, preset]) => (
             <Button key={key} variant="secondary" size="sm" onClick={() => setRows(preset.bands.map((b) => ({ ...b })))}>
               {preset.label}
@@ -116,11 +116,11 @@ export function BandsEditor({ slug, initial, editable }: { slug: string; initial
         </div>
       ) : null}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[520px] border-separate border-spacing-0 text-[14px]">
+        <table className="w-full min-w-[520px] border-separate border-spacing-0 fs-14">
           <thead>
             <tr>
               {["Grade", "From", "Range", "Remark", "Counts as pass", ""].map((h) => (
-                <th key={h} className="bg-paper px-2 py-2.5 text-left text-[13px] font-medium text-muted first:rounded-l-[10px] last:rounded-r-[10px]">
+                <th key={h} className="bg-paper px-2 py-2.5 text-left fs-13 font-medium text-muted first:rounded-l-[10px] last:rounded-r-[10px]">
                   {h}
                 </th>
               ))}

@@ -17,8 +17,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <div className="animate-float w-64">
             <Illustration name="mascot-wave" fallback={<Kola wave className="w-full" />} className="w-full" />
           </div>
-          <h2 className="mt-8 font-display text-[40px] font-black leading-[1.05] tracking-[-0.02em] text-brand">your whole school, one place</h2>
-          <p className="mt-4 text-[16.5px] text-body">Attendance in one tap, report cards that build themselves, and fees that chase themselves.</p>
+          <h2 className="mt-8 font-display fs-40 font-black leading-[1.05] tracking-[-0.02em] text-brand">your whole school, one place</h2>
+          <p className="mt-4 fs-16.5 text-body">Attendance in one tap, report cards that build themselves, and fees that chase themselves.</p>
         </div>
       </aside>
     </div>

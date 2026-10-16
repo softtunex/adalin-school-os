@@ -28,8 +28,8 @@ export function PinGenerator({ slug, schoolName, checkUrl }: { slug: string; sch
   return (
     <Card className="flex flex-col gap-5 p-5 sm:p-6">
       <div>
-        <h2 className="text-[16px] font-semibold">Generate PINs</h2>
-        <p className="mt-0.5 text-[14px] text-muted">For the current term. Each PIN locks to the first student it&apos;s used for.</p>
+        <h2 className="fs-16 font-semibold">Generate PINs</h2>
+        <p className="mt-0.5 fs-14 text-muted">For the current term. Each PIN locks to the first student it&apos;s used for.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="How many PINs" htmlFor="pin-count" hint="Up to 1,000 at a time">
@@ -74,11 +74,11 @@ export function PinGenerator({ slug, schoolName, checkUrl }: { slug: string; sch
           <div id="pin-cards" className="grid gap-3 sm:grid-cols-2 print:grid-cols-3 print:gap-2">
             {batch.pins.map((p) => (
               <div key={p.serial} className="break-inside-avoid rounded-chunk border-2 border-dashed border-line-strong p-3 print:border-black">
-                <p className="text-[12px] font-semibold uppercase tracking-[0.05em] text-brand-ink">{schoolName}</p>
-                <p className="text-[11.5px] text-muted">Result checker · {batch.term}</p>
-                <p className="mt-2 font-mono text-[18px] font-bold tracking-[0.06em] text-ink">{p.pin}</p>
-                <p className="font-mono text-[11.5px] text-muted">Serial {p.serial}</p>
-                <p className="mt-1 break-all text-[11px] text-body">{checkUrl}</p>
+                <p className="fs-12 font-semibold uppercase tracking-[0.05em] text-brand-ink">{schoolName}</p>
+                <p className="fs-11.5 text-muted">Result checker · {batch.term}</p>
+                <p className="mt-2 font-mono fs-18 font-bold tracking-[0.06em] text-ink">{p.pin}</p>
+                <p className="font-mono fs-11.5 text-muted">Serial {p.serial}</p>
+                <p className="mt-1 break-all fs-11 text-body">{checkUrl}</p>
               </div>
             ))}
           </div>

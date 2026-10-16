@@ -13,7 +13,7 @@ function Step({ n, title, text, done, active }: { n: number; title: string; text
     <div className="flex items-start gap-3">
       <span
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-full text-[14px] font-bold",
+          "grid size-9 shrink-0 place-items-center rounded-full fs-14 font-bold",
           done ? "bg-success text-white shadow-[0_2px_0_var(--success-deep)]" : active ? "bg-brand text-white shadow-[0_2px_0_var(--brand-deep)]" : "bg-sunken text-muted",
         )}
       >
@@ -21,7 +21,7 @@ function Step({ n, title, text, done, active }: { n: number; title: string; text
       </span>
       <div>
         <p className={cn("font-semibold", active || done ? "text-ink" : "text-muted")}>{title}</p>
-        <p className="text-[13.5px] text-muted">{text}</p>
+        <p className="fs-13.5 text-muted">{text}</p>
       </div>
     </div>
   );
@@ -61,8 +61,8 @@ export function ImportFlow({ slug }: { slug: string }) {
         <span className="grid size-16 place-items-center rounded-full bg-success text-white shadow-[0_4px_0_var(--success-deep)]">
           <Icon name="check" size={32} strokeWidth={2.6} />
         </span>
-        <h2 className="mt-5 font-display text-[30px] font-black">{state.imported} students imported</h2>
-        <p className="mt-2 max-w-[48ch] text-[15px] text-muted">They&apos;re on your register with admission numbers, classes and parent contacts. Siblings were linked automatically.</p>
+        <h2 className="mt-5 font-display fs-30 font-black">{state.imported} students imported</h2>
+        <p className="mt-2 max-w-[48ch] fs-15 text-muted">They&apos;re on your register with admission numbers, classes and parent contacts. Siblings were linked automatically.</p>
         <div className="mt-7 flex flex-wrap justify-center gap-2.5">
           <ButtonLink href={`/s/${slug}/students/import`} variant="secondary" onClick={() => window.location.reload()}>
             Import another file
@@ -84,7 +84,7 @@ export function ImportFlow({ slug }: { slug: string }) {
         <Step n={4} title="Import" text="All rows go in together, or none do." active={Boolean(preview)} />
         <a
           href={`/s/${slug}/students/import/template`}
-          className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-chunk border-2 border-line-strong bg-canvas text-[14.5px] font-bold text-ink shadow-[0_3px_0_var(--line-strong)] hover:bg-paper active:translate-y-[3px] active:shadow-none"
+          className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-chunk border-2 border-line-strong bg-canvas fs-14.5 font-bold text-ink shadow-[0_3px_0_var(--line-strong)] hover:bg-paper active:translate-y-[3px] active:shadow-none"
         >
           <Icon name="download" size={18} /> Download template
         </a>
@@ -113,12 +113,12 @@ export function ImportFlow({ slug }: { slug: string }) {
             {file ? (
               <>
                 <p className="mt-4 font-semibold text-ink">{file.name}</p>
-                <p className="text-[13.5px] text-muted">{(file.size / 1024).toFixed(0)} KB · click to choose a different file</p>
+                <p className="fs-13.5 text-muted">{(file.size / 1024).toFixed(0)} KB · click to choose a different file</p>
               </>
             ) : (
               <>
                 <p className="mt-4 font-semibold text-ink">Drop your spreadsheet here, or click to choose</p>
-                <p className="text-[13.5px] text-muted">Excel (.xlsx) or CSV, up to 2,000 students and 5 MB</p>
+                <p className="fs-13.5 text-muted">Excel (.xlsx) or CSV, up to 2,000 students and 5 MB</p>
               </>
             )}
             <input
@@ -143,22 +143,22 @@ export function ImportFlow({ slug }: { slug: string }) {
                 <Card className="flex items-center gap-3 p-4">
                   <IconChip icon="checkCircle" tone="success" />
                   <div>
-                    <p className="tabular text-[22px] font-semibold text-ink">{preview.valid.length}</p>
-                    <p className="text-[13px] text-muted">ready to import</p>
+                    <p className="tabular fs-22 font-semibold text-ink">{preview.valid.length}</p>
+                    <p className="fs-13 text-muted">ready to import</p>
                   </div>
                 </Card>
                 <Card className="flex items-center gap-3 p-4">
                   <IconChip icon="alert" tone={preview.errors.length ? "danger" : "neutral"} />
                   <div>
-                    <p className="tabular text-[22px] font-semibold text-ink">{preview.errors.length}</p>
-                    <p className="text-[13px] text-muted">rows with problems</p>
+                    <p className="tabular fs-22 font-semibold text-ink">{preview.errors.length}</p>
+                    <p className="fs-13 text-muted">rows with problems</p>
                   </div>
                 </Card>
                 <Card className="flex items-center gap-3 p-4">
                   <IconChip icon="layers" tone="blue" />
                   <div>
-                    <p className="tabular text-[22px] font-semibold text-ink">{new Set(preview.valid.map((v) => v.className).filter(Boolean)).size}</p>
-                    <p className="text-[13px] text-muted">classes</p>
+                    <p className="tabular fs-22 font-semibold text-ink">{new Set(preview.valid.map((v) => v.className).filter(Boolean)).size}</p>
+                    <p className="fs-13 text-muted">classes</p>
                   </div>
                 </Card>
               </div>
@@ -190,7 +190,7 @@ export function ImportFlow({ slug }: { slug: string }) {
                           <Td className="tabular w-16 font-mono text-muted">{e.row}</Td>
                           <Td className="whitespace-nowrap font-medium">{e.name}</Td>
                           <Td>
-                            <ul className="flex flex-col gap-1 text-[14px] text-danger">
+                            <ul className="flex flex-col gap-1 fs-14 text-danger">
                               {e.messages.map((m) => (
                                 <li key={m}>{m}</li>
                               ))}
@@ -221,13 +221,13 @@ export function ImportFlow({ slug }: { slug: string }) {
                           <Td className="tabular w-16 font-mono text-muted">{r.row}</Td>
                           <Td className="font-medium">{r.name}</Td>
                           <Td>{r.className ?? <span className="text-muted">No class</span>}</Td>
-                          <Td className="font-mono text-[13px]">{r.admissionNo ?? <span className="font-sans text-muted">Generated</span>}</Td>
+                          <Td className="font-mono fs-13">{r.admissionNo ?? <span className="font-sans text-muted">Generated</span>}</Td>
                           <Td className="text-body">{r.parent ?? <Badge tone="warning">None</Badge>}</Td>
                         </tr>
                       ))}
                     </tbody>
                   </Table>
-                  {preview.valid.length > 100 ? <p className="px-5 pb-4 text-[13.5px] text-muted">And {preview.valid.length - 100} more.</p> : null}
+                  {preview.valid.length > 100 ? <p className="px-5 pb-4 fs-13.5 text-muted">And {preview.valid.length - 100} more.</p> : null}
                 </TableCard>
               ) : null}
 
@@ -248,7 +248,7 @@ export function ImportFlow({ slug }: { slug: string }) {
             </>
           ) : null}
         </div>
-        <p className="text-[13.5px] text-muted">
+        <p className="fs-13.5 text-muted">
           Prefer to type them in? <Link href={`/s/${slug}/students/new`} className="font-semibold text-blue hover:underline">Add students one at a time</Link>.
         </p>
       </div>

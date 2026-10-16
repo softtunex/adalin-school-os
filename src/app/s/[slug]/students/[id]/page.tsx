@@ -29,8 +29,8 @@ function phone(p: string | null) {
 function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-[13px] text-muted">{label}</dt>
-      <dd className="text-[15px] text-ink">{value || <span className="text-muted">Not recorded</span>}</dd>
+      <dt className="fs-13 text-muted">{label}</dt>
+      <dd className="fs-15 text-ink">{value || <span className="text-muted">Not recorded</span>}</dd>
     </div>
   );
 }
@@ -85,15 +85,15 @@ export default async function StudentPage({
         <Card className="relative overflow-hidden">
           <div className="h-20 bg-gradient-to-r from-brand-wash to-violet-wash" />
           <div className="flex flex-wrap items-end gap-5 px-6 pb-6">
-            <Avatar name={`${s.firstName} ${s.lastName}`} size={88} className="-mt-11 border-4 border-canvas text-[30px]" />
+            <Avatar name={`${s.firstName} ${s.lastName}`} size={88} className="-mt-11 border-4 border-canvas fs-30" />
             <div className="min-w-0 flex-1 pt-3">
               <div className="flex flex-wrap items-center gap-2.5">
-                <h2 className="text-[24px] font-semibold tracking-[-0.02em]">{name}</h2>
+                <h2 className="fs-24 font-semibold tracking-[-0.02em]">{name}</h2>
                 <Badge tone={STATUS_TONE[s.status]} dot>
                   {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
                 </Badge>
               </div>
-              <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[14px] text-body">
+              <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 fs-14 text-body">
                 <span className="font-mono">{s.admissionNo}</span>
                 <span className="inline-flex items-center gap-1.5">
                   <Icon name="layers" size={16} className="text-muted" />
@@ -120,7 +120,7 @@ export default async function StudentPage({
             {tab === "details" ? (
               <div className="flex flex-col gap-5">
                 <Card className="p-6">
-                  <h3 className="text-[15.5px] font-semibold">Personal</h3>
+                  <h3 className="fs-15.5 font-semibold">Personal</h3>
                   <dl className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <Detail label="First name" value={s.firstName} />
                     <Detail label="Middle name" value={s.middleName} />
@@ -136,7 +136,7 @@ export default async function StudentPage({
                 {canMedical ? (
                   <Card className="p-6">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-[15.5px] font-semibold">Health</h3>
+                      <h3 className="fs-15.5 font-semibold">Health</h3>
                       <Badge tone="danger">Confidential</Badge>
                     </div>
                     <dl className="mt-4 grid gap-5 sm:grid-cols-3">
@@ -164,11 +164,11 @@ export default async function StudentPage({
                         <Avatar name={g.name} size={44} />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[16px] font-semibold text-ink">{g.name}</p>
+                            <p className="fs-16 font-semibold text-ink">{g.name}</p>
                             <Badge>{relationship}</Badge>
                             {isPrimary ? <Badge tone="brand">Primary contact</Badge> : null}
                           </div>
-                          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5 text-[14px] text-body">
+                          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1.5 fs-14 text-body">
                             <span className="inline-flex items-center gap-1.5">
                               <Icon name="phone" size={16} className="text-muted" />
                               <span className="tabular select-all">{phone(g.phone) ?? "No phone"}</span>
@@ -201,7 +201,7 @@ export default async function StudentPage({
             {tab === "history" ? (
               <Card className="p-6">
                 {history.length === 0 ? (
-                  <p className="text-[14.5px] text-muted">No class history yet. History starts once the student is placed in a class during a session.</p>
+                  <p className="fs-14.5 text-muted">No class history yet. History starts once the student is placed in a class during a session.</p>
                 ) : (
                   <ol className="relative flex flex-col gap-6 border-l-2 border-line pl-6">
                     {history.map((h) => (
@@ -211,7 +211,7 @@ export default async function StudentPage({
                           <p className="font-semibold text-ink">{h.className}</p>
                           <Badge tone={OUTCOME_TONE[h.outcome]}>{h.outcome.charAt(0).toUpperCase() + h.outcome.slice(1)}</Badge>
                         </div>
-                        <p className="mt-0.5 text-[13.5px] text-muted">
+                        <p className="mt-0.5 fs-13.5 text-muted">
                           {h.sessionName} session · from {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(h.createdAt)}
                         </p>
                       </li>
@@ -224,8 +224,8 @@ export default async function StudentPage({
 
           <div className="flex flex-col gap-5">
             <Card className="p-5">
-              <h3 className="text-[15px] font-semibold">At a glance</h3>
-              <ul className="mt-4 flex flex-col gap-3.5 text-[14px]">
+              <h3 className="fs-15 font-semibold">At a glance</h3>
+              <ul className="mt-4 flex flex-col gap-3.5 fs-14">
                 <li className="flex items-center gap-3">
                   <IconChip icon="calendarCheck" tone="success" size={34} />
                   <span className="text-body">Attendance appears here once it&apos;s being taken.</span>
@@ -241,9 +241,9 @@ export default async function StudentPage({
               </ul>
             </Card>
             <Card className="p-5">
-              <h3 className="text-[15px] font-semibold">Siblings in this school</h3>
+              <h3 className="fs-15 font-semibold">Siblings in this school</h3>
               {siblings.length === 0 ? (
-                <p className="mt-2 text-[14px] text-muted">None found. Siblings are linked automatically when they share a parent&apos;s phone number.</p>
+                <p className="mt-2 fs-14 text-muted">None found. Siblings are linked automatically when they share a parent&apos;s phone number.</p>
               ) : (
                 <ul className="mt-3 flex flex-col gap-1">
                   {siblings.map((sib) => (
@@ -254,7 +254,7 @@ export default async function StudentPage({
                           <span className="block font-medium text-ink">
                             {sib.firstName} {sib.lastName}
                           </span>
-                          <span className="block text-[13px] text-muted">{sib.className ?? "No class"}</span>
+                          <span className="block fs-13 text-muted">{sib.className ?? "No class"}</span>
                         </span>
                       </Link>
                     </li>

@@ -35,8 +35,8 @@ export default async function ResultsPage({ params }: { params: Promise<{ slug: 
             <Card className="overflow-hidden">
               <div className="grid items-center lg:grid-cols-[1fr_360px]">
                 <div className="p-8">
-                  <h2 className="font-display text-[26px] font-black">Results start once a term is running</h2>
-                  <p className="mt-2 text-[15px] text-muted">{error.message}</p>
+                  <h2 className="font-display fs-26 font-black">Results start once a term is running</h2>
+                  <p className="mt-2 fs-15 text-muted">{error.message}</p>
                   {can(access, "academics:manage") ? (
                     <ButtonLink href={`/s/${slug}/academics`} className="mt-6">
                       Go to Academics

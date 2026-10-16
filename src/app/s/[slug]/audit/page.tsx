@@ -103,13 +103,13 @@ export default async function AuditPage({
                     <tr key={e.id} className="hover:bg-paper">
                       <Td className="whitespace-nowrap">
                         <p className="tabular font-medium">{dayFmt.format(e.createdAt)}</p>
-                        <p className="tabular text-[13px] text-muted">{timeFmt.format(e.createdAt)} WAT</p>
+                        <p className="tabular fs-13 text-muted">{timeFmt.format(e.createdAt)} WAT</p>
                       </Td>
                       <Td className="whitespace-nowrap font-medium">{actionTitle(e.action)}</Td>
                       <Td className="max-w-[360px] text-body">{e.summary}</Td>
                       <Td>
                         <p className="font-medium">{e.actorName ?? "System"}</p>
-                        {e.ip ? <p className="tabular text-[13px] text-muted">{e.ip}</p> : null}
+                        {e.ip ? <p className="tabular fs-13 text-muted">{e.ip}</p> : null}
                       </Td>
                       <Td className="whitespace-nowrap text-body">{cat ? AUDIT_CATEGORIES[cat].label : "Other"}</Td>
                       <Td>{important ? <Badge tone="danger">Review</Badge> : <Badge>Info</Badge>}</Td>

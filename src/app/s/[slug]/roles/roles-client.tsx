@@ -31,17 +31,17 @@ function RoleForm({ slug, grantable, role }: { slug: string; grantable: string[]
         <Textarea id="role-desc" name="description" defaultValue={state.values?.description ?? role?.description} rows={2} />
       </Field>
       <fieldset className="flex flex-col gap-4">
-        <legend className="mb-1 text-[14px] font-medium text-ink">Permissions</legend>
-        {fe.permissions ? <p className="text-[13.5px] font-semibold text-danger">{fe.permissions}</p> : null}
+        <legend className="mb-1 fs-14 font-medium text-ink">Permissions</legend>
+        {fe.permissions ? <p className="fs-13.5 font-semibold text-danger">{fe.permissions}</p> : null}
         {Object.entries(PERMISSION_GROUPS).map(([group, def]) => (
           <div key={group} className="rounded-chunk border border-line p-3">
-            <p className="text-[13px] font-medium text-muted">{def.label}</p>
+            <p className="fs-13 font-medium text-muted">{def.label}</p>
             <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
               {Object.entries(def.actions).map(([act, label]) => {
                 const key = `${group}:${act}`;
                 const allowed = held.has(key);
                 return (
-                  <label key={key} className={allowed ? "flex cursor-pointer items-center gap-2.5 text-[14px] text-ink" : "flex items-center gap-2.5 text-[14px] text-muted"} title={allowed ? undefined : "You can't grant a permission you don't have"}>
+                  <label key={key} className={allowed ? "flex cursor-pointer items-center gap-2.5 fs-14 text-ink" : "flex items-center gap-2.5 fs-14 text-muted"} title={allowed ? undefined : "You can't grant a permission you don't have"}>
                     <input type="checkbox" name="permissions" value={key} defaultChecked={selected.has(key)} disabled={!allowed} className="size-[18px] accent-[var(--brand)]" />
                     {label}
                   </label>

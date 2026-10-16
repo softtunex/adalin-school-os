@@ -64,11 +64,11 @@ function Section({ title, text, art, name, points, flip }: (typeof SECTIONS)[num
         <Illustration name={name} fallback={art} className="w-full" />
       </div>
       <div className={cn(flip && "md:order-1")}>
-        <h2 className="font-display text-[40px] font-black leading-[1.05] tracking-[-0.02em] text-brand sm:text-[52px]">{title}</h2>
-        <p className="mt-5 max-w-[48ch] text-[18px] leading-relaxed text-body">{text}</p>
+        <h2 className="font-display fs-40 font-black leading-[1.05] tracking-[-0.02em] text-brand sm:fs-52">{title}</h2>
+        <p className="mt-5 max-w-[48ch] fs-18 leading-relaxed text-body">{text}</p>
         <ul className="mt-6 flex flex-col gap-2.5">
           {points.map((p) => (
-            <li key={p} className="flex items-center gap-3 text-[16px] font-medium text-ink">
+            <li key={p} className="flex items-center gap-3 fs-16 font-medium text-ink">
               <span className="grid size-6 shrink-0 place-items-center rounded-full bg-success text-white shadow-[0_2px_0_var(--success-deep)]">
                 <Icon name="check" size={14} strokeWidth={3} />
               </span>
@@ -89,7 +89,7 @@ export default function HomePage() {
         <div className="mx-auto flex h-[72px] max-w-[1120px] items-center justify-between px-5">
           <Logo />
           <nav className="flex items-center gap-2">
-            <Link href="/login" className="hidden px-3 text-[14px] font-bold uppercase tracking-[0.06em] text-muted hover:text-ink sm:inline">
+            <Link href="/login" className="hidden px-3 fs-14 font-bold uppercase tracking-[0.06em] text-muted hover:text-ink sm:inline">
               Log in
             </Link>
             <ButtonLink href="/signup" size="md" className="uppercase tracking-[0.06em]">
@@ -105,10 +105,10 @@ export default function HomePage() {
             <Illustration name="hero" fallback={<HeroScene className="w-full" />} className="w-full" priority />
           </div>
           <div className="flex flex-col items-center text-center">
-            <h1 className="max-w-[16ch] font-display text-[34px] font-black leading-[1.15] tracking-[-0.01em] text-ink sm:text-[40px]">
+            <h1 className="max-w-[16ch] font-display fs-34 font-black leading-[1.15] tracking-[-0.01em] text-ink sm:fs-40">
               The simplest way to run your whole school.
             </h1>
-            <p className="mt-4 max-w-[42ch] text-[17px] text-body">Attendance, results, fees and parents in one place. Free for schools with up to 50 students.</p>
+            <p className="mt-4 max-w-[42ch] fs-17 text-body">Attendance, results, fees and parents in one place. Free for schools with up to 50 students.</p>
             <div className="mt-8 flex w-full max-w-[360px] flex-col gap-3">
               <ButtonLink href="/signup" size="xl">
                 Get started
@@ -123,7 +123,7 @@ export default function HomePage() {
         <div className="border-y border-line">
           <div className="mx-auto flex max-w-[1120px] gap-3 overflow-x-auto px-5 py-5 [scrollbar-width:none] md:justify-between">
             {SCHOOL_TYPES.map((t) => (
-              <span key={t.label} className="flex shrink-0 items-center gap-2.5 px-2 text-[14px] font-bold uppercase tracking-[0.06em] text-muted">
+              <span key={t.label} className="flex shrink-0 items-center gap-2.5 px-2 fs-14 font-bold uppercase tracking-[0.06em] text-muted">
                 <span className={cn("grid size-9 place-items-center rounded-[10px] text-white shadow-[inset_0_-3px_0_rgba(0,0,0,0.15)]", t.color)}>
                   <Icon name={t.icon} size={18} strokeWidth={2.2} />
                 </span>
@@ -134,8 +134,8 @@ export default function HomePage() {
         </div>
 
         <section className="mx-auto max-w-[1120px] px-5 pt-20 text-center md:pt-28">
-          <h2 className="font-display text-[44px] font-black leading-[1.05] tracking-[-0.02em] text-brand sm:text-[60px]">simple. fast. complete.</h2>
-          <p className="mx-auto mt-5 max-w-[56ch] text-[18px] leading-relaxed text-body">
+          <h2 className="font-display fs-44 font-black leading-[1.05] tracking-[-0.02em] text-brand sm:fs-60">simple. fast. complete.</h2>
+          <p className="mx-auto mt-5 max-w-[56ch] fs-18 leading-relaxed text-body">
             Most school software is built to tick feature boxes. {APP_NAME} is built for the teacher with 40 students, a phone and five minutes. Every role gets its own simple view, so nobody wades through screens they don&apos;t need.
           </p>
         </section>
@@ -146,8 +146,8 @@ export default function HomePage() {
 
         <section className="bg-paper">
           <div className="mx-auto max-w-[1120px] px-5 py-20 md:py-24">
-            <h2 className="text-center font-display text-[40px] font-black leading-[1.05] tracking-[-0.02em] text-brand sm:text-[52px]">fair, simple pricing</h2>
-            <p className="mx-auto mt-4 max-w-[52ch] text-center text-[17px] text-body">Per student, per term. Most schools add it to the fees as a small line. No setup fee.</p>
+            <h2 className="text-center font-display fs-40 font-black leading-[1.05] tracking-[-0.02em] text-brand sm:fs-52">fair, simple pricing</h2>
+            <p className="mx-auto mt-4 max-w-[52ch] text-center fs-17 text-body">Per student, per term. Most schools add it to the fees as a small line. No setup fee.</p>
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {plans.map((p) => {
                 const popular = p.key === "standard";
@@ -156,12 +156,12 @@ export default function HomePage() {
                     key={p.key}
                     className={cn("relative flex flex-col rounded-[20px] border-2 bg-canvas p-6", popular ? "border-brand shadow-[0_6px_0_var(--brand)]" : "border-line shadow-[0_6px_0_var(--line)]")}
                   >
-                    {popular ? <span className="absolute -top-3.5 left-6 rounded-full bg-brand px-3 py-1 text-[12px] font-bold uppercase tracking-[0.06em] text-white">Most schools</span> : null}
-                    <h3 className="font-display text-[22px] font-black">{p.name}</h3>
-                    <p className="tabular mt-3 text-[30px] font-bold tracking-[-0.02em] text-ink">
+                    {popular ? <span className="absolute -top-3.5 left-6 rounded-full bg-brand px-3 py-1 fs-12 font-bold uppercase tracking-[0.06em] text-white">Most schools</span> : null}
+                    <h3 className="font-display fs-22 font-black">{p.name}</h3>
+                    <p className="tabular mt-3 fs-30 font-bold tracking-[-0.02em] text-ink">
                       {p.pricePerStudentKobo ? formatNaira(p.pricePerStudentKobo) : "Free"}
                     </p>
-                    <p className="text-[13.5px] text-muted">{p.pricePerStudentKobo ? "per student, per term" : `up to ${p.limits.students} students`}</p>
+                    <p className="fs-13.5 text-muted">{p.pricePerStudentKobo ? "per student, per term" : `up to ${p.limits.students} students`}</p>
                     <ButtonLink href="/signup" variant={popular ? "primary" : "outline"} className="mt-6">
                       {p.pricePerStudentKobo ? "Start free" : "Get started"}
                     </ButtonLink>
@@ -169,12 +169,12 @@ export default function HomePage() {
                 );
               })}
             </div>
-            <p className="mt-8 text-center text-[15px] text-muted">Running several campuses? Enterprise adds group dashboards, your own domain and an account manager.</p>
+            <p className="mt-8 text-center fs-15 text-muted">Running several campuses? Enterprise adds group dashboards, your own domain and an account manager.</p>
           </div>
         </section>
 
         <section className="mx-auto flex max-w-[1120px] flex-col items-center px-5 py-20 text-center md:py-28">
-          <h2 className="max-w-[18ch] font-display text-[40px] font-black leading-[1.08] tracking-[-0.02em] text-ink sm:text-[52px]">Spend your evenings on something better than paperwork.</h2>
+          <h2 className="max-w-[18ch] font-display fs-40 font-black leading-[1.08] tracking-[-0.02em] text-ink sm:fs-52">Spend your evenings on something better than paperwork.</h2>
           <ButtonLink href="/signup" size="xl" className="mt-10 w-full max-w-[360px]">
             Get started free
           </ButtonLink>
@@ -184,8 +184,8 @@ export default function HomePage() {
       <footer className="bg-brand text-white">
         <div className="mx-auto grid max-w-[1120px] gap-10 px-5 py-14 sm:grid-cols-2 md:grid-cols-4">
           <div className="sm:col-span-2 md:col-span-1">
-            <p className="font-display text-[26px] font-black">{APP_NAME.toLowerCase()}</p>
-            <p className="mt-2 max-w-[30ch] text-[14.5px] text-white/85">School management for schools that want their evenings back.</p>
+            <p className="font-display fs-26 font-black">{APP_NAME.toLowerCase()}</p>
+            <p className="mt-2 max-w-[30ch] fs-14.5 text-white/85">School management for schools that want their evenings back.</p>
           </div>
           {[
             { title: "Product", links: [["Features", "/#"], ["Pricing", "/#"], ["Get started", "/signup"]] },
@@ -193,11 +193,11 @@ export default function HomePage() {
             { title: "Account", links: [["Log in", "/login"], ["Create a school", "/signup"]] },
           ].map((col) => (
             <div key={col.title}>
-              <p className="text-[14px] font-bold text-white">{col.title}</p>
+              <p className="fs-14 font-bold text-white">{col.title}</p>
               <ul className="mt-3 flex flex-col gap-2">
                 {col.links.map(([label, href]) => (
                   <li key={label}>
-                    <Link href={href} className="text-[14.5px] text-[#FFD9C2] hover:text-white">
+                    <Link href={href} className="fs-14.5 text-[#FFD9C2] hover:text-white">
                       {label}
                     </Link>
                   </li>
@@ -207,7 +207,7 @@ export default function HomePage() {
           ))}
         </div>
         <div className="border-t border-white/20">
-          <p className="mx-auto max-w-[1120px] px-5 py-5 text-[13.5px] text-white/80">
+          <p className="mx-auto max-w-[1120px] px-5 py-5 fs-13.5 text-white/80">
             © {new Date().getFullYear()} Adalin Technologies · Lagos, Nigeria
           </p>
         </div>

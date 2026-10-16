@@ -22,7 +22,7 @@ const badgeTones: Record<Tone, string> = {
 export function Badge({ tone = "neutral", className, dot, ...props }: ComponentProps<"span"> & { tone?: Tone; dot?: boolean }) {
   return (
     <span
-      className={cn("inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-md border px-2 text-[12.5px] font-medium", badgeTones[tone], className)}
+      className={cn("inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-md border px-2 fs-12.5 font-medium", badgeTones[tone], className)}
       {...props}
     >
       {dot ? <span className="size-1.5 rounded-full bg-current" /> : null}
@@ -72,15 +72,15 @@ export function StatCard({
   return (
     <Card className="flex min-w-0 flex-col p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2 sm:gap-3">
-        <p className="text-[13.5px] font-medium text-body sm:text-[14.5px]">{label}</p>
+        <p className="fs-13.5 font-medium text-body sm:fs-14.5">{label}</p>
         <IconChip icon={icon} tone={tone} className="size-8! sm:size-10!" />
       </div>
-      <p className="tabular mt-3 flex flex-wrap items-baseline gap-x-2 text-[24px] font-semibold leading-none tracking-[-0.02em] text-ink sm:text-[28px]">
+      <p className="tabular mt-3 flex flex-wrap items-baseline gap-x-2 fs-24 font-semibold leading-none tracking-[-0.02em] text-ink sm:fs-28">
         {value}
-        {sub ? <span className="text-[14px] font-normal tracking-normal text-muted">{sub}</span> : null}
+        {sub ? <span className="fs-14 font-normal tracking-normal text-muted">{sub}</span> : null}
       </p>
       {progress ? <Progress value={progress.value} tone={progress.tone} /> : null}
-      {caption ? <p className="mt-3 text-[12.5px] text-muted sm:text-[13px]">{caption}</p> : null}
+      {caption ? <p className="mt-3 fs-12.5 text-muted sm:fs-13">{caption}</p> : null}
     </Card>
   );
 }
@@ -100,8 +100,8 @@ export function Banner({ icon = "sparkle", title, children, action }: { icon?: I
           <Icon name={icon} size={26} />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[16px] font-semibold text-white">{title}</p>
-          {children ? <div className="mt-0.5 text-[14.5px] text-white/75">{children}</div> : null}
+          <p className="fs-16 font-semibold text-white">{title}</p>
+          {children ? <div className="mt-0.5 fs-14.5 text-white/75">{children}</div> : null}
         </div>
         {action}
       </div>
@@ -117,7 +117,7 @@ export function Alert({ tone = "blue", title, children, className }: { tone?: "b
     danger: "border-danger/25 bg-danger-wash",
   };
   return (
-    <div role={tone === "danger" ? "alert" : "status"} className={cn("rounded-chunk border px-4 py-3 text-[14.5px] text-ink", tones[tone], className)}>
+    <div role={tone === "danger" ? "alert" : "status"} className={cn("rounded-chunk border px-4 py-3 fs-14.5 text-ink", tones[tone], className)}>
       {title ? <p className="font-semibold">{title}</p> : null}
       {children ? <div className={cn(title ? "mt-0.5" : null, "text-body")}>{children}</div> : null}
     </div>
@@ -150,9 +150,9 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="min-w-0">
-        {eyebrow ? <p className="mb-1 text-[13px] font-medium text-muted">{eyebrow}</p> : null}
-        <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.02em] sm:text-[26px]">{title}</h1>
-        {description ? <p className="mt-1 max-w-[64ch] text-[15px] text-muted">{description}</p> : null}
+        {eyebrow ? <p className="mb-1 fs-13 font-medium text-muted">{eyebrow}</p> : null}
+        <h1 className="fs-24 font-semibold leading-tight tracking-[-0.02em] sm:fs-26">{title}</h1>
+        {description ? <p className="mt-1 max-w-[64ch] fs-15 text-muted">{description}</p> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2.5">{actions}</div> : null}
     </div>
@@ -163,8 +163,8 @@ export function EmptyState({ illustration, icon, title, children, action }: { il
   return (
     <div className="flex flex-col items-center px-6 py-14 text-center">
       {illustration ?? (icon ? <IconChip icon={icon} tone="brand" size={56} className="mb-1" /> : null)}
-      <h3 className="mt-4 text-[17px] font-semibold">{title}</h3>
-      {children ? <div className="mt-1 max-w-[46ch] text-[14.5px] text-muted">{children}</div> : null}
+      <h3 className="mt-4 fs-17 font-semibold">{title}</h3>
+      {children ? <div className="mt-1 max-w-[46ch] fs-14.5 text-muted">{children}</div> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
   );
@@ -186,7 +186,7 @@ export function TableCard({ title, toolbar, children, footer }: { title?: ReactN
     <Card className="overflow-hidden">
       {title || toolbar ? (
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
-          {title ? <h2 className="text-[16px] font-semibold">{title}</h2> : <span />}
+          {title ? <h2 className="fs-16 font-semibold">{title}</h2> : <span />}
           {toolbar ? <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">{toolbar}</div> : null}
         </div>
       ) : null}
@@ -199,7 +199,7 @@ export function TableCard({ title, toolbar, children, footer }: { title?: ReactN
 export function Table({ children, className, fixed }: { children: ReactNode; className?: string; fixed?: boolean }) {
   return (
     <div className={cn("relative overflow-x-auto px-3 pb-3 sm:px-4", className)}>
-      <table className={cn("w-full min-w-[720px] border-separate border-spacing-0 text-[14.5px]", fixed && "table-fixed")}>{children}</table>
+      <table className={cn("w-full min-w-[720px] border-separate border-spacing-0 fs-14.5", fixed && "table-fixed")}>{children}</table>
     </div>
   );
 }
@@ -208,7 +208,7 @@ export function Th({ className, ...props }: ComponentProps<"th">) {
   return (
     <th
       className={cn(
-        "bg-paper px-4 py-3 text-left text-[13.5px] font-medium text-muted first:rounded-l-[10px] last:rounded-r-[10px]",
+        "bg-paper px-4 py-3 text-left fs-13.5 font-medium text-muted first:rounded-l-[10px] last:rounded-r-[10px]",
         className,
       )}
       {...props}
