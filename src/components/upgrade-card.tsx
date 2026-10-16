@@ -2,8 +2,8 @@ import { cheapestPlanWith, FEATURES, type FeatureKey } from "@/lib/plans/catalog
 import { ButtonLink } from "./ui/button";
 import { Icon } from "./ui/icons";
 
-export function UpgradeCard({ slug, feature, text }: { slug: string; feature: FeatureKey; text?: string }) {
-  const plan = cheapestPlanWith(feature);
+export function UpgradeCard({ slug, feature, text, title }: { slug: string; feature?: FeatureKey; text?: string; title?: string }) {
+  const plan = feature ? cheapestPlanWith(feature) : undefined;
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-card border border-brand/30 bg-brand-wash p-5">
       <span className="grid size-12 place-items-center rounded-[14px] bg-brand text-white shadow-[0_3px_0_var(--brand-deep)]">
@@ -11,7 +11,7 @@ export function UpgradeCard({ slug, feature, text }: { slug: string; feature: Fe
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-[16px] font-semibold text-ink">
-          {FEATURES[feature]} is on the {plan?.name ?? "higher"} plan
+          {title ?? (feature ? `${FEATURES[feature]} is on the ${plan?.name ?? "higher"} plan` : "Upgrade your plan")}
         </p>
         {text ? <p className="text-[14.5px] text-body">{text}</p> : null}
       </div>

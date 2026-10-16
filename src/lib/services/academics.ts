@@ -368,3 +368,20 @@ export async function assignSubjectTeacher(
     });
   });
 }
+
+/** Classes in level order, for pickers and filters. Teachers only get the classes they teach. */
+export async function listClassOptions(db: DB, access: Access) {
+  if (!access.permissions.has("students:view") && !access.permissions.has("academics:view")) {
+    throw new AppError("You don't have permission to do that.", "forbidden");
+  }
+  return withTenant(db, access.school.id, async (tx) => {
+    const rows = await tx
+      .select({ id: classes.id, name: classes.name, levelName: classLevels.name })
+      .from(classes)
+      .innerJoin(classLevels, eq(classLevels.id, classes.levelId))
+      .where(eq(classes.isActive, true))
+      .orderBy(asc(classLevels.sort), asc(classes.name));
+    const scope = await studentScope(tx, access);
+    return scope === "all" ? rows : rows.filter((r) => scope.includes(r.id));
+  });
+}

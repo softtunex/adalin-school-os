@@ -232,8 +232,8 @@ export const terms = pgTable(
   (t) => [uniqueIndex("terms_session_number_uq").on(t.sessionId, t.number)],
 );
 
-export const SECTIONS = ["creche", "nursery", "primary", "junior_secondary", "senior_secondary", "other"] as const;
-export type Section = (typeof SECTIONS)[number];
+import { SECTIONS, type Section } from "../academics/sections";
+export { SECTIONS, type Section };
 
 export const classLevels = pgTable(
   "class_levels",

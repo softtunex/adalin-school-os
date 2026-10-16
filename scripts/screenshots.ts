@@ -31,9 +31,9 @@ async function main() {
       await ctx.addCookies([{ name: "theme", value: theme, url: BASE }]);
       for (const p of pages) {
         if (theme === "dark" && !["overview", "staff"].includes(p)) continue;
-        await page.goto(`${BASE}/s/${slug}${p === "overview" ? "" : `/${p}`}`);
+        await page.goto(`${BASE}/s/${slug}${p === "overview" ? "" : `/${p.replace(/~/g, "?").replace(/_/g, "/")}`}`);
         await page.waitForLoadState("networkidle");
-        await page.screenshot({ path: `${OUT}/${label}-${theme}-${p}.png`, fullPage: label === "desktop" });
+        await page.screenshot({ path: `${OUT}/${label}-${theme}-${p.replace(/[^\w]+/g, "-")}.png`, fullPage: label === "desktop" });
       }
     }
     await ctx.close();

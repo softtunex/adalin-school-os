@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   devIndicators: { position: "bottom-right" },
-  serverExternalPackages: ["@electric-sql/pglite", "@node-rs/argon2"],
+  // Student imports allow 5 MB spreadsheets; leave headroom for multipart overhead.
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
+  serverExternalPackages: ["@electric-sql/pglite", "@node-rs/argon2", "exceljs"],
   turbopack: {
     rules: {
       "*.css": {

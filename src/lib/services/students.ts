@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { DB, Tx } from "../db/client";
-import { academicSessions, classes, enrollments, guardians, schools, studentGuardians, students, STUDENT_STATUSES } from "../db/schema";
+import { academicSessions, classes, classLevels, enrollments, guardians, schools, studentGuardians, students, STUDENT_STATUSES } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { NIGERIAN_STATES } from "../nigeria";
@@ -240,8 +240,9 @@ export async function listStudents(db: DB, access: Access, filters: StudentFilte
         .select({ student: students, className: classes.name })
         .from(students)
         .leftJoin(classes, eq(classes.id, students.classId))
+        .leftJoin(classLevels, eq(classLevels.id, classes.levelId))
         .where(where)
-        .orderBy(asc(classes.name), asc(students.lastName), asc(students.firstName))
+        .orderBy(asc(classLevels.sort), asc(classes.name), asc(students.lastName), asc(students.firstName))
         .limit(STUDENT_PAGE_SIZE)
         .offset((page - 1) * STUDENT_PAGE_SIZE),
       tx.select({ n: count() }).from(students).where(where),
@@ -459,4 +460,41 @@ export async function setAdmissionPrefix(db: DB, access: Access, prefix: string 
       .set({ admissionPrefix: prefix?.trim().toUpperCase() || null })
       .where(eq(schools.id, access.school.id)),
   );
+}
+
+export async function studentStats(db: DB, access: Access) {
+  requirePermission(access, "students:view");
+  return withTenant(db, access.school.id, async (tx) => {
+    const scope = await studentScope(tx, access);
+    const scoped = scope === "all" ? undefined : scope.length ? inArray(students.classId, scope) : sql`false`;
+    const rows = await tx
+      .select({ status: students.status, gender: students.gender, n: count() })
+      .from(students)
+      .where(scoped)
+      .groupBy(students.status, students.gender);
+    const sum = (f: (r: (typeof rows)[number]) => boolean) => rows.filter(f).reduce((n, r) => n + r.n, 0);
+    const [{ noGuardian }] = await tx
+      .select({ noGuardian: count() })
+      .from(students)
+      .where(
+        and(
+          eq(students.status, "active"),
+          scoped,
+          sql`not exists (select 1 from student_guardians sg where sg.student_id = ${students.id})`,
+        ),
+      );
+    const [{ noClass }] = await tx
+      .select({ noClass: count() })
+      .from(students)
+      .where(and(eq(students.status, "active"), scoped, sql`${students.classId} is null`));
+    return {
+      active: sum((r) => r.status === "active"),
+      female: sum((r) => r.status === "active" && r.gender === "female"),
+      male: sum((r) => r.status === "active" && r.gender === "male"),
+      left: sum((r) => r.status === "withdrawn" || r.status === "graduated"),
+      suspended: sum((r) => r.status === "suspended"),
+      noGuardian,
+      noClass,
+    };
+  });
 }

@@ -26,16 +26,43 @@ function useQueryUpdater() {
 
 export function SearchInput({ placeholder = "Search…", param = "q", className }: { placeholder?: string; param?: string; className?: string }) {
   const { update, params, pending } = useQueryUpdater();
-  const [value, setValue] = useState(params.get(param) ?? "");
+  const initial = params.get(param) ?? "";
+  const [value, setValue] = useState(initial);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(timer.current), []);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // On slow connections people can type before the page is interactive; pick that text up once it is.
+  useEffect(() => {
+    const typed = inputRef.current?.value ?? "";
+    if (typed !== initial) {
+      setValue(typed);
+      update({ [param]: typed.trim() || null });
+    }
+    return () => clearTimeout(timer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <label className={cn("relative flex h-10 min-w-0 items-center sm:w-72", className)}>
+    <form
+      role="search"
+      method="get"
+      onSubmit={(e) => {
+        e.preventDefault();
+        clearTimeout(timer.current);
+        update({ [param]: value.trim() || null });
+      }}
+      className={cn("relative flex h-10 w-full min-w-0 items-center sm:w-72", className)}
+    >
+      {[...params.entries()].filter(([k]) => k !== param && k !== "page").map(([k, v]) => (
+        <input key={k} type="hidden" name={k} value={v} />
+      ))}
+      <label className="contents">
       <span className="sr-only">{placeholder}</span>
       <Icon name="search" size={18} className={cn("pointer-events-none absolute left-3 text-muted", pending && "animate-pulse")} />
       <input
+        ref={inputRef}
         type="search"
+        name={param}
         value={value}
         placeholder={placeholder}
         onChange={(e) => {
@@ -46,11 +73,12 @@ export function SearchInput({ placeholder = "Search…", param = "q", className 
         }}
         className="h-10 w-full rounded-chunk border border-line-strong bg-canvas pl-10 pr-3 text-[14.5px] text-ink placeholder:text-muted focus:border-blue focus:shadow-[0_0_0_3px_var(--blue-wash)] focus:outline-none"
       />
-    </label>
+      </label>
+    </form>
   );
 }
 
-export function FilterSelect({ label, param, options }: { label: string; param: string; options: { value: string; label: string }[] }) {
+export function FilterSelect({ label, param, options, includeAll = true }: { label: string; param: string; options: { value: string; label: string }[]; includeAll?: boolean }) {
   const { update, params } = useQueryUpdater();
   const current = params.get(param) ?? "";
   return (
@@ -62,7 +90,7 @@ export function FilterSelect({ label, param, options }: { label: string; param: 
         className="h-full appearance-none bg-transparent bg-[length:16px] bg-[right_10px_center] bg-no-repeat pl-2 pr-9 font-medium text-ink focus:outline-none"
         style={{ backgroundImage: "var(--select-arrow)" }}
       >
-        <option value="">All</option>
+        {includeAll ? <option value="">All</option> : null}
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {o.label}

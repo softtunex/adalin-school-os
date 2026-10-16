@@ -1,4 +1,4 @@
-import type { Section } from "../db/schema";
+import type { Section } from "./sections";
 
 export type LevelTemplate = { name: string; section: Section };
 export type SubjectTemplate = { name: string; code: string; sections: Section[]; electiveIn?: Section[] };
