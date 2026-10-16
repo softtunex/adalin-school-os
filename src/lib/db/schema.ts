@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   date,
   numeric,
@@ -17,6 +18,21 @@ import {
 const id = () => uuid("id").primaryKey().default(sql`gen_random_uuid()`);
 const createdAt = () => timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const schoolId = () => uuid("school_id").notNull().references(() => schools.id, { onDelete: "cascade" });
+
+/** Money is stored in kobo as a bigint, read back as a JS number (safe to ₦90 trillion). */
+const kobo = (name: string) => bigint(name, { mode: "number" });
+
+export type FeeSettings = {
+  /** Parents with an unpaid balance can't check that term's result online. */
+  withholdResults?: boolean;
+  /** Email debtors a reminder every `reminderEveryDays` days. */
+  autoReminders?: boolean;
+  reminderEveryDays?: number;
+  /** Shown on invoices for bank transfers, and where Paystack settles online payments. */
+  bank?: { name: string; code?: string; accountNumber: string; accountName: string };
+  /** Free text printed at the bottom of invoices, e.g. "Fees are not refundable." */
+  invoiceNote?: string;
+};
 
 // ---------- Platform (no row-level security: accessed by the app's owner role) ----------
 
@@ -109,6 +125,10 @@ export const schools = pgTable(
     onboarding: jsonb("onboarding").$type<Record<string, boolean>>().notNull().default({}),
     admissionPrefix: text("admission_prefix"),
     nextAdmissionSeq: integer("next_admission_seq").notNull().default(1),
+    nextInvoiceSeq: integer("next_invoice_seq").notNull().default(1),
+    nextReceiptSeq: integer("next_receipt_seq").notNull().default(1),
+    feeSettings: jsonb("fee_settings").$type<FeeSettings>().notNull().default({}),
+    paystackSubaccount: text("paystack_subaccount"),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("schools_slug_uq").on(t.slug)],
@@ -606,6 +626,238 @@ export const resultPins = pgTable(
   (t) => [uniqueIndex("result_pins_school_serial_uq").on(t.schoolId, t.serial), uniqueIndex("result_pins_school_hash_uq").on(t.schoolId, t.pinHash)],
 );
 
+// ---------- Finance ----------
+
+/** The school's catalogue of fee items, e.g. Tuition, Development levy, School bus. */
+export const feeItems = pgTable(
+  "fee_items",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    /** Optional items (bus, boarding) aren't added to term invoices automatically. */
+    isOptional: boolean("is_optional").notNull().default(false),
+    sort: integer("sort").notNull().default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("fee_items_school_name_uq").on(t.schoolId, t.name)],
+);
+
+/** The fee structure: what each class level pays per item, per term. */
+export const feeAmounts = pgTable(
+  "fee_amounts",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    levelId: uuid("level_id")
+      .notNull()
+      .references(() => classLevels.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => feeItems.id, { onDelete: "cascade" }),
+    amountKobo: kobo("amount_kobo").notNull(),
+  },
+  (t) => [uniqueIndex("fee_amounts_uq").on(t.termId, t.levelId, t.itemId)],
+);
+
+export const DISCOUNT_KINDS = ["percent", "fixed"] as const;
+
+/** Discounts and scholarships, e.g. "Sibling discount 10%", "Staff child 50% of tuition". */
+export const discountSchemes = pgTable(
+  "discount_schemes",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: DISCOUNT_KINDS }).notNull(),
+    /** Whole percent for "percent", kobo for "fixed". */
+    value: kobo("value").notNull(),
+    /** Applies to one item, or to all compulsory charges when null. */
+    itemId: uuid("item_id").references(() => feeItems.id, { onDelete: "set null" }),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("discount_schemes_school_name_uq").on(t.schoolId, t.name)],
+);
+
+export const studentDiscounts = pgTable(
+  "student_discounts",
+  {
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    schemeId: uuid("scheme_id")
+      .notNull()
+      .references(() => discountSchemes.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.studentId, t.schemeId] }), index("student_discounts_scheme_idx").on(t.schemeId)],
+);
+
+export const INVOICE_STATUSES = ["unpaid", "partial", "paid", "void"] as const;
+export type InvoiceStatus = (typeof INVOICE_STATUSES)[number];
+
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    number: text("number").notNull(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    termId: uuid("term_id")
+      .notNull()
+      .references(() => terms.id, { onDelete: "cascade" }),
+    classId: uuid("class_id").references(() => classes.id, { onDelete: "set null" }),
+    /** One "term" invoice per student per term; "other" for one-off charges. */
+    kind: text("kind", { enum: ["term", "other"] }).notNull().default("term"),
+    title: text("title").notNull(),
+    dueOn: date("due_on"),
+    // Kept in step with the lines and payments by refreshInvoice().
+    chargesKobo: kobo("charges_kobo").notNull().default(0),
+    discountKobo: kobo("discount_kobo").notNull().default(0),
+    paidKobo: kobo("paid_kobo").notNull().default(0),
+    status: text("status", { enum: INVOICE_STATUSES }).notNull().default("unpaid"),
+    payToken: text("pay_token").notNull(),
+    issuedBy: uuid("issued_by").references(() => memberships.id, { onDelete: "set null" }),
+    voidedAt: timestamp("voided_at", { withTimezone: true }),
+    voidReason: text("void_reason"),
+    lastRemindedAt: timestamp("last_reminded_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("invoices_school_number_uq").on(t.schoolId, t.number),
+    uniqueIndex("invoices_pay_token_uq").on(t.payToken),
+    uniqueIndex("invoices_term_student_uq").on(t.termId, t.studentId).where(sql`kind = 'term' and status <> 'void'`),
+    index("invoices_school_term_status_idx").on(t.schoolId, t.termId, t.status),
+    index("invoices_student_idx").on(t.studentId),
+  ],
+);
+
+export const invoiceLines = pgTable(
+  "invoice_lines",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["charge", "discount"] }).notNull(),
+    itemId: uuid("item_id").references(() => feeItems.id, { onDelete: "set null" }),
+    schemeId: uuid("scheme_id").references(() => discountSchemes.id, { onDelete: "set null" }),
+    description: text("description").notNull(),
+    /** Always positive; discounts are subtracted. */
+    amountKobo: kobo("amount_kobo").notNull(),
+    sort: integer("sort").notNull().default(0),
+  },
+  (t) => [index("invoice_lines_invoice_idx").on(t.invoiceId)],
+);
+
+export const PAYMENT_METHODS = ["cash", "transfer", "pos", "cheque", "paystack"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const payments = pgTable(
+  "payments",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    amountKobo: kobo("amount_kobo").notNull(),
+    method: text("method", { enum: PAYMENT_METHODS }).notNull(),
+    reference: text("reference"),
+    receiptNo: text("receipt_no").notNull(),
+    paidOn: date("paid_on").notNull(),
+    status: text("status", { enum: ["succeeded", "reversed"] }).notNull().default("succeeded"),
+    note: text("note"),
+    payerName: text("payer_name"),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    reversedAt: timestamp("reversed_at", { withTimezone: true }),
+    reversedBy: uuid("reversed_by").references(() => memberships.id, { onDelete: "set null" }),
+    reversalReason: text("reversal_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("payments_school_receipt_uq").on(t.schoolId, t.receiptNo),
+    uniqueIndex("payments_online_reference_uq").on(t.schoolId, t.reference).where(sql`method = 'paystack'`),
+    index("payments_invoice_idx").on(t.invoiceId),
+    index("payments_school_paid_on_idx").on(t.schoolId, t.paidOn),
+  ],
+);
+
+/** An online payment started on the pay page, settled by the Paystack webhook or callback. */
+export const paymentIntents = pgTable(
+  "payment_intents",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    invoiceId: uuid("invoice_id")
+      .notNull()
+      .references(() => invoices.id, { onDelete: "cascade" }),
+    reference: text("reference").notNull(),
+    amountKobo: kobo("amount_kobo").notNull(),
+    email: text("email").notNull(),
+    status: text("status", { enum: ["pending", "succeeded", "failed"] }).notNull().default("pending"),
+    paymentId: uuid("payment_id").references(() => payments.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("payment_intents_reference_uq").on(t.reference)],
+);
+
+export const EXPENSE_CATEGORIES = [
+  "Salaries and wages",
+  "Utilities",
+  "Diesel and fuel",
+  "Repairs and maintenance",
+  "Teaching materials",
+  "Stationery and printing",
+  "Transport",
+  "Feeding",
+  "Cleaning and sanitation",
+  "Security",
+  "Rent",
+  "Taxes and levies",
+  "Bank charges",
+  "Events",
+  "Other",
+] as const;
+
+export const EXPENSE_METHODS = ["cash", "transfer", "pos", "cheque"] as const;
+
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    spentOn: date("spent_on").notNull(),
+    category: text("category").notNull(),
+    description: text("description").notNull(),
+    amountKobo: kobo("amount_kobo").notNull(),
+    method: text("method", { enum: EXPENSE_METHODS }).notNull(),
+    vendor: text("vendor"),
+    reference: text("reference"),
+    receiptUrl: text("receipt_url"),
+    status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull().default("pending"),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    decidedBy: uuid("decided_by").references(() => memberships.id, { onDelete: "set null" }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    rejectionReason: text("rejection_reason"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("expenses_school_spent_idx").on(t.schoolId, t.spentOn), index("expenses_school_status_idx").on(t.schoolId, t.status)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -634,4 +886,13 @@ export const TENANT_TABLES = [
   "term_reports",
   "result_pins",
   "student_subjects",
+  "fee_items",
+  "fee_amounts",
+  "discount_schemes",
+  "student_discounts",
+  "invoices",
+  "invoice_lines",
+  "payments",
+  "payment_intents",
+  "expenses",
 ] as const;

@@ -4,9 +4,11 @@ import type { DB } from "../db/client";
 import { academicSessions, classResults, loginAttempts, resultPins, schools, scores, students, terms } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
-import { requireFeature } from "../plans/entitlements";
+import { hasFeature, requireFeature } from "../plans/entitlements";
+import { getPlanForSchool } from "../plans/plan-for-school";
 import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
+import { owesForTerm } from "./invoices";
 import { buildClassResults, resolveTerm } from "./results";
 
 /** PINs are hashed with the school id so a leaked hash can't be checked against another school. */
@@ -83,6 +85,8 @@ const CHECK_WINDOW_MINUTES = 15;
  * Public result check: admission number + PIN. The PIN binds to the first student it's
  * used for, counts each use, and only works once that class's results are published.
  */
+export const WITHHELD_MESSAGE = "This result is being held until the term's school fees are paid. Please contact the school's bursar.";
+
 export async function checkResultWithPin(db: DB, input: { slug: string; admissionNo: string; pin: string; ip: string | null }) {
   const key = `pin:${input.ip ?? "unknown"}`;
   const since = new Date(Date.now() - CHECK_WINDOW_MINUTES * 60_000);
@@ -100,9 +104,12 @@ export async function checkResultWithPin(db: DB, input: { slug: string; admissio
   const [school] = await db.select().from(schools).where(eq(schools.slug, input.slug));
   if (!school) throw await fail("We couldn't find that school.");
 
+  const plan = await getPlanForSchool(db, school.planKey);
+  const withhold = !!school.feeSettings.withholdResults && !!plan && hasFeature(plan, "debtors");
+
   // Failures are returned (not thrown) from the transaction and recorded after it ends.
   const outcome = await withTenant(db, school.id, async (tx) => {
-    const no = (message: string) => ({ ok: false as const, message });
+    const no = (message: string) => ({ ok: false as const, withheld: false as const, message });
     const digits = input.pin.replace(/\D/g, "");
     const [pin] = digits.length === 12 ? await tx.select().from(resultPins).where(eq(resultPins.pinHash, hashPin(school.id, digits))) : [];
     if (!pin) return no("That PIN isn't valid. Check the digits on your card.");
@@ -117,6 +124,9 @@ export async function checkResultWithPin(db: DB, input: { slug: string; admissio
     const [published] = await tx.select().from(classResults).where(and(eq(classResults.termId, pin.termId), eq(classResults.classId, classId), eq(classResults.status, "published")));
     if (!published) return no("Results for this term haven't been published yet. Please check back later.");
 
+    // Schools can hold back results until the term's fees are paid. Not a failed attempt, and the PIN isn't used up.
+    if (withhold && (await owesForTerm(tx, student.id, pin.termId)) > 0) return { ok: false as const, withheld: true as const, message: WITHHELD_MESSAGE };
+
     const term = await resolveTerm(tx, pin.termId);
     const built = await buildClassResults(tx, school.id, classId, term);
     const me = built.students.find((s) => s.id === student.id);
@@ -125,6 +135,6 @@ export async function checkResultWithPin(db: DB, input: { slug: string; admissio
     await tx.update(resultPins).set({ uses: pin.uses + 1, studentId: student.id }).where(eq(resultPins.id, pin.id));
     return { ok: true as const, built, studentId: student.id, usesLeft: pin.maxUses - pin.uses - 1 };
   });
-  if (!outcome.ok) throw await fail(outcome.message);
+  if (!outcome.ok) throw outcome.withheld ? new AppError(outcome.message, "forbidden") : await fail(outcome.message);
   return { school, built: outcome.built, studentId: outcome.studentId, usesLeft: outcome.usesLeft };
 }

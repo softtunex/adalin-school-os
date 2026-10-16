@@ -7,6 +7,7 @@ export const CHECK_ERRORS: Record<string, string> = {
   expired: "This PIN has used up all its checks.",
   unpublished: "Results for this term haven't been published yet. Please check back later.",
   none: "There are no results for this student in that term.",
+  owing: "This result is being held until the term's school fees are paid. Please contact the school's bursar.",
   busy: "Too many attempts. Please wait 15 minutes and try again.",
   generic: "We couldn't check that result. Please try again.",
 };
@@ -18,6 +19,7 @@ export function codeFor(message: string): string {
   if (/expired/.test(message)) return "expired";
   if (/published/.test(message)) return "unpublished";
   if (/no results|aren't available/.test(message)) return "none";
+  if (/being held/.test(message)) return "owing";
   if (/Too many/.test(message)) return "busy";
   return "generic";
 }
