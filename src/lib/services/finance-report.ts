@@ -102,12 +102,12 @@ export async function getIncomeStatement(db: DB, access: Access, input: { from: 
         income.set("Other fees", (income.get("Other fees") ?? 0) + p.amount);
         continue;
       }
-      // Share the payment across charges by their weight in the gross; rounding remainder goes to the largest line.
+      // Share the payment across charges by their weight, in whole naira; the rounding remainder goes to the smallest line.
       const gross = charges.reduce((n, l) => n + l.amountKobo, 0);
       let allocated = 0;
       const sorted = [...charges].sort((a, b) => b.amountKobo - a.amountKobo);
       sorted.forEach((l, i) => {
-        const share = i === sorted.length - 1 ? p.amount - allocated : Math.round((p.amount * l.amountKobo) / gross);
+        const share = i === sorted.length - 1 ? p.amount - allocated : Math.round((p.amount * l.amountKobo) / gross / 100) * 100;
         allocated += share;
         income.set(l.description, (income.get(l.description) ?? 0) + share);
       });

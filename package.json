@@ -13,7 +13,8 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "test:e2e": "playwright test",
-    "db:seed-results": "tsx scripts/seed-results.ts"
+    "db:seed-results": "tsx scripts/seed-results.ts",
+    "db:seed-fees": "tsx scripts/seed-fees.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",

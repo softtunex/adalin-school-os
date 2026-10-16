@@ -45,7 +45,7 @@ export default async function DiscountsPage({ params, searchParams }: { params: 
       <Topbar title="Discounts" context={access.school.name} actions={editable ? <NewSchemeButton slug={slug} items={items} /> : null} />
       <PageBody>
         <FeesTabs slug={slug} current="discounts" />
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
           <TableCard title="Discounts and scholarships">
             {setup.schemes.length === 0 ? (
               <EmptyState icon="percent" title="No discounts yet" action={editable ? <NewSchemeButton slug={slug} items={items} /> : null}>

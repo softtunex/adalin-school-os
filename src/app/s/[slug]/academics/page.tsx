@@ -402,7 +402,7 @@ async function AssessmentTab({ slug, access }: { slug: string; access: Access })
   const config = await getAssessmentConfig(getDb(), access);
   const editable = can(access, "academics:manage");
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]">
       <ComponentsEditor slug={slug} initial={config.components.map((c) => ({ id: c.id, name: c.name, maxScore: c.maxScore }))} scoreCounts={config.scoreCounts} editable={editable} />
       <BandsEditor slug={slug} initial={config.bands.map((b) => ({ grade: b.grade, minScore: b.minScore, remark: b.remark, passes: b.passes }))} editable={editable} />
     </div>

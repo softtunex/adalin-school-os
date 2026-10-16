@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 25
     env:
       ALLOW_LOCAL_DB: "1"
+      # Online fee payments use the built-in test checkout; no Paystack keys in CI.
+      PAYMENTS_TEST_MODE: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
@@ -23,6 +25,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm db:migrate
+      - run: pnpm db:seed && pnpm db:seed-fees
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - name: Browser tests

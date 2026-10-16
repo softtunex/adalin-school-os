@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CopyField } from "@/components/copy-field";
 import { PageBody, Topbar } from "@/components/topbar";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass } from "@/components/ui/button-styles";
 import { Alert, Avatar, Badge, Card, Progress } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { appUrl, requirePageAccess } from "@/lib/auth/session";
@@ -79,7 +79,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
           </Alert>
         ) : null}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-4">
             <Card className="p-5 sm:p-7">
               <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-5">

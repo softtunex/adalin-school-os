@@ -103,7 +103,7 @@ export default async function FeesOverviewPage({ params, searchParams }: { param
               <StatCard label="Collected today" value={formatNairaCompact(o.today.amount)} icon="trending" tone="brand" caption={`${o.today.n} payment${o.today.n === 1 ? "" : "s"}`} />
             </StatGrid>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
               <Card className="flex flex-col gap-4 p-5">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="fs-16 font-semibold">Collections, last 30 days</h2>
@@ -135,15 +135,15 @@ export default async function FeesOverviewPage({ params, searchParams }: { param
               </Card>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
               <TableCard title="By class">
-                <Table>
+                <Table minWidth="min-w-[540px]">
                   <thead>
                     <tr>
                       <Th>Class</Th>
                       <Th className="text-right">Expected</Th>
                       <Th className="text-right">Collected</Th>
-                      <Th className="w-[28%]">Progress</Th>
+                      <Th className="w-[22%]">Progress</Th>
                       <Th className="text-right">Owing</Th>
                     </tr>
                   </thead>

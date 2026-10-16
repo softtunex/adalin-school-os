@@ -76,7 +76,7 @@ export function ImportFlow({ slug }: { slug: string }) {
   const canCommit = preview && preview.errors.length === 0 && preview.valid.length > 0 && preview.overLimit === 0;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
       <Card className="flex h-fit flex-col gap-5 p-5">
         <Step n={1} title="Download the template" text="Your class names are listed inside it." done={Boolean(file)} active={!file} />
         <Step n={2} title="Fill it in" text="One student per row. Copy from your existing register." done={Boolean(file)} />

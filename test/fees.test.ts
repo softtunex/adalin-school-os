@@ -328,7 +328,7 @@ describe("expenses and the income statement", () => {
     const tuitionIncome = statement.income.find((r) => r.label === "Tuition")!.amount;
     const levyIncome = statement.income.find((r) => r.label === "Development levy")!.amount;
     expect(tuitionIncome + levyIncome).toBe(160_000_00);
-    expect(levyIncome).toBe(Math.round((100_000_00 * 20_000_00) / 170_000_00));
+    expect(levyIncome).toBe(Math.round((100_000_00 * 20_000_00) / 170_000_00 / 100) * 100);
     expect(statement.totalExpenses).toBe(125_000_00);
     expect(statement.net).toBe(35_000_00);
   });

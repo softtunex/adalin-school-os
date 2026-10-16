@@ -196,10 +196,10 @@ export function TableCard({ title, toolbar, children, footer }: { title?: ReactN
   );
 }
 
-export function Table({ children, className, fixed }: { children: ReactNode; className?: string; fixed?: boolean }) {
+export function Table({ children, className, fixed, minWidth = "min-w-[720px]" }: { children: ReactNode; className?: string; fixed?: boolean; minWidth?: string }) {
   return (
     <div className={cn("relative overflow-x-auto px-3 pb-3 sm:px-4", className)}>
-      <table className={cn("w-full min-w-[720px] border-separate border-spacing-0 fs-14.5", fixed && "table-fixed")}>{children}</table>
+      <table className={cn("w-full border-separate border-spacing-0 fs-14.5", minWidth, fixed && "table-fixed")}>{children}</table>
     </div>
   );
 }

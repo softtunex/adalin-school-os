@@ -113,7 +113,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
           />
         </StatGrid>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <div className="flex flex-col gap-6">
             {visible.length > 0 && done < visible.length ? (
               <Card>

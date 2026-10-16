@@ -46,7 +46,7 @@ export default async function PinsPage({ params }: { params: Promise<{ slug: str
     <>
       <Topbar title={title} />
       <PageBody>
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
           <PinGenerator slug={slug} schoolName={access.school.name} checkUrl={checkUrl} />
           <TableCard title="Where parents check results">
             <div className="flex flex-col gap-3 px-5 pb-5">
