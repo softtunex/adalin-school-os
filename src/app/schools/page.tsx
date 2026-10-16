@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/icons";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { listUserSchools } from "@/lib/services/access";
+import { myChildren } from "@/lib/services/parent-portal";
 
 export const metadata: Metadata = { title: "Your schools" };
 
@@ -17,7 +18,9 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
   const { pick } = await searchParams;
   const schools = await listUserSchools(getDb(), user.id);
 
-  if (schools.length === 1 && !pick) redirect(`/s/${schools[0].slug}`);
+  const children = await myChildren(getDb(), user.id);
+  if (schools.length === 0 && children.length > 0) redirect("/p");
+  if (schools.length === 1 && !pick && children.length === 0) redirect(`/s/${schools[0].slug}`);
   const last = schools.find((s) => s.id === user.lastSchoolId);
 
   return (
@@ -51,6 +54,20 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
           ))
         )}
       </div>
+      {children.length ? (
+        <Link href="/p" className="group mt-3">
+          <Card className="flex items-center gap-4 border-dashed p-4 transition-colors group-hover:border-brand">
+            <span className="grid size-11 place-items-center rounded-full bg-brand-wash text-brand">
+              <Icon name="users" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block fs-16 font-extrabold text-ink">Parent view</span>
+              <span className="block fs-13 text-muted">{children.map((c) => c.firstName).join(", ")}</span>
+            </span>
+            <Icon name="arrowRight" className="text-muted group-hover:text-brand" />
+          </Card>
+        </Link>
+      ) : null}
       <ButtonLink href="/schools/new" variant="secondary" className="mt-6 self-start">
         <Icon name="plus" size={18} strokeWidth={2.6} /> Add another school
       </ButtonLink>
