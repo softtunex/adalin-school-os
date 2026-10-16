@@ -32,7 +32,7 @@ test("a wrong code is refused and unknown numbers learn nothing", async ({ page,
   await page.getByRole("button", { name: "Send me a code" }).click();
   await expect(page.getByText(/If your child's school has this number/)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText("Test mode")).toHaveCount(0);
-  await page.getByLabel("6-digit code").fill("123456");
+  await page.getByLabel("6-digit code").fill("654321");
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByText(/expired|isn't right/)).toBeVisible();
 });

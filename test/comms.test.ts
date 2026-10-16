@@ -125,6 +125,11 @@ describe("parent login by code", () => {
     expect(again.userId).toBe(userId);
   });
 
+  it("accepts the fixed development code only for contacts a school has", async () => {
+    expect((await verifyLoginCode(database.db, "08031112222", "123456")).userId).toBe(adaMum.id);
+    await expect(verifyLoginCode(database.db, "08099999998", "123456")).rejects.toThrow(/expired/);
+  });
+
   it("limits how many codes go to one number", async () => {
     await expect(
       (async () => {

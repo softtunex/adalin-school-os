@@ -49,7 +49,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         context={access.school.name}
         actions={
           <ButtonLink href={`${base}/new`}>
-            <Icon name="plus" size={18} strokeWidth={2.4} /> Message parents
+            <Icon name="plus" size={18} strokeWidth={2.4} /> New message
           </ButtonLink>
         }
       />
@@ -73,11 +73,11 @@ export default async function MessagesPage({ params, searchParams }: { params: P
               {inbox.map((m) => (
                 <li key={m.c.id}>
                   <Link href={`${base}/${m.c.id}`} className="flex items-start gap-3 px-5 py-3.5 hover:bg-paper">
-                    <Avatar name={m.parents ?? m.c.subject} size={40} />
+                    <Avatar name={m.parents ?? m.colleagues ?? m.c.subject} size={40} />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
                         <span className={cn("truncate fs-15 text-ink", m.unread ? "font-bold" : "font-semibold")}>
-                          {m.parents ?? "Staff"}
+                          {m.parents ?? m.colleagues ?? "Staff"}
                           {m.studentName ? <span className="font-normal text-muted"> · {m.studentName}</span> : null}
                         </span>
                         <span className="shrink-0 fs-12.5 text-muted">{ago(m.c.lastMessageAt)}</span>

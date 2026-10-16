@@ -16,6 +16,9 @@ const MAX_ATTEMPTS = 5;
 const SENDS_PER_WINDOW = 3;
 const IP_SENDS_PER_HOUR = 12;
 
+/** Fixed code accepted outside production, so the parent app can be tried without an SMS provider. */
+export const DEV_CODE = process.env.NODE_ENV === "production" ? null : "123456";
+
 export type Destination = { kind: "phone" | "email"; value: string };
 
 export function parseDestination(raw: string): Destination | null {
@@ -77,6 +80,8 @@ export async function verifyLoginCode(db: DB, rawDestination: string, rawCode: s
   const d = parseDestination(rawDestination);
   const code = rawCode.replace(/\D/g, "");
   if (!d || code.length !== 6) throw new AppError("Enter the 6-digit code we sent you.");
+  // Local development and demos only: a fixed code for any parent a school has on file. Never in production.
+  if (DEV_CODE && code === DEV_CODE && ((await matchingGuardians(db, d)).length > 0 || (await findUser(db, d)) !== null)) return signIn(db, d);
   const [latest] = await db
     .select()
     .from(loginCodes)
@@ -92,7 +97,10 @@ export async function verifyLoginCode(db: DB, rawDestination: string, rawCode: s
     throw new AppError(latest.attempts + 1 >= MAX_ATTEMPTS ? "Too many wrong codes. Ask for a new one." : "That code isn't right. Check the message and try again.", "invalid");
   }
   await db.update(loginCodes).set({ usedAt: new Date() }).where(eq(loginCodes.id, latest.id));
+  return signIn(db, d);
+}
 
+async function signIn(db: DB, d: Destination) {
   const matches = await matchingGuardians(db, d);
   let user = await findUser(db, d);
   if (!user) {

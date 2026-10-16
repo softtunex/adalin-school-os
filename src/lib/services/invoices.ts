@@ -27,6 +27,7 @@ import { requirePermission, type Access } from "./access";
 import { lagosToday } from "./attendance";
 import { recordAudit } from "./audit";
 import { pickTerm } from "./fees";
+import { notifyGuardians, schoolComms } from "./notify";
 
 const actor = (access: Access, ip?: string | null) => ({ userId: access.user.id, name: access.user.name, ip });
 
@@ -582,12 +583,16 @@ export async function collectReminders(
   const rows = await tx.select({ invoice: invoices, firstName: students.firstName, lastName: students.lastName }).from(invoices).innerJoin(students, eq(students.id, invoices.studentId)).where(and(...where));
   const contacts = await primaryContacts(tx, rows.map((r) => r.invoice.studentId));
   const online = school.planFeatures.includes("fees_online") && !!school.paystackSubaccount;
+  const comms = await schoolComms(tx, school.id);
+  const sms = comms.smsEnabled && !!comms.comms.smsAlerts;
   const emails: Reminder[] = [];
   const reminded: string[] = [];
+  const byStudent = new Map<string, (typeof rows)[number]>();
   let noContact = 0;
   for (const r of rows) {
-    const withEmail = (contacts.get(r.invoice.studentId) ?? []).filter((c) => c.email);
-    if (!withEmail.length) {
+    const people = contacts.get(r.invoice.studentId) ?? [];
+    const withEmail = people.filter((c) => c.email);
+    if (!withEmail.length && !(sms && people.some((c) => c.phone))) {
       noContact++;
       continue;
     }
@@ -606,8 +611,31 @@ export async function collectReminders(
       });
     }
     reminded.push(r.invoice.id);
+    byStudent.set(r.invoice.studentId, r);
   }
   if (reminded.length) await tx.update(invoices).set({ lastRemindedAt: new Date() }).where(inArray(invoices.id, reminded));
+  // Parents on the app see the reminder in Updates; with SMS alerts on, those with a phone get a text.
+  const today = new Date().toISOString().slice(0, 10);
+  const ngn = (kobo: number) => `NGN ${(kobo / 100).toLocaleString("en-NG", { maximumFractionDigits: 2 })}`;
+  await notifyGuardians(
+    tx,
+    comms,
+    [...byStudent.keys()],
+    (c) => {
+      const r = byStudent.get(c.studentId)!;
+      const owed = balanceOf(r.invoice);
+      const link = online ? ` Pay: ${opts.baseUrl}/pay/${r.invoice.payToken}` : "";
+      return {
+        kind: "fees",
+        title: `${ngn(owed)} outstanding for ${c.studentFirstName}`,
+        body: `${r.invoice.title} (${r.invoice.number})${r.invoice.dueOn ? `, due ${r.invoice.dueOn}` : ""}.`,
+        link: `/p/children/${c.studentId}?tab=fees`,
+        ref: `reminder:${r.invoice.id}:${today}`,
+        sms: `${school.name}: ${c.studentFirstName}'s fees balance is ${ngn(owed)}.${link}`,
+      };
+    },
+    { email: false, sms },
+  );
   return { emails, reminded: reminded.length, noContact, skipped: (opts.invoiceIds?.length ?? rows.length) - rows.length };
 }
 

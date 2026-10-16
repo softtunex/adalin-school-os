@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { deliverSoon } from "@/lib/deliver";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
-import { newConversationSchema, staffReply, startStaffConversation } from "@/lib/services/messaging";
+import { colleagueConversationSchema, newConversationSchema, staffReply, startColleagueConversation, startStaffConversation } from "@/lib/services/messaging";
 
 export async function staffStartAction(slug: string, _prev: FormState, formData: FormData): Promise<FormState> {
   const values = { studentId: String(formData.get("studentId") ?? ""), subject: String(formData.get("subject") ?? ""), body: String(formData.get("body") ?? "") };
@@ -34,5 +34,19 @@ export async function staffReplyAction(slug: string, conversationId: string, _pr
     return { success: "Sent." };
   } catch (error) {
     return { error: userMessage(error), values: { body } };
+  }
+}
+
+export async function colleagueStartAction(slug: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  const values = { subject: String(formData.get("subject") ?? ""), body: String(formData.get("body") ?? "") };
+  const parsed = colleagueConversationSchema.safeParse({ ...values, userIds: formData.getAll("userIds").map(String) });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the message.", values };
+  try {
+    const access = await requireAccess(slug);
+    const c = await startColleagueConversation(getDb(), access, parsed.data);
+    revalidatePath(`/s/${slug}`, "layout");
+    return { success: "Sent.", data: { conversationId: c.id } };
+  } catch (error) {
+    return { error: userMessage(error), values };
   }
 }

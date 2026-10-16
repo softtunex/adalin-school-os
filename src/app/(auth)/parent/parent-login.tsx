@@ -24,7 +24,7 @@ export function ParentLogin() {
         </div>
         {sent.data?.testCode ? (
           <Alert tone="blue" title="Test mode">
-            No SMS or email provider is connected yet, so here&apos;s the code: <span className="tabular font-mono font-bold text-ink">{sent.data.testCode}</span>
+            No SMS or email provider is connected yet, so here&apos;s the code: <span className="tabular font-mono font-bold text-ink">{sent.data.testCode}</span>. On this test server, 123456 also works.
           </Alert>
         ) : null}
         <form action={check} className="flex flex-col gap-5">

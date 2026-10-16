@@ -16,6 +16,7 @@ const KIND: Record<string, { icon: IconName; tone: Tone }> = {
   payment: { icon: "banknote", tone: "success" },
   announcement: { icon: "bell", tone: "brand" },
   message: { icon: "chat", tone: "blue" },
+  fees: { icon: "wallet", tone: "warning" },
 };
 
 export default async function ParentNotifications() {

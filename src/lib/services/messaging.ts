@@ -94,6 +94,7 @@ export async function staffInbox(db: DB, access: Access, opts: { all?: boolean }
         last: sql<string | null>`(select body from ${messages} m where m.conversation_id = ${conversations.id} order by m.created_at desc limit 1)`,
         lastFrom: sql<string | null>`(select sender_name from ${messages} m where m.conversation_id = ${conversations.id} order by m.created_at desc limit 1)`,
         parents: sql<string | null>`(select string_agg(u.name, ', ') from ${conversationParticipants} p join ${users} u on u.id = p.user_id where p.conversation_id = ${conversations.id} and p.role = 'parent')`,
+        colleagues: sql<string | null>`(select string_agg(u.name, ', ') from ${conversationParticipants} p join ${users} u on u.id = p.user_id where p.conversation_id = ${conversations.id} and p.role = 'staff' and p.user_id <> ${access.user.id})`,
       })
       .from(conversations)
       .leftJoin(students, eq(students.id, conversations.studentId))
@@ -322,5 +323,52 @@ export async function messageableStudents(db: DB, access: Access) {
       .where(and(eq(students.status, "active"), scope === "all" ? sql`true` : inArray(students.classId, scope)))
       .orderBy(asc(classes.name), asc(students.firstName));
     return rows;
+  });
+}
+
+// ---------- Staff to staff ----------
+
+export const colleagueConversationSchema = z.object({
+  userIds: z.array(z.string().uuid()).min(1, "Choose who to message.").max(20),
+  subject: z.string().trim().min(2, "Add a subject.").max(120),
+  body: messageBody,
+});
+
+/** Active staff in the school, for the colleague picker. */
+export async function listColleagues(db: DB, access: Access) {
+  requireFeature(access.plan, "messaging");
+  requirePermission(access, "comms:message");
+  return withTenant(db, access.school.id, async (tx) => {
+    const rows = await tx
+      .selectDistinct({ userId: memberships.userId, name: users.name, jobTitle: memberships.jobTitle })
+      .from(memberships)
+      .innerJoin(membershipRoles, eq(membershipRoles.membershipId, memberships.id))
+      .innerJoin(roles, eq(roles.id, membershipRoles.roleId))
+      .innerJoin(users, eq(users.id, memberships.userId))
+      .where(and(eq(memberships.status, "active"), eq(roles.kind, "staff"), ne(memberships.userId, access.user.id)))
+      .orderBy(asc(users.name));
+    return rows;
+  });
+}
+
+export async function startColleagueConversation(db: DB, access: Access, input: z.infer<typeof colleagueConversationSchema>) {
+  requireFeature(access.plan, "messaging");
+  requirePermission(access, "comms:message");
+  return withTenant(db, access.school.id, async (tx) => {
+    const ids = [...new Set(input.userIds)].filter((id) => id !== access.user.id);
+    const staff = ids.length
+      ? await tx
+          .selectDistinct({ userId: memberships.userId })
+          .from(memberships)
+          .innerJoin(membershipRoles, eq(membershipRoles.membershipId, memberships.id))
+          .innerJoin(roles, eq(roles.id, membershipRoles.roleId))
+          .where(and(inArray(memberships.userId, ids), eq(memberships.status, "active"), eq(roles.kind, "staff")))
+      : [];
+    if (!staff.length || staff.length !== ids.length) throw new AppError("Choose colleagues who are active staff at this school.", "invalid");
+    const [c] = await tx.insert(conversations).values({ schoolId: access.school.id, subject: input.subject, createdBy: access.user.id }).returning();
+    await tx.insert(conversationParticipants).values([access.user.id, ...ids].map((userId) => ({ schoolId: access.school.id, conversationId: c.id, userId, role: "staff" as const })));
+    await insertMessage(tx, access.school.id, c.id, { id: access.user.id, name: access.user.name }, input.body);
+    await announceMessage(tx, access.school.id, c.id, { id: access.user.id, name: access.user.name }, input.subject, input.body, access.school.slug);
+    return c;
   });
 }
