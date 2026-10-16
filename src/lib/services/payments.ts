@@ -228,6 +228,15 @@ export async function guardianEmails(tx: Tx, studentId: string) {
   return rows.filter((r): r is { name: string; email: string } => !!r.email);
 }
 
+export async function receiptRecipients(db: DB, access: Access, studentId: string) {
+  requirePermission(access, "fees:record_payment");
+  return withTenant(db, access.school.id, async (tx) => {
+    const [s] = await tx.select({ firstName: students.firstName, lastName: students.lastName }).from(students).where(eq(students.id, studentId));
+    if (!s) throw new AppError("That student wasn't found.", "not_found");
+    return { contacts: await guardianEmails(tx, studentId), studentName: `${s.firstName} ${s.lastName}` };
+  });
+}
+
 export function receiptEmail(input: { schoolName: string; guardianName: string; studentName: string; receiptNo: string; invoiceNumber: string; amountKobo: number; balanceKobo: number; paidOn: string }) {
   return {
     subject: `Receipt ${input.receiptNo}: ${formatNaira(input.amountKobo)} for ${input.studentName}`,

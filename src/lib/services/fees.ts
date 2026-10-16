@@ -172,7 +172,7 @@ export function describeScheme(s: { kind: "percent" | "fixed"; value: number }, 
   return `${amount} off ${itemName ?? "all compulsory fees"}`;
 }
 
-export async function saveDiscountScheme(db: DB, access: Access, input: z.infer<typeof discountSchemeSchema>, ip?: string | null) {
+export async function saveDiscountScheme(db: DB, access: Access, input: { id?: string; name: string; kind: "percent" | "fixed"; value: number; itemId: string | null }, ip?: string | null) {
   requirePermission(access, "fees:discount");
   requireFeature(access.plan, "debtors");
   return withTenant(db, access.school.id, async (tx) => {

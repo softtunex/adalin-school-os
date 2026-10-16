@@ -26,6 +26,13 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    label: "Finance",
+    items: [
+      { href: "/fees", label: "Fees", icon: "wallet", anyOf: ["fees:view"], feature: "fees_basic", staffOnly: true },
+      { href: "/expenses", label: "Expenses", icon: "receipt", anyOf: ["expenses:view"], feature: "expenses", staffOnly: true },
+    ],
+  },
+  {
     label: "Administration",
     items: [
       { href: "/staff", label: "Staff", icon: "users", anyOf: ["staff:view"], staffOnly: true },
