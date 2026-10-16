@@ -16,8 +16,15 @@ const MAX_ATTEMPTS = 5;
 const SENDS_PER_WINDOW = 3;
 const IP_SENDS_PER_HOUR = 12;
 
-/** Fixed code accepted outside production, so the parent app can be tried without an SMS provider. */
-export const DEV_CODE = process.env.NODE_ENV === "production" ? null : "123456";
+/**
+ * Test sign-in for parents: codes shown on screen and a fixed code. On in development; in a
+ * production build only when ALLOW_TEST_LOGIN_CODES=1 (CI and demo servers). Never on the live site.
+ */
+export function testLoginCodesAllowed() {
+  return process.env.NODE_ENV !== "production" || process.env.ALLOW_TEST_LOGIN_CODES === "1";
+}
+
+const FIXED_TEST_CODE = "123456";
 
 export type Destination = { kind: "phone" | "email"; value: string };
 
@@ -81,7 +88,7 @@ export async function verifyLoginCode(db: DB, rawDestination: string, rawCode: s
   const code = rawCode.replace(/\D/g, "");
   if (!d || code.length !== 6) throw new AppError("Enter the 6-digit code we sent you.");
   // Local development and demos only: a fixed code for any parent a school has on file. Never in production.
-  if (DEV_CODE && code === DEV_CODE && ((await matchingGuardians(db, d)).length > 0 || (await findUser(db, d)) !== null)) return signIn(db, d);
+  if (testLoginCodesAllowed() && code === FIXED_TEST_CODE && ((await matchingGuardians(db, d)).length > 0 || (await findUser(db, d)) !== null)) return signIn(db, d);
   const [latest] = await db
     .select()
     .from(loginCodes)

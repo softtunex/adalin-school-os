@@ -13,6 +13,8 @@ jobs:
       ALLOW_LOCAL_DB: "1"
       # Online fee payments use the built-in test checkout; no Paystack keys in CI.
       PAYMENTS_TEST_MODE: "1"
+      # Parent sign-in codes appear on screen (no SMS provider in CI). Never set on the live site.
+      ALLOW_TEST_LOGIN_CODES: "1"
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4

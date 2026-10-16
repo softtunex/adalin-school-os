@@ -7,11 +7,11 @@ import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { sendEmail } from "@/lib/mail";
 import { sendPlatformSms } from "@/lib/services/outbox";
-import { loginCodeMessage, requestLoginCode, verifyLoginCode, type Destination } from "@/lib/services/parent-auth";
+import { loginCodeMessage, requestLoginCode, testLoginCodesAllowed, verifyLoginCode, type Destination } from "@/lib/services/parent-auth";
 
-/** Outside production, with no SMS or email provider set up, the code is shown on screen so the flow can be tried. */
+/** In development, CI and demos (never the live site), with no SMS or email provider set up, the code is shown on screen. */
 function showCodeOnScreen(d: Destination) {
-  if (process.env.NODE_ENV === "production") return false;
+  if (!testLoginCodesAllowed()) return false;
   return d.kind === "phone" ? !process.env.TERMII_API_KEY : !process.env.RESEND_API_KEY;
 }
 
