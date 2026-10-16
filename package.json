@@ -14,7 +14,8 @@
     "db:seed": "tsx scripts/seed.ts",
     "test:e2e": "playwright test",
     "db:seed-results": "tsx scripts/seed-results.ts",
-    "db:seed-fees": "tsx scripts/seed-fees.ts"
+    "db:seed-fees": "tsx scripts/seed-fees.ts",
+    "db:seed-comms": "tsx scripts/seed-comms.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",

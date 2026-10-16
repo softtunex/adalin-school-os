@@ -50,7 +50,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
       </Link>
       <Card className="flex flex-wrap items-center gap-4 p-5">
         <Avatar name={`${d.link.firstName} ${d.link.lastName}`} size={64} />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-48">
           <h1 className="fs-22 font-bold tracking-[-0.01em]">{name}</h1>
           <p className="fs-14.5 text-muted">
             {d.className ?? "No class yet"} · {d.link.school.name}
@@ -58,7 +58,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           <p className="font-mono fs-13 text-muted">{d.link.admissionNo}</p>
         </div>
         {canMessage ? (
-          <Link href={`/p/messages/new?student=${id}`} className={buttonClass("secondary", "sm")}>
+          <Link href={`/p/messages/new?student=${id}`} className={buttonClass("secondary", "sm", "w-full sm:w-auto")}>
             <Icon name="chat" size={16} /> Message the teacher
           </Link>
         ) : null}

@@ -12,7 +12,8 @@ import { hasFeature } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
 import { listEvents } from "@/lib/services/announcements";
 import { lagosToday } from "@/lib/services/attendance";
-import { AddEventButton, KIND_CLASS, KIND_LABEL, MonthGrid } from "./calendar-client";
+import { AddEventButton, MonthGrid } from "./calendar-client";
+import { KIND_CLASS, KIND_LABEL } from "./kinds";
 
 export const metadata: Metadata = { title: "Calendar" };
 

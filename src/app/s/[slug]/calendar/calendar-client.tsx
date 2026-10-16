@@ -10,18 +10,9 @@ import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/cn";
 import { initialFormState } from "@/lib/form-state";
 import { deleteEventAction, saveEventAction } from "../announcements/actions";
+import { KIND_CLASS, KIND_LABEL } from "./kinds";
 
 export type CalEvent = { id: string; title: string; kind: string; startsOn: string; endsOn: string; details: string | null; forParents: boolean };
-
-export const KIND_LABEL: Record<string, string> = { event: "Event", holiday: "Holiday", exam: "Exams", meeting: "Meeting", sports: "Sports", other: "Other" };
-export const KIND_CLASS: Record<string, string> = {
-  event: "bg-blue-wash text-blue border-blue/25",
-  holiday: "bg-success-wash text-success border-success/25",
-  exam: "bg-violet-wash text-violet border-violet/25",
-  meeting: "bg-warning-wash text-warning border-warning/30",
-  sports: "bg-brand-wash text-brand-ink border-brand/30",
-  other: "bg-sunken text-body border-line-strong",
-};
 
 function EventForm({ slug, event, day, onDone }: { slug: string; event?: CalEvent; day?: string; onDone: () => void }) {
   const router = useRouter();

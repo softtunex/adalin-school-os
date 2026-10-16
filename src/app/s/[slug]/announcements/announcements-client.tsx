@@ -63,7 +63,7 @@ function Composer({ slug, classes, smsAllowed, credits, onDone }: { slug: string
     );
   }
 
-  const estimate = reach && sms ? reach.withPhone * Math.max(1, Math.ceil(Math.min(body.length + 40, 300) / 153)) : 0;
+  const estimate = reach ? reach.withPhone * Math.max(1, Math.ceil(Math.min(body.length + 40, 300) / 153)) : 0;
   return (
     <form action={action} className="flex flex-col gap-4" noValidate>
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}

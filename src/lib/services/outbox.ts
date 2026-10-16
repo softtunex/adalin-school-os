@@ -1,7 +1,6 @@
 import { and, asc, eq, inArray, sql, sum } from "drizzle-orm";
 import type { DB, Tx } from "../db/client";
 import { creditLedger, outboundMessages, plans, schools, type OutboundChannel } from "../db/schema";
-import { sendEmail } from "../mail";
 
 /*
  * Outgoing SMS, WhatsApp and email. Messages are queued inside the transaction that
@@ -69,6 +68,8 @@ export type Transport = (m: { channel: OutboundChannel; to: string; subject: str
 /** Termii for SMS and WhatsApp, Resend for email. Without keys, logs instead (local development). */
 export const defaultTransport: Transport = async (m) => {
   if (m.channel === "email") {
+    // Loaded on use: the mail module is server-only, and scripts that only queue messages never need it.
+    const { sendEmail } = await import("../mail");
     const ok = await sendEmail({ to: m.to, subject: m.subject ?? "A message from your school", text: m.body });
     return { ok: ok || !process.env.RESEND_API_KEY };
   }

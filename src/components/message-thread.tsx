@@ -13,7 +13,8 @@ type Msg = { id: string; senderId: string | null; senderName: string; body: stri
 
 function when(iso: string) {
   const d = new Date(iso);
-  const today = new Date().toDateString() === d.toDateString();
+  const lagos = (x: Date) => x.toLocaleDateString("en-CA", { timeZone: "Africa/Lagos" });
+  const today = lagos(new Date()) === lagos(d);
   return d.toLocaleString("en-NG", today ? { hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" } : { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" });
 }
 

@@ -7,6 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { createDatabaseFromEnv } from "../src/lib/db/client";
 import { invoices, students } from "../src/lib/db/schema";
 import { withTenant } from "../src/lib/db/tenant";
+import { drainOutbox } from "../src/lib/services/outbox";
 import { loadAccess } from "../src/lib/services/access";
 import { findUserByEmail } from "../src/lib/services/accounts";
 import { getAcademicOverview } from "../src/lib/services/academics";
@@ -151,6 +152,7 @@ async function main() {
 
   const left = await withTenant(db, owner.school.id, (tx) => tx.select({ id: invoices.id }).from(invoices).where(and(eq(invoices.termId, termId), eq(invoices.status, "unpaid"))));
   console.log(`Done. ${left.length} invoices still unpaid, the rest paid or part paid.`);
+  await drainOutbox(db, async (m) => (console.info(`[${m.channel}] ${m.to}`), { ok: true, ref: "seed" }), 5000);
   await database.close();
 }
 
