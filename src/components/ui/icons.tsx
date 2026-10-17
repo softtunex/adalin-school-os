@@ -72,6 +72,7 @@ const PATHS = {
   star: "M12 3l2.7 5.6 6.3.9-4.5 4.4 1 6.1L12 17l-5.5 3 1-6.1L3 9.5l6.3-.9z",
   library: "M4 4v16M8 6v14M12 6v14M16 6l4 14",
   health: "M9 3h6v6h6v6h-6v6H9v-6H3V9h6z",
+  bus: "M5 17V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11zM5 11h14M8 21v-4M16 21v-4M8 14h.01M16 14h.01",
   box: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",
 } as const;
 

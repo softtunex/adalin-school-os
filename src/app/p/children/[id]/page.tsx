@@ -13,6 +13,8 @@ import { getChildHomework } from "@/lib/services/assignments";
 import { getChildConduct } from "@/lib/services/discipline";
 import { HealthPanel } from "@/components/health-panel";
 import { getChildHealth } from "@/lib/services/health";
+import { BusPanel } from "@/components/bus-panel";
+import { getChildBus } from "@/lib/services/transport";
 import { ConductList } from "@/components/conduct-list";
 import { getChildDetail } from "@/lib/services/parent-portal";
 import { formatDue } from "@/lib/dates";
@@ -49,7 +51,8 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
   const homework = await getChildHomework(getDb(), user.id, id);
   const conduct = await getChildConduct(getDb(), user.id, id);
   const health = await getChildHealth(getDb(), user.id, id);
-  const tab = ["attendance", "timetable", "homework", "conduct", "health", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
+  const bus = await getChildBus(getDb(), user.id, id);
+  const tab = ["attendance", "timetable", "homework", "conduct", "health", "bus", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
   const name = [d.link.firstName, d.link.middleName, d.link.lastName].filter(Boolean).join(" ");
   const base = `/p/children/${id}`;
   const att = d.attendance && d.attendance.days ? Math.round((d.attendance.present / d.attendance.days) * 100) : null;
@@ -84,6 +87,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
           ...(homework ? [{ key: "homework", label: "Homework", href: `${base}?tab=homework`, count: homework.filter((h) => h.status === "to_do" || h.status === "overdue").length || undefined }] : []),
           ...(conduct ? [{ key: "conduct", label: "Conduct", href: `${base}?tab=conduct` }] : []),
           ...(health ? [{ key: "health", label: "Health", href: `${base}?tab=health` }] : []),
+          ...(bus ? [{ key: "bus", label: "Bus", href: `${base}?tab=bus` }] : []),
           { key: "results", label: "Results", href: `${base}?tab=results`, count: d.results.length },
           { key: "fees", label: "Fees", href: `${base}?tab=fees` },
           { key: "news", label: "News", href: `${base}?tab=news` },
@@ -164,6 +168,8 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
       {tab === "conduct" && conduct ? <ConductList conduct={conduct} name={d.link.firstName} /> : null}
 
       {tab === "health" && health ? <HealthPanel name={d.link.firstName} record={health.record} visits={health.visits} /> : null}
+
+      {tab === "bus" && bus ? <BusPanel bus={bus} name={d.link.firstName} /> : null}
 
       {tab === "results" ? (
         <Card className="p-5">

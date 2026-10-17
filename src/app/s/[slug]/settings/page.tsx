@@ -25,6 +25,8 @@ import { InventorySettingsForm } from "../inventory/inventory-client";
 import { inventorySettings } from "@/lib/services/inventory";
 import { HealthSettingsForm } from "../sick-bay/sick-bay-client";
 import { healthSettings } from "@/lib/services/health";
+import { TransportSettingsForm } from "../transport/transport-client";
+import { transportSettings } from "@/lib/services/transport";
 import { disciplineSettings } from "@/lib/services/discipline";
 import { payrollSettings } from "@/lib/services/payroll";
 import { LEAVE_KINDS } from "@/lib/db/schema";
@@ -38,7 +40,7 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory", "operations:health"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory", "operations:health", "operations:transport"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
   const sp = await searchParams;
   const canAdmissions = can(access, "admissions:manage") && hasFeature(access.plan, "admissions");
@@ -48,6 +50,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
   const canLibrary = can(access, "operations:library") && hasFeature(access.plan, "library");
   const canInventory = can(access, "operations:inventory") && hasFeature(access.plan, "inventory");
   const canHealth = can(access, "operations:health") && hasFeature(access.plan, "health");
+  const canTransport = can(access, "operations:transport") && hasFeature(access.plan, "transport");
   const tab = sp.tab ?? (canProfile ? "profile" : can(access, "fees:manage") ? "payments" : can(access, "comms:announce") ? "messaging" : "admissions");
   const s = access.school;
   const base = `/s/${slug}/settings`;
@@ -70,11 +73,14 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canLibrary ? [{ key: "library", label: "Library", href: `${base}?tab=library` }] : []),
             ...(canInventory ? [{ key: "inventory", label: "Inventory", href: `${base}?tab=inventory` }] : []),
             ...(canHealth ? [{ key: "health", label: "Sick bay", href: `${base}?tab=health` }] : []),
+            ...(canTransport ? [{ key: "transport", label: "Transport", href: `${base}?tab=transport` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "health" && canHealth ? (
+        {tab === "transport" && canTransport ? (
+          <TransportSettingsForm slug={slug} settings={transportSettings(s.transportSettings)} editable />
+        ) : tab === "health" && canHealth ? (
           <HealthSettingsForm slug={slug} settings={healthSettings(s.healthSettings)} editable />
         ) : tab === "inventory" && canInventory ? (
           <InventorySettingsForm slug={slug} settings={inventorySettings(s.inventorySettings)} editable />

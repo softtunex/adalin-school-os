@@ -28,6 +28,7 @@ const SETTINGS_ACCESS: Permission[] = [
   "operations:library",
   "operations:inventory",
   "operations:health",
+  "operations:transport",
 ];
 
 /** Top-level links, and groups that open to show their pages. */
@@ -61,6 +62,7 @@ export const NAV: (NavItem | NavGroup)[] = [
     items: [
       { href: "/discipline", label: "Behaviour", icon: "star", feature: "discipline", staffOnly: true, keywords: "discipline merits incidents conduct" },
       { href: "/library", label: "Library", icon: "library", anyOf: ["operations:library"], feature: "library", staffOnly: true, keywords: "books loans isbn" },
+      { href: "/transport", label: "Transport", icon: "bus", anyOf: ["operations:transport"], feature: "transport", staffOnly: true, keywords: "bus buses routes drivers pick-up" },
       { href: "/sick-bay", label: "Sick bay", icon: "health", anyOf: ["operations:health"], feature: "health", staffOnly: true, keywords: "health nurse clinic medical allergies" },
     ],
   },

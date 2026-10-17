@@ -93,6 +93,11 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+export type TransportSettings = {
+  /** Tell parents when their child is marked on the bus. */
+  notifyBoarding?: boolean;
+};
+
 export type HealthSettings = {
   /** Medicines the sick bay keeps, offered when recording a visit. */
   medicines?: string[];
@@ -248,6 +253,7 @@ export const schools = pgTable(
     librarySettings: jsonb("library_settings").$type<LibrarySettings>().notNull().default({}),
     inventorySettings: jsonb("inventory_settings").$type<InventorySettings>().notNull().default({}),
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
+    transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1843,6 +1849,73 @@ export const sickBayVisits = pgTable(
   (t) => [index("sick_bay_visits_student_idx").on(t.studentId, t.arrivedAt), index("sick_bay_visits_school_idx").on(t.schoolId, t.arrivedAt)],
 );
 
+// ---------- Transport ----------
+
+export const RIDE_DIRECTIONS = ["both", "morning", "afternoon"] as const;
+export const TRIP_DIRECTIONS = ["morning", "afternoon"] as const;
+export type RouteStop = { name: string; pickup: string; dropoff: string };
+
+export const transportVehicles = pgTable("transport_vehicles", {
+  id: id(),
+  schoolId: schoolId(),
+  name: text("name").notNull(),
+  plate: text("plate"),
+  capacity: integer("capacity").notNull(),
+  driverName: text("driver_name"),
+  driverPhone: text("driver_phone"),
+  attendantName: text("attendant_name"),
+  attendantPhone: text("attendant_phone"),
+  createdAt: createdAt(),
+});
+
+export const transportRoutes = pgTable("transport_routes", {
+  id: id(),
+  schoolId: schoolId(),
+  name: text("name").notNull(),
+  vehicleId: uuid("vehicle_id").references(() => transportVehicles.id, { onDelete: "set null" }),
+  stops: jsonb("stops").$type<RouteStop[]>().notNull().default([]),
+  termFeeKobo: kobo("term_fee_kobo").notNull().default(0),
+  createdAt: createdAt(),
+});
+
+/** A student on a route. One route per student. */
+export const transportRiders = pgTable(
+  "transport_riders",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    routeId: uuid("route_id")
+      .notNull()
+      .references(() => transportRoutes.id, { onDelete: "cascade" }),
+    stop: text("stop").notNull(),
+    direction: text("direction", { enum: RIDE_DIRECTIONS }).notNull().default("both"),
+    startedOn: date("started_on").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("transport_riders_student_uq").on(t.studentId), index("transport_riders_route_idx").on(t.routeId)],
+);
+
+/** The bus register for one route, one day, one direction. */
+export const transportTrips = pgTable(
+  "transport_trips",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    routeId: uuid("route_id")
+      .notNull()
+      .references(() => transportRoutes.id, { onDelete: "cascade" }),
+    tripDate: date("trip_date").notNull(),
+    direction: text("direction", { enum: TRIP_DIRECTIONS }).notNull(),
+    boarded: jsonb("boarded").$type<string[]>().notNull().default([]),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("transport_trips_uq").on(t.routeId, t.tripDate, t.direction)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1918,4 +1991,8 @@ export const TENANT_TABLES = [
   "inventory_moves",
   "student_health",
   "sick_bay_visits",
+  "transport_vehicles",
+  "transport_routes",
+  "transport_riders",
+  "transport_trips",
 ] as const;
