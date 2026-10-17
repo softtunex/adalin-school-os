@@ -17,6 +17,7 @@ Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
 | Mrs Funmilayo Adeyemi | Class teacher, JSS 1 Gold | `adeyemi3@demo.schoolos.ng` | Attendance, report-card comments |
 | Mr Emeka Obi | Maths teacher, JSS 1 | `obi4@demo.schoolos.ng` | Assignments, CBT exams, lesson notes, score entry |
 | Miss Zainab Bello | English teacher, JSS 1 | `bello5@demo.schoolos.ng` | Score entry |
+| Mrs Grace Okafor | Librarian | `librarian6@demo.schoolos.ng` | Library: catalogue, lending, returns, fines (one loan overdue, one fine owed) |
 
 ## Parent
 

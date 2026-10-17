@@ -87,6 +87,12 @@ export type PayrollSettings = {
   recordExpense?: boolean;
 };
 
+export type LibrarySettings = {
+  loanDays?: number;
+  maxLoans?: number;
+  finePerDayKobo?: number;
+};
+
 export type DisciplineSettings = {
   meritCategories?: string[];
   incidentCategories?: string[];
@@ -224,6 +230,7 @@ export const schools = pgTable(
     hrSettings: jsonb("hr_settings").$type<HrSettings>().notNull().default({}),
     payrollSettings: jsonb("payroll_settings").$type<PayrollSettings>().notNull().default({}),
     disciplineSettings: jsonb("discipline_settings").$type<DisciplineSettings>().notNull().default({}),
+    librarySettings: jsonb("library_settings").$type<LibrarySettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1653,6 +1660,48 @@ export const behaviourRecords = pgTable(
   (t) => [index("behaviour_student_idx").on(t.studentId, t.occurredOn), index("behaviour_school_term_idx").on(t.schoolId, t.termId, t.kind)],
 );
 
+// ---------- Library ----------
+
+export const libraryBooks = pgTable(
+  "library_books",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    title: text("title").notNull(),
+    author: text("author"),
+    isbn: text("isbn"),
+    publisher: text("publisher"),
+    year: integer("year"),
+    category: text("category"),
+    shelf: text("shelf"),
+    copies: integer("copies").notNull().default(1),
+    createdAt: createdAt(),
+  },
+  (t) => [index("library_books_title_idx").on(t.schoolId, t.title), index("library_books_isbn_idx").on(t.schoolId, t.isbn)],
+);
+
+export const libraryLoans = pgTable(
+  "library_loans",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    bookId: uuid("book_id")
+      .notNull()
+      .references(() => libraryBooks.id, { onDelete: "cascade" }),
+    studentId: uuid("student_id").references(() => students.id, { onDelete: "cascade" }),
+    membershipId: uuid("membership_id").references(() => memberships.id, { onDelete: "cascade" }),
+    issuedOn: date("issued_on").notNull(),
+    dueOn: date("due_on").notNull(),
+    returnedOn: date("returned_on"),
+    fineKobo: kobo("fine_kobo").notNull().default(0),
+    finePaid: boolean("fine_paid").notNull().default(false),
+    issuedBy: uuid("issued_by").references(() => memberships.id, { onDelete: "set null" }),
+    note: text("note"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("library_loans_open_idx").on(t.schoolId, t.returnedOn), index("library_loans_book_idx").on(t.bookId), index("library_loans_student_idx").on(t.studentId)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1721,4 +1770,6 @@ export const TENANT_TABLES = [
   "payroll_runs",
   "payslips",
   "behaviour_records",
+  "library_books",
+  "library_loans",
 ] as const;
