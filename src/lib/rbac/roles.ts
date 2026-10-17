@@ -11,6 +11,7 @@ export type SystemRoleKey =
   | "nurse"
   | "transport_officer"
   | "hostel_warden"
+  | "storekeeper"
   | "parent"
   | "student";
 
@@ -101,6 +102,7 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
       "expenses:view",
       "expenses:create",
       "expenses:payroll",
+      "operations:inventory",
       "comms:message",
     ],
   },
@@ -157,6 +159,13 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
     description: "Runs boarding only.",
     kind: "staff",
     permissions: ["school:view", "students:view", "operations:hostel"],
+  },
+  {
+    key: "storekeeper",
+    name: "Storekeeper",
+    description: "Store and assets. Stock in and out, assigning items to staff and rooms.",
+    kind: "staff",
+    permissions: ["school:view", "operations:inventory"],
   },
   {
     key: "parent",

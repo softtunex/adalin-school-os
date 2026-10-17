@@ -26,7 +26,8 @@
     "db:seed-hr": "tsx scripts/seed-hr.ts",
     "db:seed-payroll": "tsx scripts/seed-payroll.ts",
     "db:seed-discipline": "tsx scripts/seed-discipline.ts",
-    "db:seed-library": "tsx scripts/seed-library.ts"
+    "db:seed-library": "tsx scripts/seed-library.ts",
+    "db:seed-inventory": "tsx scripts/seed-inventory.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",

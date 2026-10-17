@@ -11,6 +11,7 @@ import { requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { hasFeature } from "@/lib/plans/entitlements";
 import { can, type Access } from "@/lib/services/access";
+import { myItems } from "@/lib/services/inventory";
 import { getMonthSummary, getMyDay, getRegister, lagosClock, LEAVE_LABEL, listLeave, type DayStatus } from "@/lib/services/hr";
 import { CancelLeave, ClockCard, LeaveDecision, MarkDay, RequestLeaveButton } from "./hr-client";
 import { formatNaira } from "@/lib/money";
@@ -86,7 +87,7 @@ export default async function HrPage({ params, searchParams }: { params: Promise
 }
 
 async function MyDay({ slug, access }: { slug: string; access: Access }) {
-  const d = await getMyDay(getDb(), access);
+  const [d, mine] = await Promise.all([getMyDay(getDb(), access), myItems(getDb(), access)]);
   return (
     <>
       <ClockCard
@@ -172,6 +173,24 @@ async function MyDay({ slug, access }: { slug: string; access: Access }) {
             ))}
         </ul>
       </Card>
+      {mine.length ? (
+        <Card className="p-5">
+          <h2 className="fs-15 font-semibold">Signed out to you</h2>
+          <p className="mt-0.5 fs-13.5 text-muted">School property on your name until it goes back to the store.</p>
+          <ul className="mt-3 flex flex-col divide-y divide-line">
+            {mine.map((i) => (
+              <li key={i.a.id} className="flex items-baseline justify-between gap-3 py-2 fs-14">
+                <span className="text-ink">
+                  {i.a.quantity > 1 ? `${i.a.quantity} × ` : ""}
+                  {i.name}
+                  {i.tag ? <span className="text-muted"> · {i.tag}</span> : null}
+                </span>
+                <span className="shrink-0 text-muted">Since {new Date(`${i.a.assignedOn}T12:00:00Z`).toLocaleDateString("en-NG", { day: "numeric", month: "short", timeZone: "UTC" })}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : null}
     </>
   );
 }

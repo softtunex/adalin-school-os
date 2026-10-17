@@ -93,6 +93,14 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+export type InventorySettings = {
+  categories?: string[];
+  /** Rooms and places items can be assigned to. */
+  locations?: string[];
+  /** Book stock bought with a cost as a pending expense for approval. */
+  recordPurchases?: boolean;
+};
+
 export type DisciplineSettings = {
   meritCategories?: string[];
   incidentCategories?: string[];
@@ -231,6 +239,7 @@ export const schools = pgTable(
     payrollSettings: jsonb("payroll_settings").$type<PayrollSettings>().notNull().default({}),
     disciplineSettings: jsonb("discipline_settings").$type<DisciplineSettings>().notNull().default({}),
     librarySettings: jsonb("library_settings").$type<LibrarySettings>().notNull().default({}),
+    inventorySettings: jsonb("inventory_settings").$type<InventorySettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1702,6 +1711,80 @@ export const libraryLoans = pgTable(
   (t) => [index("library_loans_open_idx").on(t.schoolId, t.returnedOn), index("library_loans_book_idx").on(t.bookId), index("library_loans_student_idx").on(t.studentId)],
 );
 
+// ---------- Inventory and assets ----------
+
+export const INVENTORY_KINDS = ["consumable", "asset"] as const;
+export const ASSET_CONDITIONS = ["good", "fair", "damaged", "lost"] as const;
+export const STOCK_MOVES = ["in", "out", "adjust", "assign", "return"] as const;
+
+export const inventoryItems = pgTable(
+  "inventory_items",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: INVENTORY_KINDS }).notNull(),
+    category: text("category"),
+    unit: text("unit").notNull().default("pieces"),
+    /** How many are in the store now (not counting what is assigned out). */
+    quantity: integer("quantity").notNull().default(0),
+    reorderLevel: integer("reorder_level").notNull().default(0),
+    unitCostKobo: kobo("unit_cost_kobo").notNull().default(0),
+    location: text("location"),
+    tag: text("tag"),
+    condition: text("condition", { enum: ASSET_CONDITIONS }).notNull().default("good"),
+    note: text("note"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("inventory_items_name_idx").on(t.schoolId, t.name)],
+);
+
+export const inventoryAssignments = pgTable(
+  "inventory_assignments",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => inventoryItems.id, { onDelete: "cascade" }),
+    quantity: integer("quantity").notNull(),
+    membershipId: uuid("membership_id").references(() => memberships.id, { onDelete: "set null" }),
+    location: text("location"),
+    assignedOn: date("assigned_on").notNull(),
+    returnedOn: date("returned_on"),
+    returnCondition: text("return_condition", { enum: ASSET_CONDITIONS }),
+    note: text("note"),
+    assignedBy: uuid("assigned_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("inventory_assignments_open_idx").on(t.schoolId, t.returnedOn), index("inventory_assignments_item_idx").on(t.itemId), index("inventory_assignments_member_idx").on(t.membershipId)],
+);
+
+export const inventoryMoves = pgTable(
+  "inventory_moves",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => inventoryItems.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: STOCK_MOVES }).notNull(),
+    /** Signed change to the store count: positive in, negative out. */
+    change: integer("change").notNull(),
+    balance: integer("balance").notNull(),
+    unitCostKobo: kobo("unit_cost_kobo"),
+    membershipId: uuid("membership_id").references(() => memberships.id, { onDelete: "set null" }),
+    location: text("location"),
+    supplier: text("supplier"),
+    expenseId: uuid("expense_id").references(() => expenses.id, { onDelete: "set null" }),
+    note: text("note"),
+    movedOn: date("moved_on").notNull(),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("inventory_moves_item_idx").on(t.itemId, t.createdAt), index("inventory_moves_school_idx").on(t.schoolId, t.movedOn)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1772,4 +1855,7 @@ export const TENANT_TABLES = [
   "behaviour_records",
   "library_books",
   "library_loans",
+  "inventory_items",
+  "inventory_assignments",
+  "inventory_moves",
 ] as const;

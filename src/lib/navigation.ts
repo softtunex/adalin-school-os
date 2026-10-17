@@ -23,6 +23,7 @@ export const NAV: NavSection[] = [
       { href: "/results", label: "Results", icon: "results", anyOf: ["results:enter", "results:view"], feature: "score_entry", staffOnly: true },
       { href: "/students", label: "Students", icon: "graduation", anyOf: ["students:view"], staffOnly: true },
       { href: "/library", label: "Library", icon: "library", anyOf: ["operations:library"], feature: "library", staffOnly: true },
+      { href: "/inventory", label: "Inventory", icon: "box", anyOf: ["operations:inventory"], feature: "inventory", staffOnly: true },
       { href: "/discipline", label: "Behaviour", icon: "star", feature: "discipline", staffOnly: true },
       { href: "/admissions", label: "Admissions", icon: "userPlus", anyOf: ["admissions:view"], feature: "admissions", staffOnly: true },
       { href: "/timetable", label: "Timetable", icon: "clock", feature: "timetable", staffOnly: true },
@@ -56,7 +57,7 @@ export const NAV: NavSection[] = [
       { href: "/hr", label: "Attendance & leave", icon: "userCheck", feature: "staff_attendance", staffOnly: true },
       { href: "/roles", label: "Roles & permissions", icon: "shield", anyOf: ["roles:view"], staffOnly: true },
       { href: "/audit", label: "Audit log", icon: "history", anyOf: ["audit:view"], feature: "audit_log", staffOnly: true },
-      { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing", "fees:manage", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library"], staffOnly: true },
+      { href: "/settings", label: "Settings", icon: "settings", anyOf: ["school:update", "school:billing", "fees:manage", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory"], staffOnly: true },
     ],
   },
 ];
