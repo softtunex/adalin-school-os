@@ -16,7 +16,9 @@ export async function applyAction(slug: string, _prev: FormState, formData: Form
   // Bots fill every field; people never see this one.
   if (formData.get("website")) return { success: "Thank you." };
   const parsed = applicationSchema.safeParse(values);
-  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values, error: "Some details need another look." };
+  const consent: Record<string, string> = formData.get("consent") === "on" ? {} : { consent: "Tick the box to give your consent." };
+  if (!parsed.success) return { fieldErrors: { ...fieldErrors(parsed.error), ...consent }, values, error: "Some details need another look." };
+  if (consent.consent) return { fieldErrors: consent, values, error: "Some details need another look." };
   let token: string;
   try {
     const r = await submitApplication(getDb(), slug, parsed.data, { ip: (await requestMeta()).ip, baseUrl: await appUrl() });

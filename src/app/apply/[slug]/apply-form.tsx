@@ -95,6 +95,24 @@ export function ApplyForm({ slug, levels, feeLabel }: { slug: string; levels: { 
         </Field>
       </Card>
 
+      <div className="flex flex-col gap-1.5">
+        <label className="flex cursor-pointer items-start gap-3 fs-14.5 text-body">
+          <input type="checkbox" name="consent" required aria-invalid={!!fe.consent} aria-describedby={fe.consent ? "ap-consent-error" : undefined} className="mt-1 size-[18px] shrink-0 accent-[var(--brand)]" />
+          <span>
+            I&apos;m this child&apos;s parent or guardian, and I agree to the school keeping these details to consider the application and, if the child joins, for their schooling. See the{" "}
+            <a href="/privacy" target="_blank" className="font-semibold text-blue hover:underline">
+              privacy notice
+            </a>
+            .
+          </span>
+        </label>
+        {fe.consent ? (
+          <p id="ap-consent-error" className="fs-13.5 font-medium text-danger">
+            {fe.consent}
+          </p>
+        ) : null}
+      </div>
+
       <div className="flex flex-col gap-2">
         <SubmitButton size="lg">Send application</SubmitButton>
         {feeLabel ? <p className="text-center fs-13.5 text-muted">After you apply, you can pay the {feeLabel} application fee online.</p> : null}

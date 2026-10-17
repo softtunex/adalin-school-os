@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/display";
 import { Field, Input } from "@/components/ui/form";
+import { TermsConsent } from "@/components/terms-consent";
 import { initialFormState } from "@/lib/form-state";
 import { signupAction } from "../actions";
 
@@ -25,6 +26,7 @@ export function SignupForm() {
       <Field label="Password" htmlFor="password" error={fe.password} hint="At least 8 characters, with a letter and a number.">
         <Input id="password" name="password" type="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
       </Field>
+      <TermsConsent error={fe.terms} />
       <SubmitButton size="lg" pendingText="Creating your school…">
         Create school
       </SubmitButton>

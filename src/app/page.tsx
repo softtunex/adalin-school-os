@@ -192,7 +192,7 @@ export default async function HomePage() {
           </div>
           {[
             { title: "Product", links: [["Features", "/#"], ["Pricing", "/#"], ["Get started", "/signup"]] },
-            { title: "Company", links: [["Adalin Technologies", "https://adalintechnologies.com"], ["Contact", "/#"]] },
+            { title: "Company", links: [["Adalin Technologies", "https://adalintechnologies.com"], ["Contact", "/#"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
             { title: "Account", links: [["Log in", "/login"], ["Create a school", "/signup"]] },
           ].map((col) => (
             <div key={col.title}>

@@ -14,6 +14,7 @@ test("an owner sets up classes, adds and imports students, and manages a profile
   await page.getByLabel("Your full name").fill("Mrs Bisi Akande");
   await page.getByLabel("Email").fill(`bisi${run}@e2e.test`);
   await page.getByLabel("Password").fill("UnitySchool1");
+  await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
   const slug = new URL(page.url()).pathname.split("/")[2];

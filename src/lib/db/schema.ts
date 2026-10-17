@@ -315,6 +315,10 @@ export const schools = pgTable(
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
+    /** When the school accepted our terms, privacy notice and data processing agreement, which version, and who. */
+    termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
+    termsVersion: text("terms_version"),
+    termsAcceptedBy: uuid("terms_accepted_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
     /** The school's own web address for School OS, e.g. portal.yourschool.edu.ng (Enterprise). */
     customDomain: text("custom_domain"),
     /** When the custom domain was confirmed working. Until then it only shows setup steps. */
@@ -1586,6 +1590,8 @@ export const applicants = pgTable(
     payReference: text("pay_reference"),
     offeredAt: timestamp("offered_at", { withTimezone: true }),
     studentId: uuid("student_id").references(() => students.id, { onDelete: "set null" }),
+    /** The parent's consent to the school holding the child's data, given on the form (NDPA). */
+    consentAt: timestamp("consent_at", { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

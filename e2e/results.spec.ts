@@ -14,6 +14,7 @@ test("attendance, score entry, publishing and PDF report cards", async ({ page, 
   await page.getByLabel("Your full name").fill("Mr Tunde Bakare");
   await page.getByLabel("Email").fill(`tunde${run}@e2e.test`);
   await page.getByLabel("Password").fill("KingsCourt1");
+  await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
   const slug = new URL(page.url()).pathname.split("/")[2];

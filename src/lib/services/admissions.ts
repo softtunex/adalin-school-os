@@ -204,7 +204,8 @@ export async function submitApplication(db: DB, slug: string, input: Application
 
   await withTenant(db, schoolId, async (tx) => {
     const current = await getCurrentTerm(tx);
-    await tx.insert(applicants).values({ ...input, schoolId, ref, token, sessionId: current?.session.id ?? null, feeKobo: page.feeKobo, feePaid: page.feeKobo === 0 });
+    // The form only submits with the parent's consent ticked (NDPA); when, is kept with the application.
+    await tx.insert(applicants).values({ ...input, schoolId, ref, token, sessionId: current?.session.id ?? null, feeKobo: page.feeKobo, feePaid: page.feeKobo === 0, consentAt: new Date() });
     const level = page.levels.find((l) => l.id === input.levelId)!.name;
     const link = statusUrl(ctx.baseUrl, slug, token);
     await sendToGuardian(tx, schoolId, input, {

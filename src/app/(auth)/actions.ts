@@ -13,6 +13,7 @@ import { sendEmail } from "@/lib/mail";
 import { authenticate, createPasswordReset, registerSchoolOwner, resetPassword } from "@/lib/services/accounts";
 import { acceptInvitation } from "@/lib/services/staff";
 import { emailSchema, fieldErrors, nameSchema, passwordSchema, schoolNameSchema } from "@/lib/validation";
+import { TERMS_REQUIRED } from "@/components/terms-consent";
 
 const signupSchema = z.object({
   name: nameSchema,
@@ -24,7 +25,9 @@ const signupSchema = z.object({
 export async function signupAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const values = formValues(formData, ["name", "email", "schoolName"]);
   const parsed = signupSchema.safeParse({ ...values, password: formData.get("password") });
-  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
+  const terms: Record<string, string> = formData.get("terms") === "on" ? {} : { terms: TERMS_REQUIRED };
+  if (!parsed.success) return { fieldErrors: { ...fieldErrors(parsed.error), ...terms }, values };
+  if (terms.terms) return { fieldErrors: terms, values };
 
   let slug: string;
   try {

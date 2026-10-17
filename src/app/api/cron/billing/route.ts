@@ -2,8 +2,9 @@ import { timingSafeEqual } from "node:crypto";
 import { getDb } from "@/lib/db/client";
 import { drainOutbox } from "@/lib/services/outbox";
 import { runBilling } from "@/lib/services/billing";
+import { purgeExpiredData } from "@/lib/services/retention";
 
-/** Daily job (Vercel Cron): trials, term bills, reminders and read-only for long-overdue bills. */
+/** Daily job (Vercel Cron): trials, term bills, reminders, read-only for long-overdue bills, and deleting data past its retention period. */
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const given = request.headers.get("authorization") ?? "";
@@ -14,5 +15,6 @@ export async function GET(request: Request) {
   const db = getDb();
   const report = await runBilling(db);
   await drainOutbox(db);
-  return Response.json({ ok: true, report });
+  const purged = await purgeExpiredData(db);
+  return Response.json({ ok: true, report, purged });
 }

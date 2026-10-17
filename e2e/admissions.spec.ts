@@ -18,6 +18,7 @@ test("a parent applies and pays, and the school offers and enrols", async ({ bro
   await parent.getByLabel("Your full name").fill(`Mrs Ada ${surname}`);
   await parent.getByLabel("Phone number").fill("0803 222 3333");
   await parent.getByLabel("Email (optional)").fill(`ada${run}@example.com`);
+  await parent.getByRole("checkbox", { name: /parent or guardian/ }).check();
   await parent.getByRole("button", { name: "Send application" }).click();
   await expect(parent.getByRole("heading", { name: "Application sent!" })).toBeVisible({ timeout: 60_000 });
   const statusUrl = parent.url().replace(/\?.*$/, "");

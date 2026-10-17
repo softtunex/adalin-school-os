@@ -1,5 +1,6 @@
 import { and, count, eq, gt, isNull, sql } from "drizzle-orm";
 import { RESET_TTL_MINUTES, SESSION_TTL_DAYS } from "../config";
+import { TERMS_VERSION } from "../legal";
 import { burnPasswordCheck, hashPassword, hashToken, newToken, verifyPassword } from "../auth/crypto";
 import type { DB, Tx } from "../db/client";
 import { loginAttempts, membershipRoles, memberships, passwordResets, schools, sessions, users } from "../db/schema";
@@ -35,7 +36,8 @@ export async function registerSchoolOwner(db: DB, input: RegisterInput) {
 /** Creates a school on the Free plan with the given user as its Proprietor. */
 export async function createSchoolForUser(tx: Tx, user: { id: string; name: string }, schoolName: string) {
   const slug = await uniqueSlug(tx, schoolName);
-  const [school] = await tx.insert(schools).values({ name: schoolName, slug, planKey: "free" }).returning();
+  // Creating a school means accepting the terms for it (the sign-up forms require the box).
+  const [school] = await tx.insert(schools).values({ name: schoolName, slug, planKey: "free", termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION, termsAcceptedBy: user.id }).returning();
   const schoolRoles = await provisionSystemRoles(tx, school.id);
   const ownerRole = schoolRoles.find((r) => r.key === "owner")!;
   const [membership] = await tx

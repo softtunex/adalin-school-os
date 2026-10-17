@@ -19,6 +19,7 @@ test("a new school on Free sees fees as an upgrade, not an error", async ({ page
   await page.getByLabel("Your full name").fill("Mrs Kemi Ade");
   await page.getByLabel("Email").fill(`kemi${run}@e2e.test`);
   await page.getByLabel("Password").fill("LittleSteps1");
+  await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
   const slug = new URL(page.url()).pathname.split("/")[2];
