@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
-import { cn } from "@/lib/cn";
-import type { ResolvedNavItem } from "@/lib/navigation";
+import { flattenNav, type ResolvedNav } from "@/lib/navigation";
 import { Avatar, initials } from "./ui/display";
 import { Icon } from "./ui/icons";
 import { RouteLoader } from "./route-loader";
+import { SidebarNav } from "./sidebar-nav";
 
 type Props = {
   school: { name: string; slug: string; planName: string; logoUrl: string | null };
   user: { name: string; email: string; roleNames: string[] };
-  nav: { label?: string; items: ResolvedNavItem[] }[];
+  nav: ResolvedNav;
   children: ReactNode;
 };
 
@@ -47,38 +47,7 @@ function SidebarBody({ school, user, nav, pathname }: Omit<Props, "children"> & 
       <div className="mx-4 border-t border-line" />
 
       <nav className="flex-1 overflow-y-auto px-4 py-4" aria-label="Main">
-        <div className="flex flex-col gap-5">
-          {nav.map((section, i) => (
-            <div key={section.label ?? i} className="flex flex-col gap-1">
-              {section.label ? <p className="px-3 pb-1 fs-12.5 font-medium text-muted">{section.label}</p> : null}
-              {section.items.map((item) => {
-                // Analytics lives under Overview, so Overview stays highlighted there.
-                const active = item.href === home ? pathname === home || pathname.startsWith(`${home}/analytics`) : pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "relative flex h-11 items-center gap-3 rounded-chunk border px-3 fs-15 transition-colors",
-                      active ? "shadow-card border-line bg-canvas font-semibold text-ink" : "border-transparent font-medium text-body hover:bg-sunken hover:text-ink",
-                    )}
-                  >
-                    {active ? <span aria-hidden className="absolute -left-4 top-2.5 h-6 w-1 rounded-r-full bg-brand" /> : null}
-                    <Icon name={item.icon} size={20} className={active ? "text-brand-ink" : undefined} />
-                    <span className="flex-1">{item.label}</span>
-                    {item.locked ? <Icon name="lock" size={15} className="text-muted" aria-label="Upgrade to unlock" /> : null}
-                    {!item.locked && item.badge ? (
-                      <span className="tabular grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 fs-11.5 font-bold text-white" aria-label={`${item.badge} new`}>
-                        {item.badge > 99 ? "99+" : item.badge}
-                      </span>
-                    ) : null}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+        <SidebarNav nav={nav} home={home} pathname={pathname} />
       </nav>
 
       <div className="mx-4 border-t border-line" />
@@ -104,7 +73,7 @@ export function AppShell(props: Props) {
   // The drawer closes on navigation because it only counts as open on the page it was opened from.
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const open = openedOn === pathname;
-  const unread = props.nav.reduce((n, sec) => n + sec.items.reduce((m, i) => m + (i.locked ? 0 : (i.badge ?? 0)), 0), 0);
+  const unread = flattenNav(props.nav).reduce((n, i) => n + (i.locked ? 0 : (i.badge ?? 0)), 0);
 
   return (
     <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--paper)_287px,var(--line)_287px,var(--line)_288px,var(--canvas)_288px)]">
