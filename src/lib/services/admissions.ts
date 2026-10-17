@@ -14,6 +14,7 @@ import { schoolComms } from "./notify";
 import { enqueue, type Outgoing } from "./outbox";
 import { paystack, paystackMode } from "./paystack";
 import { brandOf } from "../brand";
+import { featuresOf } from "../plans/school-features";
 import { createStudent, guardianInputSchema, normalizePhone, studentInputSchema } from "./students";
 
 /*
@@ -103,7 +104,8 @@ export async function saveAdmissionSettings(db: DB, access: Access, input: z.inf
 export async function getApplyPage(db: DB, slug: string) {
   const [row] = await db.select({ school: schools, plan: plans }).from(schools).innerJoin(plans, eq(plans.key, schools.planKey)).where(eq(schools.slug, slug));
   if (!row || row.school.status === "suspended") return null;
-  const { school, plan } = row;
+  const { school } = row;
+  const plan = { ...row.plan, features: featuresOf(row.plan.features, row.school) };
   const settings = school.admissionSettings;
   const enabled = hasFeature(plan as PlanRow, "admissions");
   return withTenant(db, school.id, async (tx) => {

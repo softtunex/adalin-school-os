@@ -23,6 +23,7 @@ import {
 } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { brandOf } from "../brand";
+import { featuresOf } from "../plans/school-features";
 import { AppError } from "../errors";
 import { hasFeature } from "../plans/entitlements";
 import { requirePermission, type Access } from "./access";
@@ -510,7 +511,7 @@ export async function verifyDocument(db: DB, slug: string, token: string) {
         address: [s.address, s.city, s.state].filter(Boolean).join(", ") || null,
         phone: s.phone,
         email: s.email,
-        accent: brandOf(s, row.features ?? []),
+        accent: brandOf(s, featuresOf(row.features ?? [], s)),
       }
     : null;
   if (!school ||!/^[\w-]{10,40}$/.test(token)) return null;

@@ -7,6 +7,7 @@ import { getCurrentTerm } from "./academics";
 import { lagosToday, studentAttendanceSummary } from "./attendance";
 import { owesForTerm } from "./invoices";
 import { publishedTerms } from "./parent-portal";
+import { schoolFeaturesSql } from "../plans/school-features";
 import { classWeek } from "./timetable";
 
 /*
@@ -40,7 +41,7 @@ export async function myStudentRecord(db: DB, userId: string): Promise<Me | null
       schoolName: schools.name,
       slug: schools.slug,
       logoUrl: schools.logoUrl,
-      features: plans.features,
+      features: schoolFeaturesSql,
       comms: schools.commsSettings,
       fees: schools.feeSettings,
       schoolStatus: schools.status,

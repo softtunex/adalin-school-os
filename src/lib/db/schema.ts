@@ -269,6 +269,12 @@ export const schools = pgTable(
     pendingPlanKey: text("pending_plan_key"),
     /** Set by the platform when a school is read-only for an unpaid bill (cleared on payment). */
     readOnlySince: timestamp("read_only_since", { withTimezone: true }),
+    /** Features on top of the plan: add-ons the school pays for, plus anything Adalin grants. Kept in step by syncExtraFeatures. */
+    extraFeatures: jsonb("extra_features").$type<string[]>().notNull().default([]),
+    /** Granted by Adalin in the admin console (a pilot, a favour, a custom deal). */
+    adminGrants: jsonb("admin_grants").$type<string[]>().notNull().default([]),
+    /** Switched off by Adalin for this school, even if the plan includes them. */
+    adminBlocks: jsonb("admin_blocks").$type<string[]>().notNull().default([]),
     onboarding: jsonb("onboarding").$type<Record<string, boolean>>().notNull().default({}),
     admissionPrefix: text("admission_prefix"),
     nextAdmissionSeq: integer("next_admission_seq").notNull().default(1),
@@ -2099,6 +2105,27 @@ export const platformInvoices = pgTable(
   (t) => [uniqueIndex("platform_invoices_number_uq").on(t.number), uniqueIndex("platform_invoices_reference_uq").on(t.reference), index("platform_invoices_school_idx").on(t.schoolId, t.status)],
 );
 
+export const ADDON_STATUSES = ["pending", "active", "cancelled"] as const;
+
+/** Add-ons a school has bought: features billed each term alongside the plan, or one-off services. */
+export const schoolAddons = pgTable(
+  "school_addons",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    key: text("key").notNull(),
+    status: text("status", { enum: ADDON_STATUSES }).notNull().default("pending"),
+    /** The bill that pays for it; it switches on when this is paid. */
+    invoiceId: uuid("invoice_id").references(() => platformInvoices.id, { onDelete: "set null" }),
+    /** For one-off services: when Adalin delivered it. */
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    note: text("note"),
+    boughtBy: uuid("bought_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("school_addons_school_idx").on(t.schoolId, t.status)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -2185,4 +2212,5 @@ export const TENANT_TABLES = [
   "document_templates",
   "issued_documents",
   "platform_invoices",
+  "school_addons",
 ] as const;

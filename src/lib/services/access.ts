@@ -4,6 +4,7 @@ import { membershipRoles, memberships, plans, roles, schools, users } from "../d
 import { AppError } from "../errors";
 import type { PlanRow } from "../plans/entitlements";
 import { isPermission, type Permission } from "../rbac/permissions";
+import { featuresOf } from "../plans/school-features";
 import { getSystemRole, type RoleKind } from "../rbac/roles";
 
 export type RoleRow = typeof roles.$inferSelect;
@@ -47,7 +48,7 @@ export async function loadAccess(db: DB, userId: string, schoolSlug: string): Pr
   return {
     user: { id: row.user.id, name: row.user.name, email: row.user.email },
     school: row.school,
-    plan: row.plan,
+    plan: { ...row.plan, features: featuresOf(row.plan.features, row.school) },
     membershipId: row.membership.id,
     roles: assigned.map(({ role }) => ({ id: role.id, key: role.key, name: role.name, kind: role.kind })),
     permissions,

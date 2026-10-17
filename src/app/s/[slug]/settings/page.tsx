@@ -35,6 +35,7 @@ import { BuyCredits, CommsSettingsForm } from "./messaging-forms";
 import { FeeRulesForm, SettlementForm } from "./payments-forms";
 import { ProfileForm } from "./profile-form";
 import { PlanTab } from "./plan-tab";
+import { AddonsTab } from "./addons-tab";
 import { BrandColorCard } from "./brand-color";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -80,6 +81,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canHostel ? [{ key: "hostel", label: "Boarding", href: `${base}?tab=hostel` }] : []),
             ...(canDocuments ? [{ key: "documents", label: "Documents", href: `${base}?tab=documents` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
+            ...(can(access, "school:billing") ? [{ key: "addons", label: "Add-ons", href: `${base}?tab=addons` }] : []),
           ]}
         />
 
@@ -112,6 +114,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
           <MessagingTab slug={slug} access={access} bought={sp.bought} failed={!!sp.failed} />
         ) : tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
           <PaymentsTab slug={slug} access={access} />
+        ) : tab === "addons" && can(access, "school:billing") ? (
+          <AddonsTab slug={slug} access={access} />
         ) : !canProfile ? null : tab === "plan" ? (
           <PlanTab slug={slug} access={access} canBill={can(access, "school:billing")} paid={sp.paid} failed={sp.failed} />
         ) : (

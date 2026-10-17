@@ -24,6 +24,7 @@ import { AppError } from "../errors";
 import { getCurrentTerm } from "./academics";
 import { lagosToday, studentAttendanceSummary } from "./attendance";
 import { balanceOf, owesForTerm } from "./invoices";
+import { schoolFeaturesSql } from "../plans/school-features";
 import { classWeek } from "./timetable";
 
 /*
@@ -53,7 +54,7 @@ export async function myChildren(db: DB, userId: string): Promise<ChildLink[]> {
       schoolName: schools.name,
       slug: schools.slug,
       logoUrl: schools.logoUrl,
-      features: plans.features,
+      features: schoolFeaturesSql,
       feeSettings: schools.feeSettings,
       status: students.status,
       firstName: students.firstName,

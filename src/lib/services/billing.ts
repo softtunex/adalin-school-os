@@ -12,6 +12,12 @@ import { recordAudit } from "./audit";
 import { notifyUsers } from "./notify";
 import { enqueue } from "./outbox";
 import { paystack, paystackMode } from "./paystack";
+import { activateAddonsForBill, syncExtraFeatures, termAddonLines } from "./addons";
+import { addDays, charge, dayDiff, nextBillNumber, termFraction } from "./billing-core";
+
+export { charge, termFraction };
+
+const pupils = (n: number) => `${n} student${n === 1 ? "" : "s"}`;
 
 /*
  * Adalin billing schools. Each term a school on a paid plan gets a bill: students on roll
@@ -33,28 +39,6 @@ function actor(access: Access, ip?: string | null) {
   return { userId: access.user.id, name: access.user.name, ip };
 }
 
-function addDays(iso: string, n: number) {
-  const d = new Date(`${iso}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-const dayDiff = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00Z`) - Date.parse(`${a}T12:00:00Z`)) / 86_400_000);
-
-/** Share of a term still to run on a day: 1 at or before the start, 0 after the end. */
-export function termFraction(term: { startsOn: string | null; endsOn: string | null }, on: string) {
-  if (!term.startsOn || !term.endsOn) return 1;
-  const total = dayDiff(term.startsOn, term.endsOn) + 1;
-  if (total <= 0) return 1;
-  const left = dayDiff(on, term.endsOn) + 1;
-  return Math.max(0, Math.min(1, left / total));
-}
-
-/** Kobo for a number of students on a plan, for a share of the term, rounded to the naira. */
-export function charge(pricePerStudentKobo: number, studentsOnRoll: number, fraction = 1) {
-  return Math.round((pricePerStudentKobo * studentsOnRoll * fraction) / 100) * 100;
-}
-
 async function activeStudents(tx: Tx) {
   const [{ n }] = await tx.select({ n: count() }).from(students).where(eq(students.status, "active"));
   return n;
@@ -66,16 +50,6 @@ async function currentTerm(tx: Tx) {
 }
 
 const periodOf = (t: { term: Term; session: string }) => `${/term$/i.test(t.term.name) ? t.term.name : `${t.term.name} term`}, ${t.session}`;
-
-async function nextNumber(db: DB | Tx) {
-  const year = lagosToday().slice(0, 4);
-  const prefix = `ADL-${year}-`;
-  const [{ top }] = await db
-    .select({ top: sql<number>`coalesce(max(cast(substring(${platformInvoices.number} from ${prefix.length + 1}::int) as integer)), 0)`.mapWith(Number) })
-    .from(platformInvoices)
-    .where(sql`${platformInvoices.number} like ${`${prefix}%`}`);
-  return `${prefix}${String(top + 1).padStart(5, "0")}`;
-}
 
 async function planRow(db: DB | Tx, key: string): Promise<PlanRow> {
   const [p] = await db.select().from(plans).where(eq(plans.key, key));
@@ -223,13 +197,13 @@ export async function changePlan(db: DB, access: Access, planKey: string, ip?: s
     if (termBill && !onTrial) {
       // Already billed this term at the old price: charge the difference for what's left.
       const diff = charge(toPrice - fromPrice, termBill.studentCount, fraction);
-      if (diff > 0) lines.push({ description: `Upgrade from ${from.name} to ${to.name}: ${termBill.studentCount} students × ${formatNaira(toPrice - fromPrice)}, ${Math.round(fraction * 100)}% of the term left`, amountKobo: diff });
+      if (diff > 0) lines.push({ description: `Upgrade from ${from.name} to ${to.name}: ${pupils(termBill.studentCount)} × ${formatNaira(toPrice - fromPrice)}, ${Math.round(fraction * 100)}% of the term left`, amountKobo: diff });
     } else if (!termBill) {
       const amount = charge(toPrice, onRoll, fraction);
-      if (amount > 0) lines.push({ description: `${to.name}: ${onRoll} students × ${formatNaira(toPrice)}${fraction < 1 ? `, ${Math.round(fraction * 100)}% of the term left` : ""}`, amountKobo: amount });
+      if (amount > 0) lines.push({ description: `${to.name}: ${pupils(onRoll)} × ${formatNaira(toPrice)}${fraction < 1 ? `, ${Math.round(fraction * 100)}% of the term left` : ""}`, amountKobo: amount });
     }
   }
-  const number = lines.length ? await nextNumber(db) : null;
+  const number = lines.length ? await nextBillNumber(db) : null;
   const bill = await withTenant(db, school.id, async (tx) => {
     let bill: typeof platformInvoices.$inferSelect | null = null;
     if (number && term) {
@@ -278,9 +252,16 @@ export async function ensureTermBill(db: DB, schoolId: string) {
     await db.update(schools).set({ planKey, pendingPlanKey: null }).where(eq(schools.id, schoolId));
   }
   const plan = await planRow(db, planKey);
-  const amount = plan.pricePerStudentKobo ? charge(plan.pricePerStudentKobo, found.onRoll) : 0;
+  // A new term: add-ons cancelled last term stop now.
+  await syncExtraFeatures(db, schoolId);
+  const planAmount = plan.pricePerStudentKobo ? charge(plan.pricePerStudentKobo, found.onRoll) : 0;
+  const lines: BillLine[] = [
+    ...(planAmount ? [{ description: `${plan.name}: ${pupils(found.onRoll)} on roll × ${formatNaira(plan.pricePerStudentKobo!)}`, amountKobo: planAmount }] : []),
+    ...(await termAddonLines(db, schoolId, found.term.term.id)),
+  ];
+  const amount = lines.reduce((n, l) => n + l.amountKobo, 0);
   if (!amount) return null;
-  const number = await nextNumber(db);
+  const number = await nextBillNumber(db);
   const today = lagosToday();
   const [bill] = await withTenant(db, schoolId, (tx) =>
     tx
@@ -293,7 +274,7 @@ export async function ensureTermBill(db: DB, schoolId: string) {
         period: periodOf(found.term),
         planKey,
         studentCount: found.onRoll,
-        lines: [{ description: `${plan.name}: ${found.onRoll} students on roll × ${formatNaira(plan.pricePerStudentKobo!)}`, amountKobo: amount }],
+        lines,
         totalKobo: amount,
         issuedOn: today,
         dueOn: addDays(today, DUE_DAYS),
@@ -345,6 +326,7 @@ export async function settleBill(db: DB, data: { reference: string; amount: numb
       .set({ status: "paid", paidAt: data.paid_at ? new Date(data.paid_at) : new Date(), paidVia: data.channel ?? "card" })
       .where(eq(platformInvoices.id, bill.id));
   }
+  await activateAddonsForBill(db, bill.schoolId, bill.id);
   await liftReadOnlyIfClear(db, bill.schoolId);
   return true;
 }
@@ -403,9 +385,9 @@ export async function runBilling(db: DB, now = new Date()) {
       report.billsIssued++;
       await tellOwners(db, school, {
         title: `School OS bill for ${bill.period}`,
-        body: `${formatNaira(bill.totalKobo)} for ${bill.studentCount} students, due ${bill.dueOn}.`,
+        body: `${formatNaira(bill.totalKobo)} for ${pupils(bill.studentCount)}, due ${bill.dueOn}.`,
         ref: `bill:${bill.id}`,
-        email: `Your School OS bill ${bill.number} for ${bill.period} is ready: ${formatNaira(bill.totalKobo)} for ${bill.studentCount} students on roll. It's due by ${bill.dueOn}. Pay it under Settings, Plan & billing.`,
+        email: `Your School OS bill ${bill.number} for ${bill.period} is ready: ${formatNaira(bill.totalKobo)} for ${pupils(bill.studentCount)} on roll. It's due by ${bill.dueOn}. Pay it under Settings, Plan & billing.`,
       });
     }
     const open = await db.select().from(platformInvoices).where(and(eq(platformInvoices.schoolId, school.id), eq(platformInvoices.status, "open")));

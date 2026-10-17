@@ -7,6 +7,7 @@ import { AppError } from "../errors";
 import { burnPasswordCheck, hashPassword, verifyPassword } from "../auth/crypto";
 import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
+import { schoolFeaturesSql } from "../plans/school-features";
 import { studentScope } from "./academics";
 
 /*
@@ -98,7 +99,7 @@ export async function authenticateStudent(db: DB, input: { school: string; admis
   const [{ n }] = await db.select({ n: count() }).from(loginAttempts).where(and(eq(loginAttempts.key, keys[0]), eq(loginAttempts.succeeded, false), gt(loginAttempts.createdAt, since)));
   if (n >= 5) throw new AppError(`Too many tries. Wait ${WINDOW} minutes, or ask your teacher to reset your password.`, "rate_limited");
   const [row] = await db
-    .select({ user: users, studentId: students.id, schoolStatus: schools.status, features: plans.features })
+    .select({ user: users, studentId: students.id, schoolStatus: schools.status, features: schoolFeaturesSql })
     .from(users)
     .innerJoin(students, eq(students.userId, users.id))
     .innerJoin(schools, eq(schools.id, students.schoolId))

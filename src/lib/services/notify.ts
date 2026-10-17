@@ -1,13 +1,14 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { Tx } from "../db/client";
 import { guardians, notifications, outboundMessages, plans, schools, studentGuardians, students, users, type CommsSettings, type NotifyPrefs } from "../db/schema";
+import { schoolFeaturesSql } from "../plans/school-features";
 import { enqueue, type Outgoing } from "./outbox";
 
 export type SchoolComms = { id: string; name: string; comms: CommsSettings; smsEnabled: boolean; features: string[] };
 
 export async function schoolComms(tx: Tx, schoolId: string): Promise<SchoolComms> {
   const [row] = await tx
-    .select({ id: schools.id, name: schools.name, comms: schools.commsSettings, features: plans.features })
+    .select({ id: schools.id, name: schools.name, comms: schools.commsSettings, features: schoolFeaturesSql })
     .from(schools)
     .innerJoin(plans, eq(plans.key, schools.planKey))
     .where(eq(schools.id, schoolId));

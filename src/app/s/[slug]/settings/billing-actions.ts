@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { formatNaira } from "@/lib/money";
+import { buyAddon, cancelAddon } from "@/lib/services/addons";
 import { changePlan, payBill, startTrial } from "@/lib/services/billing";
 
 // Billing works in read-only mode: paying the bill is how a school gets out of it.
@@ -43,6 +44,30 @@ export async function payBillAction(slug: string, billId: string): Promise<FormS
     const r = await payBill(getDb(), access, billId, await appUrl(), ip);
     revalidatePath(`/s/${slug}`, "layout");
     return { url: r.url };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function buyAddonAction(slug: string, key: string, quantity?: number): Promise<FormState & { url?: string }> {
+  try {
+    const { access, ip } = await ctx(slug);
+    const db = getDb();
+    const { bill } = await buyAddon(db, access, { key, quantity }, ip);
+    const r = await payBill(db, access, bill.id, await appUrl(), ip);
+    revalidatePath(`/s/${slug}`, "layout");
+    return { url: r.url };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function cancelAddonAction(slug: string, addonId: string): Promise<FormState> {
+  try {
+    const { access, ip } = await ctx(slug);
+    await cancelAddon(getDb(), access, addonId, ip);
+    revalidatePath(`/s/${slug}`, "layout");
+    return { success: "Stopped. It keeps working until the end of this term." };
   } catch (error) {
     return { error: userMessage(error) };
   }
