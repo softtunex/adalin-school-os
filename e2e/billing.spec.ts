@@ -13,12 +13,14 @@ test("the proprietor sees the term's bill, pays it, and chooses a cheaper plan f
   // Free can't take 56 students, so it isn't offered.
   await expect(page.getByText(/Allows 50 students; you have \d+ on roll/)).toBeVisible({ timeout: 30_000 });
 
-  const bill = page.getByRole("row").filter({ hasText: /ADL-\d{4}-\d{5}/ }).first();
+  // The open bill, whichever row it's in (other tests may have raised and cancelled newer ones).
+  const bill = page.getByRole("row").filter({ hasText: /ADL-\d{4}-\d{5}/ }).filter({ has: page.getByRole("button", { name: /^Pay / }) }).first();
   await expect(bill).toBeVisible();
+  const number = (await bill.textContent())!.match(/ADL-\d{4}-\d{5}/)![0];
   await bill.getByRole("button", { name: /^Pay / }).click();
   await expect(page).toHaveURL(/paid=ADL-/, { timeout: 60_000 });
-  await expect(page.getByText(/Thank you\. Bill ADL-.* is paid\./)).toBeVisible();
-  await expect(page.getByRole("row").filter({ hasText: /ADL-/ }).first().getByText("Paid", { exact: true })).toBeVisible();
+  await expect(page.getByText(`Thank you. Bill ${number} is paid.`)).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: number }).getByText("Paid", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Move to Standard" }).click();
   const dialog = page.getByRole("dialog");

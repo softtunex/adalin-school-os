@@ -9,8 +9,10 @@ test("Adalin's team finds a school, bills it and cancels the bill; the proprieto
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
 
+  // Search, then wait for the results page before opening the school (the search box updates the address after a pause).
   await page.goto("/admin/schools");
   await page.getByPlaceholder("Name, code, email or city…").fill("adalin");
+  await expect(page).toHaveURL(/q=adalin/);
   await page.getByRole("row").filter({ hasText: "adalin-college" }).getByRole("link").first().click();
   await expect(page.getByRole("heading", { name: "Account" })).toBeVisible({ timeout: 30_000 });
 
