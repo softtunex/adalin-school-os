@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { formatNaira } from "@/lib/money";
-import { bookSchema, deleteBook, issueBook, issueSchema, librarySettingsSchema, lookupIsbn, markFinePaid, returnBook, saveBook, saveLibrarySettings } from "@/lib/services/library";
+import { bookSchema, deleteBook, issueBooks, issueSchema, librarySettingsSchema, lookupIsbn, markFinePaid, returnBook, saveBook, saveLibrarySettings } from "@/lib/services/library";
 import { fieldErrors } from "@/lib/validation";
 
 async function ctx(slug: string) {
@@ -54,9 +54,10 @@ export async function issueAction(slug: string, input: unknown): Promise<FormSta
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the loan." };
   try {
     const { access, ip } = await ctx(slug);
-    const loan = await issueBook(getDb(), access, parsed.data, ip);
+    const r = await issueBooks(getDb(), access, parsed.data, ip);
     done(slug);
-    return { success: `Lent. Due back ${new Date(`${loan.dueOn}T12:00:00Z`).toLocaleDateString("en-NG", { day: "numeric", month: "long", timeZone: "UTC" })}.` };
+    const n = r.loans.length;
+    return { success: `Lent ${n === 1 ? "1 book" : `${n} books`} to ${r.who}. Due back ${new Date(`${r.dueOn}T12:00:00Z`).toLocaleDateString("en-NG", { day: "numeric", month: "long", timeZone: "UTC" })}.` };
   } catch (error) {
     return { error: userMessage(error) };
   }

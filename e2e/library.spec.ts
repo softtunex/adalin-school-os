@@ -27,12 +27,15 @@ test("the librarian adds a book, lends it, and the student sees it", async ({ br
 
   await lib.getByRole("button", { name: "Lend a book" }).click();
   const lend = lib.getByRole("dialog");
-  await lend.getByLabel("Book").fill(run);
+  await lend.getByLabel("Books").fill(run);
   await lend.getByRole("option", { name: new RegExp(run) }).click();
+  await lend.getByLabel("Add another book").fill("Famished");
+  await lend.getByRole("option", { name: /The Famished Road/ }).click();
+  await expect(lend.getByRole("list", { name: "Books to lend" }).getByRole("listitem")).toHaveCount(2);
   await lend.getByLabel("Borrower").fill("Oluwaseun");
   await lend.getByRole("option", { name: /Oluwaseun Lawal/ }).click();
-  await lend.getByRole("button", { name: "Lend", exact: true }).click();
-  await expect(lend.getByText(/Lent/)).toBeVisible({ timeout: 30_000 });
+  await lend.getByRole("button", { name: "Lend 2 books" }).click();
+  await expect(lend.getByText(/Lent 2 books to Oluwaseun Lawal/)).toBeVisible({ timeout: 30_000 });
 
   const kid = await (await browser.newContext({ viewport: { width: 412, height: 860 } })).newPage();
   await kid.goto(`/student?school=${SLUG}`);
@@ -43,4 +46,5 @@ test("the librarian adds a book, lends it, and the student sees it", async ({ br
   await kid.getByRole("button", { name: "More", exact: true }).click();
   await kid.getByRole("navigation", { name: "App tabs" }).getByRole("link", { name: "Library" }).click();
   await expect(kid.getByText(title)).toBeVisible({ timeout: 30_000 });
+  await expect(kid.getByText("The Famished Road")).toBeVisible();
 });

@@ -221,23 +221,25 @@ export function IssueButton({
   students,
   staff,
   defaultDue,
+  maxLoans,
 }: {
   slug: string;
   books: { id: string; title: string; author: string | null; copies: number; out: number }[];
   students: { id: string; name: string; detail: string }[];
   staff: { id: string; name: string }[];
   defaultDue: string;
+  maxLoans: number;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const [book, setBook] = useState<Option | null>(null);
+  const [picked, setPicked] = useState<Option[]>([]);
   const [who, setWho] = useState<"student" | "staff">("student");
   const [borrower, setBorrower] = useState<Option | null>(null);
   const [due, setDue] = useState(defaultDue);
   const [msg, setMsg] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
   const reset = () => {
-    setBook(null);
+    setPicked([]);
     setBorrower(null);
     setMsg(null);
     setDue(defaultDue);
@@ -257,14 +259,33 @@ export function IssueButton({
       >
         <div className="flex flex-col gap-4">
           {msg ? <Alert tone={msg.tone}>{msg.text}</Alert> : null}
-          <Picker
-            label="Book"
-            id="ln-book"
-            value={book}
-            onChange={setBook}
-            placeholder="Type the title or author"
-            options={books.map((b) => ({ id: b.id, label: b.title, detail: `${b.copies - b.out} of ${b.copies} in` }))}
-          />
+          {picked.length ? (
+            <ul className="flex flex-col divide-y divide-line rounded-chunk border border-line bg-paper" aria-label="Books to lend">
+              {picked.map((b) => (
+                <li key={b.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <span className="min-w-0">
+                    <span className="block truncate fs-14.5 font-semibold text-ink">{b.label}</span>
+                    <span className="block fs-13 text-muted">{b.detail}</span>
+                  </span>
+                  <Button variant="ghost" size="sm" aria-label={`Remove ${b.label}`} onClick={() => setPicked((x) => x.filter((y) => y.id !== b.id))}>
+                    <Icon name="x" size={16} />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {picked.length < maxLoans ? (
+            <Picker
+              label={picked.length ? "Add another book" : "Books"}
+              id="ln-book"
+              value={null}
+              onChange={(o) => o && setPicked((x) => [...x, o])}
+              placeholder="Type the title or author"
+              options={books.filter((b) => !picked.some((p) => p.id === b.id)).map((b) => ({ id: b.id, label: b.title, detail: `${b.copies - b.out} of ${b.copies} in` }))}
+            />
+          ) : (
+            <p className="fs-13.5 text-muted">That&apos;s the most one person can borrow ({maxLoans}).</p>
+          )}
           <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Who is borrowing">
             {(["student", "staff"] as const).map((k) => (
               <button
@@ -300,16 +321,16 @@ export function IssueButton({
               </Button>
             ) : null}
             <Button
-              disabled={pending || !book || !borrower}
+              disabled={pending || !picked.length || !borrower}
               onClick={() =>
                 start(async () => {
-                  const r = await issueAction(slug, { bookId: book!.id, studentId: who === "student" ? borrower!.id : null, membershipId: who === "staff" ? borrower!.id : null, dueOn: due });
+                  const r = await issueAction(slug, { bookIds: picked.map((b) => b.id), studentId: who === "student" ? borrower!.id : null, membershipId: who === "staff" ? borrower!.id : null, dueOn: due });
                   setMsg(r.error ? { tone: "danger", text: r.error } : { tone: "success", text: r.success ?? "Lent." });
                   if (!r.error) router.refresh();
                 })
               }
             >
-              {pending ? "Saving…" : "Lend"}
+              {pending ? "Saving…" : picked.length > 1 ? `Lend ${picked.length} books` : "Lend"}
             </Button>
           </div>
         </div>

@@ -381,20 +381,12 @@
 }
 
 @media print {
-  body:has(#pin-cards) *,
-  body:has(#login-slips) * {
-    visibility: hidden;
+  /* A PrintSheet prints alone: everything else on the page is left out. */
+  body:has(> .print-sheet) > :not(.print-sheet) {
+    display: none !important;
   }
-  #pin-cards,
-  #pin-cards *,
-  #login-slips,
-  #login-slips * {
-    visibility: visible;
-  }
-  #pin-cards,
-  #login-slips {
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
+  .print-sheet {
+    padding: 0;
+    background: #fff;
   }
 }

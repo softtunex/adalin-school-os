@@ -55,7 +55,7 @@ export default async function LibraryPage({ params, searchParams }: { params: Pr
         actions={
           <div className="flex gap-2">
             <BookButton slug={slug} variant="secondary" />
-            <IssueButton slug={slug} books={people.books} students={people.students} staff={people.staff} defaultDue={addDays(lagosToday(), s.loanDays)} />
+            <IssueButton slug={slug} books={people.books} students={people.students} staff={people.staff} defaultDue={addDays(lagosToday(), s.loanDays)} maxLoans={s.maxLoans} />
           </div>
         }
       />

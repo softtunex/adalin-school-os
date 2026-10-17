@@ -6,7 +6,7 @@ import { withTenant } from "@/lib/db/tenant";
 import { loadAccess, type Access } from "@/lib/services/access";
 import { registerSchoolOwner } from "@/lib/services/accounts";
 import { getAcademicOverview, setupAcademics } from "@/lib/services/academics";
-import { bookSchema, cleanIsbn, issueBook, issueSchema, listBooks, listLoans, librarySettingsSchema, markFinePaid, returnBook, saveBook, saveLibrarySettings } from "@/lib/services/library";
+import { bookSchema, cleanIsbn, issueBooks, issueSchema, listBooks, listLoans, librarySettingsSchema, markFinePaid, returnBook, saveBook, saveLibrarySettings } from "@/lib/services/library";
 import { acceptInvitation, inviteStaff } from "@/lib/services/staff";
 import { createStudent, studentInputSchema } from "@/lib/services/students";
 import { createTestDatabase } from "./helpers";
@@ -56,12 +56,12 @@ describe("library", () => {
   it("lends within copies and limits", async () => {
     await saveLibrarySettings(database.db, owner, librarySettingsSchema.parse({ loanDays: 14, maxLoans: 2, finePerDayKobo: 5_000 }));
     librarian = (await loadAccess(database.db, librarian.user.id, owner.school.slug))!;
-    await issueBook(database.db, librarian, issueSchema.parse({ bookId: books.tfa, studentId: kids.Ada }));
-    await expect(issueBook(database.db, librarian, issueSchema.parse({ bookId: books.tfa, studentId: kids.Bayo }))).rejects.toThrow(/Every copy/);
-    await issueBook(database.db, librarian, issueSchema.parse({ bookId: books.maths, studentId: kids.Ada }));
-    await expect(issueBook(database.db, librarian, issueSchema.parse({ bookId: books.maths, studentId: kids.Ada }))).rejects.toThrow(/limit is 2/);
-    await issueBook(database.db, librarian, issueSchema.parse({ bookId: books.maths, membershipId: teacher.membershipId }));
-    expect(issueSchema.safeParse({ bookId: books.maths }).success).toBe(false);
+    await issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.tfa], studentId: kids.Ada }));
+    await expect(issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.tfa], studentId: kids.Bayo }))).rejects.toThrow(/Every copy/);
+    await issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.maths], studentId: kids.Ada }));
+    await expect(issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.maths], studentId: kids.Ada }))).rejects.toThrow(/limit is 2/);
+    await issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.maths], membershipId: teacher.membershipId }));
+    expect(issueSchema.safeParse({ bookIds: [books.maths] }).success).toBe(false);
     expect((await listLoans(database.db, librarian)).rows).toHaveLength(3);
     const shelf = await listBooks(database.db, librarian);
     expect(shelf.rows.find((r) => r.b.id === books.tfa)?.out).toBe(1);
@@ -82,5 +82,17 @@ describe("library", () => {
     await markFinePaid(database.db, librarian, loan.id);
     expect((await listBooks(database.db, librarian)).stats.fines).toBe(0);
     await expect(returnBook(database.db, librarian, loan.id)).rejects.toThrow(/Already returned/);
+  });
+
+  it("lends several books at once, all or nothing", async () => {
+    expect(issueSchema.safeParse({ bookIds: [books.tfa, books.tfa], studentId: kids.Bayo }).success).toBe(false);
+    const extra = (await saveBook(database.db, librarian, bookSchema.parse({ title: "Arrow of God", copies: 1 }))).id;
+    await issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [extra], membershipId: teacher.membershipId }));
+    await expect(issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.tfa, extra], studentId: kids.Bayo }))).rejects.toThrow(/Every copy of "Arrow of God"/);
+    expect((await listLoans(database.db, librarian, { q: "Bayo" })).rows).toHaveLength(0);
+    const r = await issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.tfa, books.maths], studentId: kids.Bayo }));
+    expect(r.loans).toHaveLength(2);
+    expect(new Set(r.loans.map((l) => l.dueOn)).size).toBe(1);
+    await expect(issueBooks(database.db, librarian, issueSchema.parse({ bookIds: [books.maths], studentId: kids.Bayo }))).rejects.toThrow(/can take no more/);
   });
 });

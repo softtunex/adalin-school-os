@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, isNull, isNotNull, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, isNotNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { DB, Tx } from "../db/client";
 import { classes, libraryBooks, libraryLoans, membershipRoles, memberships, roles, schools, students, users, type LibrarySettings } from "../db/schema";
@@ -194,7 +194,11 @@ export async function listBooks(db: DB, access: Access, filter: { q?: string; ca
 
 export const issueSchema = z
   .object({
-    bookId: z.string().uuid("Choose a book."),
+    bookIds: z
+      .array(z.string().uuid())
+      .min(1, "Choose at least one book.")
+      .max(20)
+      .refine((ids) => new Set(ids).size === ids.length, "The same book is in the list twice."),
     studentId: z.string().uuid().nullable().default(null),
     membershipId: z.string().uuid().nullable().default(null),
     dueOn: z
@@ -205,19 +209,36 @@ export const issueSchema = z
   })
   .refine((v) => !!v.studentId !== !!v.membershipId, { path: ["studentId"], message: "Choose who's borrowing it." });
 
-export async function issueBook(db: DB, access: Access, input: z.infer<typeof issueSchema>, ip?: string | null) {
+/** Lends one or more books to one borrower, all due back the same day. All or nothing. */
+export async function issueBooks(db: DB, access: Access, input: z.infer<typeof issueSchema>, ip?: string | null) {
   requireLibrary(access);
   const s = librarySettings(access.school.librarySettings);
   const today = lagosToday();
   const dueOn = input.dueOn ?? addDays(today, s.loanDays);
   if (dueOn < today) throw new AppError("The due date can't be in the past.", "invalid");
   return withTenant(db, access.school.id, async (tx) => {
-    const [book] = await tx.select().from(libraryBooks).where(eq(libraryBooks.id, input.bookId));
-    if (!book) throw new AppError("That book wasn't found.", "not_found");
-    if ((await onLoan(tx, book.id)) >= book.copies) throw new AppError(`Every copy of "${book.title}" is out.`, "conflict");
+    const books = [];
+    for (const id of input.bookIds) {
+      const [book] = await tx.select().from(libraryBooks).where(eq(libraryBooks.id, id));
+      if (!book) throw new AppError("That book wasn't found.", "not_found");
+      if ((await onLoan(tx, book.id)) >= book.copies) throw new AppError(`Every copy of "${book.title}" is out.`, "conflict");
+      books.push(book);
+    }
     const borrower = input.studentId ? eq(libraryLoans.studentId, input.studentId) : eq(libraryLoans.membershipId, input.membershipId!);
     const [{ n }] = await tx.select({ n: count() }).from(libraryLoans).where(and(borrower, isNull(libraryLoans.returnedOn)));
-    if (n >= s.maxLoans) throw new AppError(`They already have ${n} book${n === 1 ? "" : "s"} out (the limit is ${s.maxLoans}).`, "conflict");
+    if (n + books.length > s.maxLoans) {
+      const room = Math.max(0, s.maxLoans - n);
+      throw new AppError(
+        n ? `They already have ${n} book${n === 1 ? "" : "s"} out, so they can take ${room ? `only ${room} more` : "no more"} (the limit is ${s.maxLoans}).` : `That's more than the limit of ${s.maxLoans} books each.`,
+        "conflict",
+      );
+    }
+    const [already] = await tx
+      .select({ title: libraryBooks.title })
+      .from(libraryLoans)
+      .innerJoin(libraryBooks, eq(libraryBooks.id, libraryLoans.bookId))
+      .where(and(borrower, isNull(libraryLoans.returnedOn), inArray(libraryLoans.bookId, input.bookIds)));
+    if (already) throw new AppError(`They already have a copy of "${already.title}".`, "conflict");
     const [overdue] = await tx.select({ id: libraryLoans.id }).from(libraryLoans).where(and(borrower, isNull(libraryLoans.returnedOn), lt(libraryLoans.dueOn, today)));
     if (overdue) throw new AppError("They have an overdue book. It needs to come back first.", "conflict");
     let who = "";
@@ -230,12 +251,14 @@ export async function issueBook(db: DB, access: Access, input: z.infer<typeof is
       if (!m) throw new AppError("That staff member wasn't found.", "not_found");
       who = m.name;
     }
-    const [loan] = await tx
+    const loans = await tx
       .insert(libraryLoans)
-      .values({ schoolId: access.school.id, bookId: book.id, studentId: input.studentId, membershipId: input.membershipId, issuedOn: today, dueOn, issuedBy: access.membershipId, note: input.note || null })
+      .values(books.map((book) => ({ schoolId: access.school.id, bookId: book.id, studentId: input.studentId, membershipId: input.membershipId, issuedOn: today, dueOn, issuedBy: access.membershipId, note: input.note || null })))
       .returning();
-    await recordAudit(tx, access.school.id, actor(access, ip), { action: "library.issued", summary: `Lent "${book.title}" to ${who}, due ${dueOn}`, entityType: "book", entityId: book.id });
-    return loan;
+    for (const book of books) {
+      await recordAudit(tx, access.school.id, actor(access, ip), { action: "library.issued", summary: `Lent "${book.title}" to ${who}, due ${dueOn}`, entityType: "book", entityId: book.id });
+    }
+    return { loans, dueOn, who };
   });
 }
 

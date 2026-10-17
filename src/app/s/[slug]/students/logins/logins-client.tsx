@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, Badge, Card, Table, Td, Th } from "@/components/ui/display";
+import { PrintSheet } from "@/components/print-sheet";
 import { Icon } from "@/components/ui/icons";
 import { issueLoginsAction } from "./actions";
 
@@ -43,7 +44,8 @@ export function StudentLogins({ slug, schoolName, signInUrl, rows, canIssue }: {
             Done
           </Button>
         </div>
-        <div id="login-slips" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 print:gap-2">
+        <PrintSheet>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 print:grid-cols-3 print:gap-2">
           {slips.map((s) => (
             <div key={s.studentId} className="break-inside-avoid rounded-chunk border-2 border-dashed border-line-strong bg-canvas p-4 fs-13.5">
               <p className="fs-12 font-semibold uppercase tracking-[0.06em] text-muted">{schoolName} · student login</p>
@@ -62,6 +64,7 @@ export function StudentLogins({ slug, schoolName, signInUrl, rows, canIssue }: {
             </div>
           ))}
         </div>
+        </PrintSheet>
       </div>
     );
   }

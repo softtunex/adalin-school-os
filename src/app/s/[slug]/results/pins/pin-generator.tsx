@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/display";
 import { Field, Input } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
+import { PrintSheet } from "@/components/print-sheet";
 import { generatePinsAction } from "../actions";
 
 type Batch = { batch: string; term: string; pins: { serial: string; pin: string }[] };
@@ -71,7 +72,8 @@ export function PinGenerator({ slug, schoolName, checkUrl }: { slug: string; sch
               <Icon name="clipboard" size={17} /> Print cards
             </Button>
           </div>
-          <div id="pin-cards" className="grid gap-3 sm:grid-cols-2 print:grid-cols-3 print:gap-2">
+          <PrintSheet>
+          <div className="grid gap-3 sm:grid-cols-2 print:grid-cols-3 print:gap-2">
             {batch.pins.map((p) => (
               <div key={p.serial} className="break-inside-avoid rounded-chunk border-2 border-dashed border-line-strong p-3 print:border-black">
                 <p className="fs-12 font-semibold uppercase tracking-[0.05em] text-brand-ink">{schoolName}</p>
@@ -82,6 +84,7 @@ export function PinGenerator({ slug, schoolName, checkUrl }: { slug: string; sch
               </div>
             ))}
           </div>
+          </PrintSheet>
         </div>
       ) : null}
     </Card>
