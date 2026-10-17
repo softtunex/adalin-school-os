@@ -64,6 +64,18 @@ test("attendance, score entry, publishing and PDF report cards", async ({ page, 
   await expect(page.getByLabel("Exam for Obi Amaka")).toHaveValue("52");
   await expect(page.getByRole("row", { name: /Obi Amaka/ }).getByText("A1")).toBeVisible();
 
+  // No connection: a score typed now is kept on the device, survives a reload, and saves once it can.
+  const blockSaves = (route: import("@playwright/test").Route) => (route.request().method() === "POST" ? route.abort("internetdisconnected") : route.continue());
+  await page.route("**/s/**", blockSaves);
+  await page.getByLabel("Exam for Eze Chinedu").fill("47");
+  await expect(page.getByText(/No connection\. Your scores are kept here/)).toBeVisible({ timeout: 20_000 });
+  await page.unroute("**/s/**", blockSaves);
+  await page.reload();
+  await expect(page.getByLabel("Exam for Eze Chinedu")).toHaveValue("47");
+  await expect(page.getByText("All changes saved")).toBeVisible({ timeout: 20_000 });
+  await page.reload();
+  await expect(page.getByLabel("Exam for Eze Chinedu")).toHaveValue("47");
+
   // Submit the sheet, then publish (Free plan publishes directly).
   await page.getByRole("button", { name: "Submit scores" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Submit scores" }).click();

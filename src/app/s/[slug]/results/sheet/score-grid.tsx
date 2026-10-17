@@ -54,6 +54,37 @@ export function ScoreGrid({
   const [confirm, setConfirm] = useState<"submit" | "reopen" | null>(null);
   const [, startTransition] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Unsaved scores survive a closed tab or a dead battery: kept on this device until the server has them.
+  const draftKey = `sos:scores:${slug}:${classId}:${subjectId}`;
+  const restored = useRef(false);
+  useEffect(() => {
+    if (!editable) return;
+    // After the first paint, like the register's offline queue, so the page matches what the server sent.
+    const restore = setTimeout(() => {
+      restored.current = true;
+      try {
+        const saved = JSON.parse(localStorage.getItem(draftKey) ?? "{}") as Record<string, string>;
+        const keys = Object.keys(saved);
+        if (!keys.length) return;
+        setValues((prev) => ({ ...prev, ...saved }));
+        setPendingKeys(new Set(keys));
+      } catch {
+        // Storage blocked: scores still save while the page is open.
+      }
+    }, 0);
+    return () => clearTimeout(restore);
+  }, [draftKey, editable]);
+  useEffect(() => {
+    // Until any saved draft is read back, an empty page mustn't wipe it.
+    if (!restored.current) return;
+    try {
+      if (pendingKeys.size) localStorage.setItem(draftKey, JSON.stringify(Object.fromEntries([...pendingKeys].map((k) => [k, values[k] ?? ""]))));
+      else localStorage.removeItem(draftKey);
+    } catch {
+      // Storage full or blocked.
+    }
+  }, [draftKey, pendingKeys, values]);
   const inputs = useRef(new Map<string, HTMLInputElement>());
 
   const flush = useCallback(

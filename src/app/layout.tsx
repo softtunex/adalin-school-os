@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Nunito } from "next/font/google";
 import type { ReactNode } from "react";
+import { ServiceWorker } from "@/components/service-worker";
 import { hostSchool } from "@/lib/auth/host";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
 import { getTextSize, getTheme } from "@/lib/theme";
@@ -29,7 +30,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const [theme, textSize] = await Promise.all([getTheme(), getTextSize()]);
   return (
     <html lang="en" data-theme={theme} data-text-size={textSize === "default" ? undefined : textSize} className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }

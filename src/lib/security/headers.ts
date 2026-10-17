@@ -13,6 +13,9 @@ export function contentSecurityPolicy(nonce: string, dev = process.env.NODE_ENV 
     `connect-src 'self'${dev ? " ws: wss:" : ""}`,
     "media-src 'self' blob: https:",
     "frame-src https://www.youtube-nocookie.com",
+    // The offline service worker and the install manifest come from this site only.
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
