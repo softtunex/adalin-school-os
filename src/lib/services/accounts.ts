@@ -127,9 +127,17 @@ export async function revokeAllSessions(db: DB, userId: string) {
 }
 
 /** Returns a reset token for the email, or null when no account exists. Callers must not reveal which. */
+/** Reset emails per account per hour. Past it, requests quietly do nothing, so an inbox can't be flooded. */
+export const RESETS_PER_HOUR = 3;
+
 export async function createPasswordReset(db: DB, email: string) {
   const user = await findUserByEmail(db, email);
   if (!user) return null;
+  const [{ n }] = await db
+    .select({ n: count() })
+    .from(passwordResets)
+    .where(and(eq(passwordResets.userId, user.id), gt(passwordResets.createdAt, new Date(Date.now() - 3_600_000))));
+  if (n >= RESETS_PER_HOUR) return null;
   const token = newToken();
   await db.insert(passwordResets).values({
     tokenHash: hashToken(token),

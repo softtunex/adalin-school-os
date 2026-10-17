@@ -79,6 +79,13 @@ describe("registration and login", () => {
     await authenticate(database.db, "owner@adalin.test", "NewPassword9", null);
     expect(await createPasswordReset(database.db, "nobody@x.test")).toBeNull();
   });
+
+  it("sends at most three reset emails an hour, quietly", async () => {
+    // One was already sent in the test above.
+    expect(await createPasswordReset(database.db, "owner@adalin.test")).not.toBeNull();
+    expect(await createPasswordReset(database.db, "owner@adalin.test")).not.toBeNull();
+    expect(await createPasswordReset(database.db, "owner@adalin.test")).toBeNull();
+  });
 });
 
 describe("staff, roles and permissions", () => {

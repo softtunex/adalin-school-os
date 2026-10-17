@@ -94,7 +94,7 @@ export async function settleCreditPurchase(db: DB, data: { reference: string; am
 
 export async function verifyCreditPurchase(db: DB, reference: string) {
   if (!/^sosc_[0-9a-f]{24}$/.test(reference) || paystackMode() !== "live") return false;
-  const res = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }, cache: "no-store" });
+  const res = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` }, cache: "no-store" });
   const json = (await res.json().catch(() => null)) as { data?: { status: string; reference: string; amount: number; currency: string; metadata?: Record<string, string> } } | null;
   if (json?.data?.status !== "success") return false;
   return settleCreditPurchase(db, json.data);

@@ -15,3 +15,8 @@ minimumReleaseAgeExclude:
   - '@next/swc-win32-x64-msvc@16.4.2'
   - eslint-config-next@16.4.2
   - next@16.4.2
+overrides:
+  # exceljs pins an old uuid with a moderate advisory (GHSA-w5hq-g745-h8pq); 11.1.1+ keeps the same v4 API.
+  "exceljs>uuid": "^11.1.1"
+  # pdfkit (via @react-pdf) pulls an older fflate with a moderate advisory (GHSA-px8p-9vwx-vf98); 0.8.3 is a patch release.
+  "fflate": "^0.8.3"
