@@ -41,7 +41,7 @@ export const SYSTEM_ROLES: readonly SystemRole[] = [
     description: "Runs academics and staff. Approves and publishes results.",
     kind: "staff",
     permissions: ALL_PERMISSIONS.filter(
-      (p) => !["school:billing", "fees:refund", "expenses:payroll", "comms:credits", "roles:manage"].includes(p),
+      (p) => !["school:billing", "school:export", "fees:refund", "expenses:payroll", "comms:credits", "roles:manage"].includes(p),
     ),
   },
   {

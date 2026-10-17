@@ -165,6 +165,7 @@ export default async function StaffPage({
                             roles={grantable}
                             canAssign={can(access, "staff:assign_roles")}
                             canDeactivate={can(access, "staff:deactivate")}
+                            canExport={can(access, "school:export")}
                           />
                         ) : null}
                       </Td>

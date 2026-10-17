@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { PageBody, Topbar } from "@/components/topbar";
 import { ButtonLink } from "@/components/ui/button";
+import { buttonClass } from "@/components/ui/button-styles";
 import { Alert, Avatar, Badge, Card, EmptyState, IconChip, type Tone } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { Tabs } from "@/components/ui/tabs";
@@ -95,6 +96,11 @@ export default async function StudentPage({
               <ButtonLink href={`/s/${slug}/messages/new?student=${id}`} variant="secondary">
                 <Icon name="chat" size={17} /> <span className="hidden sm:inline">Message parents</span>
               </ButtonLink>
+            ) : null}
+            {can(access, "school:export") ? (
+              <a href={`/s/${slug}/data-export?student=${id}`} download className={buttonClass("secondary", "md")} title="Download their data">
+                <Icon name="download" size={17} /> <span className="hidden sm:inline">Download their data</span>
+              </a>
             ) : null}
             {canUpdate ? (
               <ButtonLink href={`${base}/edit`} variant="secondary">

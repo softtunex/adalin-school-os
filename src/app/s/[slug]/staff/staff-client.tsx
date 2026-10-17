@@ -104,18 +104,21 @@ export function MemberActions({
   roles,
   canAssign,
   canDeactivate,
+  canExport = false,
 }: {
   slug: string;
   member: { membershipId: string; name: string; status: "active" | "deactivated"; roleIds: string[] };
   roles: RoleOption[];
   canAssign: boolean;
   canDeactivate: boolean;
+  canExport?: boolean;
 }) {
   const [dialog, setDialog] = useState<"roles" | "deactivate" | "reactivate" | null>(null);
   const items: MenuItem[] = [];
   if (canAssign && member.status === "active") items.push({ label: "Edit roles", icon: "shield", onSelect: () => setDialog("roles") });
   if (canDeactivate && member.status === "active") items.push({ label: "Deactivate", icon: "userX", danger: true, onSelect: () => setDialog("deactivate") });
   if (canDeactivate && member.status === "deactivated") items.push({ label: "Reactivate", icon: "userCheck", onSelect: () => setDialog("reactivate") });
+  if (canExport) items.push({ label: "Download their data", icon: "download", onSelect: () => window.location.assign(new URL(`/s/${slug}/data-export?staff=${member.membershipId}`, window.location.origin).href) });
 
   return (
     <>
