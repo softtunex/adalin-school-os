@@ -61,7 +61,7 @@ export async function reportError(error: unknown, ctx: Context = {}) {
 }
 
 /** What a production deployment needs to run safely. Fatal problems stop it starting. */
-export function productionEnvProblems(env: NodeJS.ProcessEnv = process.env) {
+export function productionEnvProblems(env: Record<string, string | undefined> = process.env) {
   const fatal: string[] = [];
   const warn: string[] = [];
   for (const key of ["DATABASE_URL", "APP_URL", "CRON_SECRET", "SESSION_SECRET"]) if (!env[key]) fatal.push(`${key} is not set.`);

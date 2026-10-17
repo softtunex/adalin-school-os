@@ -49,11 +49,11 @@ describe("live site settings", () => {
   const good = { DATABASE_URL: "postgres://x", APP_URL: "https://app.example", CRON_SECRET: "c", SESSION_SECRET: "s" };
 
   it("passes a properly configured live site", () => {
-    expect(productionEnvProblems(good as NodeJS.ProcessEnv).fatal).toEqual([]);
+    expect(productionEnvProblems(good).fatal).toEqual([]);
   });
 
   it("refuses test switches, missing secrets and plain http", () => {
-    const { fatal } = productionEnvProblems({ ...good, CRON_SECRET: "", PAYMENTS_TEST_MODE: "1", ALLOW_TEST_LOGIN_CODES: "1", APP_URL: "http://app.example" } as NodeJS.ProcessEnv);
+    const { fatal } = productionEnvProblems({ ...good, CRON_SECRET: "", PAYMENTS_TEST_MODE: "1", ALLOW_TEST_LOGIN_CODES: "1", APP_URL: "http://app.example" });
     expect(fatal).toEqual(expect.arrayContaining(["CRON_SECRET is not set.", "PAYMENTS_TEST_MODE must not be set on the live site.", "ALLOW_TEST_LOGIN_CODES must not be set on the live site.", "APP_URL must start with https://"]));
   });
 });
