@@ -16,7 +16,7 @@ jobs:
       # Parent sign-in codes appear on screen (no SMS provider in CI). Never set on the live site.
       ALLOW_TEST_LOGIN_CODES: "1"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
