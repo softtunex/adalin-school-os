@@ -11,7 +11,7 @@ import { recordAudit } from "./audit";
 
 /*
  * Custom domains (Enterprise): a school uses School OS at its own address, e.g.
- * portal.greenfield.edu.ng, and on that address the school's name and logo replace ours.
+ * portal.yourschool.edu.ng, and on that address the school's name and logo replace ours.
  * The domain is added to our Vercel project through Vercel's API; the school points DNS at
  * Vercel; we check until it works. Without a Vercel token, Adalin connects it by hand.
  */
@@ -50,7 +50,7 @@ export const vercelConfigured = () => Boolean(vercel());
 /** The DNS records a domain needs: a CNAME for a subdomain, an A record for a bare domain. */
 export function dnsFor(domain: string): DnsRecord[] {
   const parts = domain.split(".");
-  // Nigerian and similar second-level suffixes: greenfield.edu.ng is a bare domain.
+  // Nigerian and similar second-level suffixes: yourschool.edu.ng is a bare domain.
   const base = parts.length >= 3 && /^(com|edu|org|gov|sch|net|ac|co)\.[a-z]{2}$/.test(parts.slice(-2).join(".")) ? 3 : 2;
   if (parts.length <= base) return [{ type: "A", name: "@", value: "76.76.21.21" }];
   return [{ type: "CNAME", name: parts.slice(0, parts.length - base).join("."), value: "cname.vercel-dns.com" }];

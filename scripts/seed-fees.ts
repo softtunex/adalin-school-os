@@ -37,9 +37,9 @@ async function main() {
   const db = database.db;
   const user = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, user.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, user.id, "adalin-college"))!;
   const bursarUser = await findUserByEmail(db, "musa2@demo.schoolos.ng");
-  const bursar = bursarUser ? ((await loadAccess(db, bursarUser.id, "greenfield-college")) ?? owner) : owner;
+  const bursar = bursarUser ? ((await loadAccess(db, bursarUser.id, "adalin-college")) ?? owner) : owner;
 
   const setup = await getFeeSetup(db, owner);
   if (setup.invoiced > 0) {
@@ -85,8 +85,8 @@ async function main() {
   await setStudentDiscounts(db, owner, roll[12].id, [scholarship.id]);
 
   // Where fees settle, so the pay links work in test mode.
-  await saveSettlementAccount(db, owner, { bankName: "Guaranty Trust Bank", accountNumber: "0123456789", accountName: "Greenfield College Ltd" });
-  await saveFeeSettings(db, (await loadAccess(db, user.id, "greenfield-college"))!, { withholdResults: false, autoReminders: false, reminderEveryDays: 7, invoiceNote: "Fees once paid are not refundable. Please quote the invoice number on every transfer." });
+  await saveSettlementAccount(db, owner, { bankName: "Guaranty Trust Bank", accountNumber: "0123456789", accountName: "Adalin College Ltd" });
+  await saveFeeSettings(db, (await loadAccess(db, user.id, "adalin-college"))!, { withholdResults: false, autoReminders: false, reminderEveryDays: 7, invoiceNote: "Fees once paid are not refundable. Please quote the invoice number on every transfer." });
 
   // Invoices for everyone.
   const gen = await generateTermInvoices(db, bursar, { termId, dueOn: daysAgo(5) });

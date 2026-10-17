@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 const run = `${Date.now()}`.slice(-6);
 
 test("a parent applies and pays, and the school offers and enrols", async ({ browser, isMobile }) => {

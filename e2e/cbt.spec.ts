@@ -1,6 +1,6 @@
 import { expect, test, type Browser } from "@playwright/test";
 
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 const run = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 
 async function teacherPage(browser: Browser) {
@@ -29,7 +29,7 @@ test("a student sits a CBT exam and the teacher marks the theory", async ({ brow
   // The student sits the open test, answering everything.
   const student = await (await browser.newContext({ viewport: { width: 412, height: 860 } })).newPage();
   await student.goto(`/student?school=${SLUG}`);
-  await student.getByLabel("Admission number").fill("GFC/2026/0009");
+  await student.getByLabel("Admission number").fill("ADC/2026/0009");
   await student.getByLabel("Password").fill("Student2026");
   await student.getByRole("button", { name: "Sign in" }).click();
   await expect(student).toHaveURL(/\/learn$/, { timeout: 60_000 });

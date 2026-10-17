@@ -1,6 +1,6 @@
 import { expect, test, type Browser } from "@playwright/test";
 
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 
 async function signIn(browser: Browser, email: string) {
   const page = await (await browser.newContext()).newPage();

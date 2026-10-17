@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 const run = `${Date.now()}`.slice(-6);
 
 test("the storekeeper adds an asset, signs it out to a teacher, and takes it back", async ({ browser, isMobile }) => {
@@ -20,7 +20,7 @@ test("the storekeeper adds an asset, signs it out to a teacher, and takes it bac
   await add.getByRole("radio", { name: /Kept/ }).click();
   await add.getByLabel("Name").fill(name);
   await add.getByLabel("How many now").fill("2");
-  await add.getByLabel("Asset tag").fill(`GFC-ICT-${run}`);
+  await add.getByLabel("Asset tag").fill(`ADC-ICT-${run}`);
   await add.getByRole("button", { name: "Add to store" }).click();
   await expect(add).toBeHidden({ timeout: 30_000 });
 

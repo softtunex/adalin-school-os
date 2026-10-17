@@ -30,7 +30,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: applicants.id }).from(applicants).limit(1));
   if (existing.length) {
     console.log("Admissions demo data already there.");
@@ -54,14 +54,14 @@ async function main() {
   for (const [i, p] of PEOPLE.entries()) {
     const { token } = await submitApplication(
       db,
-      "greenfield-college",
+      "adalin-college",
       applicationSchema.parse({
         levelId: levelId(p.level),
         firstName: p.child[0],
         lastName: p.child[1],
         gender: p.child[2],
         dateOfBirth: p.level === "JSS 1" ? `2014-0${(i % 9) + 1}-1${i}` : `2011-0${(i % 9) + 1}-1${i}`,
-        previousSchool: p.level === "JSS 1" ? "Bright Stars Nursery and Primary School" : "Greenfield College",
+        previousSchool: p.level === "JSS 1" ? "Bright Stars Nursery and Primary School" : "Adalin College",
         guardianName: p.parent,
         guardianRelationship: p.parent.startsWith("Mrs") ? "Mother" : "Father",
         guardianPhone: p.phone,
@@ -74,9 +74,9 @@ async function main() {
     if (p.paid) await updateApplicant(db, owner, { id: row.id, feePaid: true, notify: false }, { baseUrl: BASE });
     if (p.score !== undefined) await updateApplicant(db, owner, { id: row.id, examScore: p.score, notify: false }, { baseUrl: BASE });
     for (const status of p.path) await updateApplicant(db, owner, { id: row.id, status: status as "exam", notify: false }, { baseUrl: BASE });
-    if (p.path.at(-1) === "offered") offerLink = `${BASE}/apply/greenfield-college/status/${token}`;
+    if (p.path.at(-1) === "offered") offerLink = `${BASE}/apply/adalin-college/status/${token}`;
   }
-  console.log(`Admissions demo: ${PEOPLE.length} applicants. Form: ${BASE}/apply/greenfield-college`);
+  console.log(`Admissions demo: ${PEOPLE.length} applicants. Form: ${BASE}/apply/adalin-college`);
   console.log(`Parent page with an open offer: ${offerLink}`);
   await database.close();
 }

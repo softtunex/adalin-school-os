@@ -31,7 +31,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: payrollRuns.id }).from(payrollRuns).limit(1));
   if (existing.length) {
     console.log("Payroll demo data already there.");

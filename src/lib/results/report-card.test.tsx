@@ -16,7 +16,7 @@ describe("report card PDF", () => {
     const scores = ["ada", "bayo"].flatMap((st, k) => subjects.flatMap((sub, i) => components.map((c) => ({ studentId: st, subjectId: sub.id, componentId: c.id, score: Math.min(c.maxScore, Math.round(c.maxScore * (0.45 + ((i * 7 + k * 13) % 50) / 100))) }))));
     const results = computeClassResults({ studentIds: ["ada", "bayo"], subjectIds: subjects.map((s) => s.id), components, bands: WAEC_BANDS, scores });
     const data: ReportCardData = {
-      school: { name: "Greenfield College", motto: "Knowledge, Character, Excellence", address: "14 Admiralty Way, Lekki, Lagos", phone: "+2348031234567", email: "info@greenfieldcollege.ng", logo: null, initials: "GC" },
+      school: { name: "Adalin College", motto: "Knowledge, Character, Excellence", address: "14 Admiralty Way, Lekki, Lagos", phone: "+2348031234567", email: "info@adalincollege.ng", logo: null, initials: "AC" },
       term: { name: "First Term", session: "2026/2027" },
       className: "JSS 1 Gold",
       classSize: 2,
@@ -27,8 +27,8 @@ describe("report card PDF", () => {
       bands: WAEC_BANDS,
       watermark: true,
       students: [
-        { name: "Adaeze Chioma Okafor", admissionNo: "GFC/2026/0001", gender: "female", age: 12, result: results.get("ada")!, attendance: { present: 54, absent: 2, late: 2, excused: 0 }, report: { classTeacherComment: "Focused and kind. Keep reading every day.", principalComment: "An excellent result.", ratings: { Punctuality: 5, Neatness: 4 } } },
-        { name: "Bayo Ade", admissionNo: "GFC/2026/0002", gender: "male", age: 13, result: results.get("bayo")!, attendance: { present: 50, absent: 6, late: 2, excused: 0 }, report: null },
+        { name: "Adaeze Chioma Okafor", admissionNo: "ADC/2026/0001", gender: "female", age: 12, result: results.get("ada")!, attendance: { present: 54, absent: 2, late: 2, excused: 0 }, report: { classTeacherComment: "Focused and kind. Keep reading every day.", principalComment: "An excellent result.", ratings: { Punctuality: 5, Neatness: 4 } } },
+        { name: "Bayo Ade", admissionNo: "ADC/2026/0002", gender: "male", age: 13, result: results.get("bayo")!, attendance: { present: 50, absent: 6, late: 2, excused: 0 }, report: null },
       ],
     };
     const pdf = await renderToBuffer(createElement(ReportCards, { data }) as Parameters<typeof renderToBuffer>[0]);

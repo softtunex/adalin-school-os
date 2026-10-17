@@ -42,7 +42,7 @@ export const schoolProfileSchema = z.object({
     .string()
     .trim()
     .toUpperCase()
-    .refine((v) => v === "" || /^[A-Z0-9]{1,8}$/.test(v), "Use up to 8 letters or numbers, e.g. GFC.")
+    .refine((v) => v === "" || /^[A-Z0-9]{1,8}$/.test(v), "Use up to 8 letters or numbers, e.g. ADC.")
     .transform((v) => (v === "" ? null : v))
     .nullable()
     .optional(),

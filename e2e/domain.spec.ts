@@ -3,7 +3,7 @@ import { expect, request, test } from "@playwright/test";
 test("a school sets its own web address, and its login page there carries its name", async ({ page, isMobile, baseURL }) => {
   test.skip(isMobile, "desktop journey");
   test.setTimeout(process.env.CI ? 240_000 : 480_000);
-  const host = "portal.e2e-greenfield.sch.ng";
+  const host = "portal.e2e-school.sch.ng";
   await page.goto("/login");
   await page.getByLabel("Email").fill("director@demo.schoolos.ng");
   await page.getByLabel("Password").fill("Demo2026!");
@@ -11,8 +11,8 @@ test("a school sets its own web address, and its login page there carries its na
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
 
   const openSchoolInAdmin = async () => {
-    await page.goto("/admin/schools?q=greenfield");
-    await page.getByRole("row").filter({ hasText: "greenfield-college" }).getByRole("link").first().click();
+    await page.goto("/admin/schools?q=adalin");
+    await page.getByRole("row").filter({ hasText: "adalin-college" }).getByRole("link").first().click();
   };
   const setFeature = async (on: boolean) => {
     await openSchoolInAdmin();
@@ -24,7 +24,7 @@ test("a school sets its own web address, and its login page there carries its na
   };
   await setFeature(true);
   try {
-    await page.goto("/s/greenfield-college/settings?tab=domain");
+    await page.goto("/s/adalin-college/settings?tab=domain");
     await page.getByLabel("Your school's address").fill(`https://${host}/`);
     await page.getByRole("button", { name: /^(Save|Change)$/ }).click();
     await expect(page.getByText("Waiting for DNS")).toBeVisible({ timeout: 30_000 });
@@ -52,7 +52,7 @@ test("a school sets its own web address, and its login page there carries its na
     expect(home.headers().location).toContain("/login");
     await visitor.dispose();
   } finally {
-    await page.goto("/s/greenfield-college/settings?tab=domain");
+    await page.goto("/s/adalin-college/settings?tab=domain");
     if (await page.getByRole("button", { name: "Stop using it" }).isVisible()) {
       await page.getByRole("button", { name: "Stop using it" }).click();
       await page.getByRole("dialog").getByRole("button", { name: "Stop using it" }).click();

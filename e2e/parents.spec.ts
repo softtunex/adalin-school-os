@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 const STAFF = { email: "director@demo.schoolos.ng", password: "Demo2026!" };
 // Mrs Blessing Lawal, linked by db:seed-comms. Email keeps this clear of the per-number code limit used by manual checks.
 const PARENT_LOGIN = "parent8@example.com";
-const SCHOOL = "/s/greenfield-college";
+const SCHOOL = "/s/adalin-college";
 
 async function staffLogin(page: Page) {
   await page.goto("/login");

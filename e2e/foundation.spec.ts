@@ -107,7 +107,7 @@ test("a stranger can't open another school's pages", async ({ page }) => {
   await page.getByLabel("Password").fill("Outsider123");
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
-  const response = await page.goto("/s/greenfield-college-does-not-belong-to-you");
+  const response = await page.goto("/s/adalin-college-does-not-belong-to-you");
   expect(response?.status()).toBe(404);
 });
 

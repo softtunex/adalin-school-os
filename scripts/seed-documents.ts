@@ -27,7 +27,7 @@ async function main() {
   const db = database.db;
   const user = await findUserByEmail(db, "nwosu1@demo.schoolos.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
-  let admin = (await loadAccess(db, user.id, "greenfield-college"))!;
+  let admin = (await loadAccess(db, user.id, "adalin-college"))!;
   const existing = await withTenant(db, admin.school.id, (tx) => tx.select({ id: issuedDocuments.id }).from(issuedDocuments).limit(1));
   if (existing.length) {
     console.log("Documents demo data already there.");
@@ -39,8 +39,8 @@ async function main() {
         { name: "Dr Adebayo Ogunleye", title: "Principal" },
         { name: "Olatunji Buari", title: "Proprietor" },
       ],
-      cardNote: "This card belongs to Greenfield College. If found, please return it to the school office." }));
-  admin = (await loadAccess(db, user.id, "greenfield-college"))!;
+      cardNote: "This card belongs to Adalin College. If found, please return it to the school office." }));
+  admin = (await loadAccess(db, user.id, "adalin-college"))!;
   const [gold] = await withTenant(db, admin.school.id, (tx) => tx.select().from(classes).where(eq(classes.name, "JSS 1 Gold")));
   if (gold) await issueIdCards(db, admin, idCardSchema.parse({ classId: gold.id }));
   const kids = await withTenant(db, admin.school.id, (tx) =>
@@ -65,7 +65,7 @@ async function main() {
   }
   const templates = await listTemplates(db, admin);
   const award = templates.find((t) => t.name === "Award of excellence");
-  const seun = kids.find((k) => k.s.admissionNo === "GFC/2026/0009");
+  const seun = kids.find((k) => k.s.admissionNo === "ADC/2026/0009");
   if (award && seun) await issueFromTemplate(db, admin, fromTemplateSchema.parse({ templateId: award.id, studentIds: [seun.s.id, kids[2].s.id] }));
   console.log("Documents demo: ID cards for JSS 1 Gold, a testimonial and two certificates.");
   await database.close();

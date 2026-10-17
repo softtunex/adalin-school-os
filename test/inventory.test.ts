@@ -57,7 +57,7 @@ describe("inventory", () => {
   it("is the storekeeper's, not a teacher's", async () => {
     await expect(saveItem(database.db, teacher, itemSchema.parse({ name: "Chalk", kind: "consumable" }))).rejects.toThrow(/permission/);
     items.chalk = (await saveItem(database.db, keeper, itemSchema.parse({ name: "White chalk", kind: "consumable", unit: "packets", quantity: 40, reorderLevel: 10, unitCostKobo: 800_00 }))).id;
-    items.projector = (await saveItem(database.db, keeper, itemSchema.parse({ name: "Epson projector", kind: "asset", unit: "units", quantity: 2, unitCostKobo: 350_000_00, tag: "GFC-ICT-001" }))).id;
+    items.projector = (await saveItem(database.db, keeper, itemSchema.parse({ name: "Epson projector", kind: "asset", unit: "units", quantity: 2, unitCostKobo: 350_000_00, tag: "ADC-ICT-001" }))).id;
     await expect(saveItem(database.db, keeper, itemSchema.parse({ name: "white chalk", kind: "consumable" }))).rejects.toThrow(/already in the store/);
     const { stats } = await listItems(database.db, keeper);
     expect(stats).toMatchObject({ items: 2, low: 0, assigned: 0, value: 40 * 800_00 + 2 * 350_000_00 });

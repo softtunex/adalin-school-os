@@ -31,7 +31,8 @@
     "db:seed-health": "tsx scripts/seed-health.ts",
     "db:seed-transport": "tsx scripts/seed-transport.ts",
     "db:seed-hostel": "tsx scripts/seed-hostel.ts",
-    "db:seed-documents": "tsx scripts/seed-documents.ts"
+    "db:seed-documents": "tsx scripts/seed-documents.ts",
+    "db:seed-enterprise": "tsx scripts/seed-enterprise.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",

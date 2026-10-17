@@ -8,7 +8,7 @@ export function sampleData(brand: Brand, student?: { name: string; className: st
   return {
     name,
     first_name: name.split(" ")[0],
-    admission_no: "GFC/2026/0001",
+    admission_no: "ADC/2026/0001",
     class: student?.className ?? "JSS 1 Gold",
     parent: student ? "their parent" : "Mrs Ngozi Okafor",
     school: brand.name,

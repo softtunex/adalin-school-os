@@ -43,7 +43,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const n = await withTenant(db, owner.school.id, async (tx) => {
     const existing = await tx.select({ id: behaviourRecords.id }).from(behaviourRecords).limit(1);
     if (existing.length) return 0;
@@ -59,7 +59,7 @@ async function main() {
     roll.forEach((s, i) => {
       const [cat, desc, pts] = MERITS[i % MERITS.length];
       rows.push({ ...base, studentId: s.id, classId: s.classId, kind: "merit", category: cat, points: pts, description: desc, occurredOn: daysAgo(2 + (i % 20)), status: "resolved", parentNotifiedAt: new Date() });
-      if (s.admissionNo === "GFC/2026/0009") {
+      if (s.admissionNo === "ADC/2026/0009") {
         rows.push({ ...base, studentId: s.id, classId: s.classId, kind: "merit", category: "Hard work", points: 2, description: "Top score in the Second CA maths test.", occurredOn: daysAgo(1), status: "resolved", parentNotifiedAt: new Date() });
       }
       if (i % 4 === 2) {

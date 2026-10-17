@@ -14,7 +14,7 @@ test("the nurse records a visit, is warned about an allergy, and the parent sees
   await nurse.getByLabel("Password").fill("Demo2026!");
   await nurse.getByRole("button", { name: "Log in" }).click();
   await expect(nurse).toHaveURL(/\/s\//, { timeout: 60_000 });
-  await nurse.goto("/s/greenfield-college/sick-bay");
+  await nurse.goto("/s/adalin-college/sick-bay");
   await nurse.getByRole("button", { name: "New visit" }).click();
   const form = nurse.getByRole("dialog");
   await form.getByLabel("Student").fill("Oluwaseun La");

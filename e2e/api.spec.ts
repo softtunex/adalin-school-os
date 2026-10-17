@@ -9,12 +9,12 @@ test("an Enterprise school makes an API key, reads with it, adds a webhook and t
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
 
-  // Greenfield is on Premium: the API is an Enterprise feature, so Adalin switches it on for this school.
-  await page.goto("/s/greenfield-college/settings?tab=api");
+  // Adalin College is on Premium: the API is an Enterprise feature, so Adalin switches it on for this school.
+  await page.goto("/s/adalin-college/settings?tab=api");
   await expect(page.getByText(/Connect your website, accounting software/)).toBeVisible({ timeout: 30_000 });
   const setFeature = async (on: boolean) => {
-    await page.goto("/admin/schools?q=greenfield");
-    await page.getByRole("row").filter({ hasText: "greenfield-college" }).getByRole("link").first().click();
+    await page.goto("/admin/schools?q=adalin");
+    await page.getByRole("row").filter({ hasText: "adalin-college" }).getByRole("link").first().click();
     await page.getByRole("button", { name: "Change features" }).click();
     const box = page.getByRole("dialog").getByRole("checkbox", { name: /API access/ });
     if ((await box.isChecked()) !== on) await box.click();
@@ -24,7 +24,7 @@ test("an Enterprise school makes an API key, reads with it, adds a webhook and t
   await setFeature(true);
 
   try {
-    await page.goto("/s/greenfield-college/settings?tab=api");
+    await page.goto("/s/adalin-college/settings?tab=api");
     // Clear anything an earlier, interrupted run left behind.
     await expect(page.getByRole("button", { name: "New key" })).toBeVisible({ timeout: 30_000 });
     const leftoverHooks = page.getByRole("button", { name: "Remove" });
@@ -52,7 +52,7 @@ test("an Enterprise school makes an API key, reads with it, adds a webhook and t
 
     const school = await page.request.get("/api/v1/school", { headers: { Authorization: `Bearer ${key}` } });
     expect(school.status()).toBe(200);
-    expect((await school.json()).data.code).toBe("greenfield-college");
+    expect((await school.json()).data.code).toBe("adalin-college");
     const students = await (await page.request.get("/api/v1/students?per_page=2", { headers: { Authorization: `Bearer ${key}` } })).json();
     expect(students.data).toHaveLength(2);
     expect((await page.request.get("/api/v1/invoices", { headers: { Authorization: `Bearer ${key}` } })).status()).toBe(403);

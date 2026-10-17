@@ -9,13 +9,13 @@ test("a proprietor groups campuses and compares them on the group dashboard", as
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
 
-  await page.goto("/s/greenfield-college/settings?tab=campuses");
+  await page.goto("/s/adalin-college/settings?tab=campuses");
   await expect(page.getByText(/Run several campuses as one group/)).toBeVisible({ timeout: 30_000 });
 
   // Multi-campus is an Enterprise feature: Adalin switches it on for this school for the test.
   const setFeature = async (on: boolean) => {
-    await page.goto("/admin/schools?q=greenfield");
-    await page.getByRole("row").filter({ hasText: "greenfield-college" }).getByRole("link").first().click();
+    await page.goto("/admin/schools?q=adalin");
+    await page.getByRole("row").filter({ hasText: "adalin-college" }).getByRole("link").first().click();
     await page.getByRole("button", { name: "Change features" }).click();
     const box = page.getByRole("dialog").getByRole("checkbox", { name: /Multi-campus/ });
     if ((await box.isChecked()) !== on) await box.click();
@@ -24,7 +24,7 @@ test("a proprietor groups campuses and compares them on the group dashboard", as
   };
   await setFeature(true);
   try {
-    await page.goto("/s/greenfield-college/settings?tab=campuses");
+    await page.goto("/s/adalin-college/settings?tab=campuses");
     // An earlier interrupted run may have left the group: close it first.
     if (await page.getByRole("link", { name: "Open the group dashboard" }).isVisible()) {
       await page.getByRole("button", { name: "Remove" }).first().click();
@@ -46,7 +46,7 @@ test("a proprietor groups campuses and compares them on the group dashboard", as
     await page.goto("/schools?pick=1");
     await expect(page.getByRole("link", { name: /E2E Schools/ })).toBeVisible();
 
-    await page.goto("/s/greenfield-college/settings?tab=campuses");
+    await page.goto("/s/adalin-college/settings?tab=campuses");
     await page.getByRole("button", { name: "Remove" }).click();
     await expect(page.getByRole("dialog").getByText(/the group closes/)).toBeVisible();
     await page.getByRole("dialog").getByRole("button", { name: "Take it out" }).click();

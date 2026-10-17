@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const run = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 
 async function staffPage(browser: Browser, email: string) {
   const page = await (await browser.newContext()).newPage();
@@ -47,7 +47,7 @@ test("a teacher sets homework, a student hands it in with a file, and the teache
   // The student hands in with a file.
   const student = await (await browser.newContext()).newPage();
   await student.goto(`/student?school=${SLUG}`);
-  await student.getByLabel("Admission number").fill("GFC/2026/0009");
+  await student.getByLabel("Admission number").fill("ADC/2026/0009");
   await student.getByLabel("Password").fill("Student2026");
   await student.getByRole("button", { name: "Sign in" }).click();
   await expect(student).toHaveURL(/\/learn$/, { timeout: 60_000 });

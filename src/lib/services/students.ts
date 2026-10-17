@@ -99,7 +99,7 @@ function defaultPrefix(schoolName: string) {
   return (letters || "STU").slice(0, 4);
 }
 
-/** Atomically reserves the next admission number, e.g. GFC/2026/0042. */
+/** Atomically reserves the next admission number, e.g. ADC/2026/0042. */
 export async function nextAdmissionNo(tx: Tx, schoolId: string) {
   const [row] = await tx
     .update(schools)

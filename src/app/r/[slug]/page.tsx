@@ -39,7 +39,7 @@ export default async function ResultCheckPage({ params, searchParams }: { params
         <form action={`/r/${slug}/check`} method="post" className="mt-8 flex flex-col gap-5 rounded-card border border-line bg-canvas p-6 shadow-card">
           {error ? <Alert tone="danger">{error}</Alert> : null}
           <Field label="Admission number" htmlFor="admissionNo">
-            <Input id="admissionNo" name="admissionNo" required autoComplete="off" placeholder="e.g. GFC/2026/0042" className="font-mono" />
+            <Input id="admissionNo" name="admissionNo" required autoComplete="off" placeholder="e.g. ADC/2026/0042" className="font-mono" />
           </Field>
           <Field label="PIN" htmlFor="pin" hint="12 digits, dashes optional">
             <Input id="pin" name="pin" required inputMode="numeric" autoComplete="off" placeholder="0000-0000-0000" className="font-mono tracking-[0.08em]" />

@@ -41,7 +41,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: sickBayVisits.id }).from(sickBayVisits).limit(1));
   if (existing.length) {
     console.log("Sick bay demo data already there.");
@@ -58,7 +58,7 @@ async function main() {
   const n = await withTenant(db, owner.school.id, async (tx) => {
     const [nurse] = await tx.select().from(memberships).where(eq(memberships.userId, nurseUser!.id));
     const kids = await tx.select().from(students).where(eq(students.status, "active")).orderBy(asc(students.admissionNo)).limit(30);
-    const seun = kids.find((k) => k.admissionNo === "GFC/2026/0009");
+    const seun = kids.find((k) => k.admissionNo === "ADC/2026/0009");
     const others = kids.filter((k) => k.id !== seun?.id);
     const records: { studentId: string; allergies: string[]; conditions: string[]; regularMedication?: string; emergencyNote?: string }[] = [
       ...(seun ? [{ studentId: seun.id, allergies: ["Groundnuts"], conditions: [], emergencyNote: "Keep away from groundnut snacks. Call mother first." }] : []),

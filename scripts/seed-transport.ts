@@ -59,7 +59,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: transportRoutes.id }).from(transportRoutes).limit(1));
   if (existing.length) {
     console.log("Transport demo data already there.");
@@ -73,7 +73,7 @@ async function main() {
     await acceptInvitation(db, token, { name: "Mr Tunde Bakare", password: "Demo2026!" });
     officerUser = await findUserByEmail(db, "transport9@demo.schoolos.ng");
   }
-  const officer = (await loadAccess(db, officerUser!.id, "greenfield-college"))!;
+  const officer = (await loadAccess(db, officerUser!.id, "adalin-college"))!;
   const buses = [];
   for (const b of BUSES) buses.push(await saveVehicle(db, officer, vehicleSchema.parse(b)));
   const routes = [];
@@ -87,7 +87,7 @@ async function main() {
     );
   }
   const kids = await withTenant(db, owner.school.id, (tx) => tx.select().from(students).where(eq(students.status, "active")).orderBy(asc(students.admissionNo)));
-  const seun = kids.find((k) => k.admissionNo === "GFC/2026/0009");
+  const seun = kids.find((k) => k.admissionNo === "ADC/2026/0009");
   const others = kids.filter((k) => k.id !== seun?.id);
   if (seun) await setRider(db, officer, riderSchema.parse({ studentId: seun.id, routeId: routes[0].id, stop: "Jakande" }));
   const plan: [route: number, count: number][] = [

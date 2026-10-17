@@ -24,7 +24,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: hostels.id }).from(hostels).limit(1));
   if (existing.length) {
     console.log("Hostel demo data already there.");
@@ -38,7 +38,7 @@ async function main() {
     await acceptInvitation(db, token, { name: "Mrs Esther Okoro", password: "Demo2026!" });
     wardenUser = await findUserByEmail(db, "warden10@demo.schoolos.ng");
   }
-  const warden = (await loadAccess(db, wardenUser!.id, "greenfield-college"))!;
+  const warden = (await loadAccess(db, wardenUser!.id, "adalin-college"))!;
   const girls = await saveHostel(db, warden, hostelSchema.parse({ name: "Queen Amina House", gender: "female", wardenId: warden.membershipId, termFeeKobo: 280_000_00 }));
   const boys = await saveHostel(db, warden, hostelSchema.parse({ name: "King Jaja House", gender: "male", wardenId: warden.membershipId, termFeeKobo: 280_000_00 }));
   const rooms: Record<"female" | "male", string[]> = { female: [], male: [] };
@@ -57,7 +57,7 @@ async function main() {
   }
   const kids = await withTenant(db, owner.school.id, (tx) => tx.select().from(students).where(eq(students.status, "active")).orderBy(asc(students.admissionNo)));
   const folake = kids.find((k) => k.firstName === "Folake" && k.lastName === "Lawal");
-  const seun = kids.find((k) => k.admissionNo === "GFC/2026/0009");
+  const seun = kids.find((k) => k.admissionNo === "ADC/2026/0009");
   const pool = kids.filter((k) => k.id !== seun?.id && k.id !== folake?.id).filter((_, i) => i % 3 === 1);
   const boarders = [...(folake ? [folake] : []), ...pool.slice(0, 21)];
   const count = { female: 0, male: 0 };

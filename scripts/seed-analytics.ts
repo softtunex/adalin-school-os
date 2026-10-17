@@ -25,7 +25,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const exists = await withTenant(db, owner.school.id, (tx) => tx.select().from(academicSessions).where(eq(academicSessions.name, PAST)));
   if (exists.length) {
     console.log("Analytics history already there.");

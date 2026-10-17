@@ -10,7 +10,7 @@ test("the office issues a certificate, its QR page says genuine, and revoking it
   await page.getByLabel("Password").fill("Demo2026!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
-  await page.goto("/s/greenfield-college/documents");
+  await page.goto("/s/adalin-college/documents");
   await page.getByRole("button", { name: "Issue certificate" }).click();
   const form = page.getByRole("dialog");
   await form.getByLabel("Template").selectOption({ label: "Certificate of completion" });
@@ -23,7 +23,7 @@ test("the office issues a certificate, its QR page says genuine, and revoking it
   expect(pdf.status()).toBe(200);
   expect((await pdf.body()).subarray(0, 5).toString()).toBe("%PDF-");
 
-  await page.goto("/s/greenfield-college/documents?tab=issued&q=Oluwaseun&kind=certificate");
+  await page.goto("/s/adalin-college/documents?tab=issued&q=Oluwaseun&kind=certificate");
   const row = page.getByRole("row").filter({ hasText: "Certificate of Completion" }).first();
   const check = (await row.getByRole("link", { name: "Check" }).getAttribute("href"))!;
   const serial = (await row.locator("td").first().innerText()).trim();

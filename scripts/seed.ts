@@ -12,7 +12,7 @@ import { createStudent, guardianInputSchema, studentInputSchema } from "../src/l
 const DEMO = {
   email: "director@demo.schoolos.ng",
   password: "Demo2026!",
-  schoolName: "Greenfield College",
+  schoolName: "Adalin College",
 };
 
 const STAFF = [
@@ -58,12 +58,12 @@ async function main() {
         motto: "Knowledge, Character, Excellence",
         schoolType: "secondary",
         curriculum: "nigerian",
-        email: "info@greenfieldcollege.ng",
+        email: "info@adalincollege.ng",
         phone: "+2348031234567",
         address: "14 Admiralty Way, Lekki Phase 1",
         city: "Lekki",
         state: "Lagos",
-        admissionPrefix: "GFC",
+        admissionPrefix: "ADC",
         onboarding: { profile: true },
       })
       .where(eq(schools.id, school.id));

@@ -19,7 +19,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const ctx = await withTenant(db, owner.school.id, async (tx) => {
     const [gold] = await tx.select().from(classes).where(eq(classes.name, "JSS 1 Gold"));
     const [maths] = await tx.select().from(subjects).where(eq(subjects.name, "Mathematics"));
@@ -36,7 +36,7 @@ async function main() {
     await database.close();
     return;
   }
-  const teacher = (await loadAccess(db, ctx.link.userId, "greenfield-college"))!;
+  const teacher = (await loadAccess(db, ctx.link.userId, "adalin-college"))!;
   const base = { levelId: ctx.gold.levelId, subjectId: ctx.maths.id };
 
   await saveMaterial(

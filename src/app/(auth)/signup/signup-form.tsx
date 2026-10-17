@@ -14,7 +14,7 @@ export function SignupForm() {
     <form action={action} className="mt-8 flex flex-col gap-5" noValidate>
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
       <Field label="School name" htmlFor="schoolName" error={fe.schoolName}>
-        <Input id="schoolName" name="schoolName" placeholder="e.g. Greenfield College" defaultValue={state.values?.schoolName} aria-invalid={!!fe.schoolName} required />
+        <Input id="schoolName" name="schoolName" placeholder="e.g. Adalin College" defaultValue={state.values?.schoolName} aria-invalid={!!fe.schoolName} required />
       </Field>
       <Field label="Your full name" htmlFor="name" error={fe.name}>
         <Input id="name" name="name" autoComplete="name" defaultValue={state.values?.name} aria-invalid={!!fe.name} required />

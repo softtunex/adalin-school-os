@@ -1,6 +1,6 @@
 # Demo accounts
 
-Logins for the demo school **Greenfield College** (school code `greenfield-college`) on a local or demo server. They come from the seed scripts (`pnpm db:seed` and the `db:seed-*` steps), so they exist only on databases built from them, never on the live site.
+Logins for the demo school **Adalin College** (school code `adalin-college`) on a local or demo server. They come from the seed scripts (`pnpm db:seed` and the `db:seed-*` steps), so they exist only on databases built from them, never on the live site.
 
 Local app: <http://localhost:3005>
 
@@ -23,6 +23,14 @@ Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
 | Mr Tunde Bakare | Transport officer | `transport9@demo.schoolos.ng` | Transport: three Lagos routes, the bus register (Bus register tab), riders, buses. The Director can add bus fees to invoices. |
 | Mrs Esther Okoro | Hostel warden | `warden10@demo.schoolos.ng` | Hostel: two hostels, rooms and beds, exeats (Folake Lawal's parent has one waiting for approval; one student is out now) |
 
+## Enterprise school
+
+A second demo, **Adalin Heights Schools** (`pnpm db:seed-enterprise`), on the Enterprise plan with two campuses in one group: Ikoyi (`adalin-heights-school-ikoyi`, 24 students) and Abuja (`adalin-heights-school-abuja`, 14 students). Use it to try what only Enterprise has.
+
+| Person | Role | Email | Password | What to try |
+| --- | --- | --- | --- | --- |
+| Mrs Ronke Adeleke | Proprietor of both campuses | `enterprise@demo.schoolos.ng` | **`Demo2026!`** | School picker → **Adalin Heights Schools** group dashboard; Settings → API &amp; webhooks (make a key, call `/api/v1/students`), Staff sign-in, Campuses, Web address, Data &amp; privacy |
+
 ## Parent
 
 Sign in at `/parent` with the phone number or email. On local and demo servers the code is shown on screen, and **`123456`** always works.
@@ -37,7 +45,7 @@ Sign in at `/student`.
 
 | Student | School code | Admission no | Password |
 | --- | --- | --- | --- |
-| Oluwaseun Lawal, JSS 1 Gold | `greenfield-college` | `GFC/2026/0009` | **`Student2026`** |
+| Oluwaseun Lawal, JSS 1 Gold | `adalin-college` | `ADC/2026/0009` | **`Student2026`** |
 
 He has homework due, an open CBT test ("Second CA test") and published results.
 
@@ -45,8 +53,8 @@ Other students get logins from **Students → Logins** (staff side), which print
 
 ## Admissions (no login needed)
 
-- Public application form: <http://localhost:3005/apply/greenfield-college>. Anyone can apply; the ₦5,000 form fee uses the test checkout.
-- A parent's page with an open offer (Chiamaka Nwosu, accept or decline it here): <http://localhost:3005/apply/greenfield-college/status/3ZL2Nozb_eanE4fFK5wrxxcZtZOqJrI3>. This link only works on your local demo database; `pnpm db:seed-admissions` prints a fresh one on a new database.
+- Public application form: <http://localhost:3005/apply/adalin-college>. Anyone can apply; the ₦5,000 form fee uses the test checkout.
+- A parent's page with an open offer (Chiamaka Nwosu, accept or decline it here): <http://localhost:3005/apply/adalin-college/status/3ZL2Nozb_eanE4fFK5wrxxcZtZOqJrI3>. This link only works on your local demo database; `pnpm db:seed-admissions` prints a fresh one on a new database.
 - Staff side: **Admissions** in the sidebar (Director or admin).
 
 ## Payments

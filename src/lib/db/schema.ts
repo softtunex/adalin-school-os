@@ -315,7 +315,7 @@ export const schools = pgTable(
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
-    /** The school's own web address for School OS, e.g. portal.greenfield.edu.ng (Enterprise). */
+    /** The school's own web address for School OS, e.g. portal.yourschool.edu.ng (Enterprise). */
     customDomain: text("custom_domain"),
     /** When the custom domain was confirmed working. Until then it only shows setup steps. */
     domainVerifiedAt: timestamp("domain_verified_at", { withTimezone: true }),

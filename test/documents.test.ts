@@ -45,7 +45,7 @@ async function staff(key: string, email: string) {
 
 beforeAll(async () => {
   database = await createTestDatabase();
-  const { user, school } = await registerSchoolOwner(database.db, { name: "Mrs Paper", email: "paper@docs.test", password: "Papers123", schoolName: "Greenfield College" });
+  const { user, school } = await registerSchoolOwner(database.db, { name: "Mrs Paper", email: "paper@docs.test", password: "Papers123", schoolName: "Adalin College" });
   await database.db.update(schools).set({ planKey: "premium" }).where(eq(schools.id, school.id));
   owner = (await loadAccess(database.db, user.id, school.slug))!;
   await setupAcademics(database.db, owner, { template: "nigerian", sections: ["junior_secondary"], arms: ["Gold"], sessionName: "2026/2027" });
@@ -70,7 +70,7 @@ describe("documents", () => {
   });
 
   it("fills templates and rejects unknown fields", () => {
-    expect(schoolCode("Greenfield College")).toBe("GC");
+    expect(schoolCode("Adalin College")).toBe("AC");
     expect(fillTemplate("Dear {{parent}}, {{first_name}} is in {{ class }}.", { parent: "Mrs Okafor", first_name: "Ada", class: "JSS 1 Gold" })).toBe("Dear Mrs Okafor, Ada is in JSS 1 Gold.");
     expect(templateSchema.safeParse({ kind: "letter", name: "Bad", title: "Hi", body: "Dear {{guardian}}, welcome." }).success).toBe(false);
   });
@@ -79,7 +79,7 @@ describe("documents", () => {
     await expect(issueIdCards(database.db, teacher, idCardSchema.parse({ classId: gold }))).rejects.toThrow(/permission/);
     const first = await issueIdCards(database.db, admin, idCardSchema.parse({ classId: gold }));
     expect(first.cards.map((c) => c.holderName).sort()).toEqual(["Ada Okafor", "Bayo Okafor"]);
-    expect(first.cards[0].serial).toMatch(/^GC-ID-\d{4}-0000[12]$/);
+    expect(first.cards[0].serial).toMatch(/^AC-ID-\d{4}-0000[12]$/);
     const again = await issueIdCards(database.db, admin, idCardSchema.parse({ studentIds: [kids.Ada] }));
     const ada = first.cards.find((c) => c.holderName === "Ada Okafor")!;
     expect(again.cards[0].token).toBe(ada.token);
@@ -103,7 +103,7 @@ describe("documents", () => {
 
   it("issues testimonials and letters from templates", async () => {
     const t = await issueTestimonial(database.db, admin, testimonialSchema.parse({ studentId: kids.Ada, conduct: "Excellent", yearsFrom: "2020", yearsTo: "2026", lastClass: "JSS 1 Gold", remark: "A kind and hard-working student." }));
-    expect(t.serial).toMatch(/^GC-TES-/);
+    expect(t.serial).toMatch(/^AC-TES-/);
     const templates = await listTemplates(database.db, admin);
     const letter = templates.find((x) => x.kind === "letter")!;
     const r = await issueFromTemplate(database.db, admin, fromTemplateSchema.parse({ templateId: letter.id, studentIds: [kids.Ada] }));

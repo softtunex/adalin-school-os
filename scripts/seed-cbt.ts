@@ -96,7 +96,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const ctx = await withTenant(db, owner.school.id, async (tx) => {
     const [gold] = await tx.select().from(classes).where(eq(classes.name, "JSS 1 Gold"));
     const [maths] = await tx.select().from(subjects).where(eq(subjects.name, "Mathematics"));
@@ -113,7 +113,7 @@ async function main() {
     await database.close();
     return;
   }
-  const teacher = (await loadAccess(db, ctx.link.userId, "greenfield-college"))!;
+  const teacher = (await loadAccess(db, ctx.link.userId, "adalin-college"))!;
   await importQuestions(db, teacher, { subjectId: ctx.maths.id, levelId: ctx.gold.levelId, topic: "First half of term", text: BANK });
   const qs = await withTenant(db, owner.school.id, (tx) => tx.select().from(questions).where(eq(questions.subjectId, ctx.maths.id)).orderBy(asc(questions.createdAt)));
   const objective = qs.filter((q) => q.kind === "objective");
@@ -157,7 +157,7 @@ async function main() {
     const roll = await tx
       .select()
       .from(students)
-      .where(and(eq(students.classId, ctx.gold.id), eq(students.status, "active"), ne(students.admissionNo, "GFC/2026/0009")))
+      .where(and(eq(students.classId, ctx.gold.id), eq(students.status, "active"), ne(students.admissionNo, "ADC/2026/0009")))
       .orderBy(asc(students.admissionNo))
       .limit(5);
     const accuracy = [0.92, 0.75, 0.6, 0.83, 0.5];

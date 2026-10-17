@@ -81,10 +81,10 @@ export function ProfileForm({ slug, profile, readOnly }: { slug: string; profile
           label="Admission number prefix"
           htmlFor="admissionPrefix"
           error={fe.admissionPrefix}
-          hint={`New students get numbers like ${(v.admissionPrefix || "GFC").toUpperCase()}/${new Date().getFullYear()}/0001. Leave empty to use your school's initials.`}
+          hint={`New students get numbers like ${(v.admissionPrefix || "ADC").toUpperCase()}/${new Date().getFullYear()}/0001. Leave empty to use your school's initials.`}
           className="sm:col-span-2"
         >
-          <Input id="admissionPrefix" name="admissionPrefix" defaultValue={v.admissionPrefix} maxLength={8} className="uppercase sm:max-w-[200px]" placeholder="e.g. GFC" />
+          <Input id="admissionPrefix" name="admissionPrefix" defaultValue={v.admissionPrefix} maxLength={8} className="uppercase sm:max-w-[200px]" placeholder="e.g. ADC" />
         </Field>
       </fieldset>
       {readOnly ? null : (

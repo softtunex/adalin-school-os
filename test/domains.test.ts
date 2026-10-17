@@ -36,16 +36,16 @@ afterEach(() => {
 
 describe("addresses", () => {
   it("are cleaned up and checked", () => {
-    expect(normalizeDomain(" https://Portal.Greenfield.edu.ng/login ")).toBe("portal.greenfield.edu.ng");
+    expect(normalizeDomain(" https://Portal.Example-School.edu.ng/login ")).toBe("portal.example-school.edu.ng");
     expect(() => normalizeDomain("not a domain")).toThrow(/web address/);
     expect(() => normalizeDomain("myschool.vercel.app")).toThrow(/can't be used/);
   });
 
   it("get the right DNS record", () => {
-    expect(dnsFor("portal.greenfield.edu.ng")).toEqual([{ type: "CNAME", name: "portal", value: "cname.vercel-dns.com" }]);
-    expect(dnsFor("app.portal.greenfield.com")).toEqual([{ type: "CNAME", name: "app.portal", value: "cname.vercel-dns.com" }]);
-    expect(dnsFor("greenfield.edu.ng")).toEqual([{ type: "A", name: "@", value: "76.76.21.21" }]);
-    expect(dnsFor("greenfield.com")).toEqual([{ type: "A", name: "@", value: "76.76.21.21" }]);
+    expect(dnsFor("portal.example-school.edu.ng")).toEqual([{ type: "CNAME", name: "portal", value: "cname.vercel-dns.com" }]);
+    expect(dnsFor("app.portal.example-school.com")).toEqual([{ type: "CNAME", name: "app.portal", value: "cname.vercel-dns.com" }]);
+    expect(dnsFor("example-school.edu.ng")).toEqual([{ type: "A", name: "@", value: "76.76.21.21" }]);
+    expect(dnsFor("example-school.com")).toEqual([{ type: "A", name: "@", value: "76.76.21.21" }]);
   });
 });
 

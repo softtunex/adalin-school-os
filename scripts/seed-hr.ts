@@ -29,7 +29,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const today = lagosToday();
   const n = await withTenant(db, owner.school.id, async (tx) => {
     const existing = await tx.select({ id: staffAttendance.id }).from(staffAttendance).limit(1);

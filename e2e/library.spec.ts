@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 const run = `${Date.now()}`.slice(-6);
 
 test("the librarian adds a book, lends it, and the student sees it", async ({ browser, isMobile }) => {
@@ -39,7 +39,7 @@ test("the librarian adds a book, lends it, and the student sees it", async ({ br
 
   const kid = await (await browser.newContext({ viewport: { width: 412, height: 860 } })).newPage();
   await kid.goto(`/student?school=${SLUG}`);
-  await kid.getByLabel("Admission number").fill("GFC/2026/0009");
+  await kid.getByLabel("Admission number").fill("ADC/2026/0009");
   await kid.getByLabel("Password").fill("Student2026");
   await kid.getByRole("button", { name: "Sign in" }).click();
   await expect(kid).toHaveURL(/\/learn/, { timeout: 60_000 });

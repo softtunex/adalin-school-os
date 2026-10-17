@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { describe, expect, it } from "vitest";
 import { amountInWords, InvoicePdf, ngn, ReceiptPdf } from "./documents";
 
-const school = { name: "Greenfield College", address: "14 Admiralty Way, Lekki, Lagos", phone: "+2348031234567", email: "info@greenfieldcollege.ng", logo: null, initials: "GC" };
+const school = { name: "Adalin College", address: "14 Admiralty Way, Lekki, Lagos", phone: "+2348031234567", email: "info@adalincollege.ng", logo: null, initials: "AC" };
 
 describe("fee documents", () => {
   it("writes amounts the way Nigerian receipts do", () => {
@@ -26,7 +26,7 @@ describe("fee documents", () => {
           issuedOn: "1 October 2026",
           dueOn: "15 October 2026",
           status: "partial",
-          student: { name: "Adaeze Okafor", admissionNo: "GFC/2026/0001", className: "JSS 1 Gold" },
+          student: { name: "Adaeze Okafor", admissionNo: "ADC/2026/0001", className: "JSS 1 Gold" },
           parent: "Mrs Ngozi Okafor",
           lines: [
             { kind: "charge", description: "Tuition", amountKobo: 18_500_000 },
@@ -36,7 +36,7 @@ describe("fee documents", () => {
           chargesKobo: 21_000_000,
           discountKobo: 1_850_000,
           paidKobo: 10_000_000,
-          bank: { name: "GTBank", accountNumber: "0123456789", accountName: "Greenfield College Ltd" },
+          bank: { name: "GTBank", accountNumber: "0123456789", accountName: "Adalin College Ltd" },
           payUrl: "https://app.test/pay/abc",
           note: "Fees are not refundable.",
         },
@@ -55,7 +55,7 @@ describe("fee documents", () => {
           payerName: "Mrs Okafor",
           receivedBy: "Mr Ibrahim Musa",
           status: "succeeded",
-          student: { name: "Adaeze Okafor", admissionNo: "GFC/2026/0001", className: "JSS 1 Gold" },
+          student: { name: "Adaeze Okafor", admissionNo: "ADC/2026/0001", className: "JSS 1 Gold" },
           invoice: { number: "INV-00001", title: "First Term fees", term: "First Term · 2026/2027", totalKobo: 19_150_000, balanceKobo: 9_150_000 },
         },
       }) as Parameters<typeof renderToBuffer>[0],

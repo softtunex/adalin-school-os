@@ -47,7 +47,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: libraryBooks.id }).from(libraryBooks).limit(1));
   if (existing.length) {
     console.log("Library demo data already there.");
@@ -69,7 +69,7 @@ async function main() {
       .returning();
     const byTitle = (t: string) => rows.find((r) => r.title === t)!.id;
     const kids = await tx.select().from(students).where(eq(students.status, "active")).orderBy(asc(students.admissionNo)).limit(12);
-    const seun = kids.find((k) => k.admissionNo === "GFC/2026/0009");
+    const seun = kids.find((k) => k.admissionNo === "ADC/2026/0009");
     const base = { schoolId: owner.school.id, issuedBy: lib.id };
     const loans: (typeof libraryLoans.$inferInsert)[] = [];
     if (seun) loans.push({ ...base, bookId: byTitle("Chike and the River"), studentId: seun.id, issuedOn: shift(-5), dueOn: shift(9) });

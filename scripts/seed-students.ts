@@ -13,7 +13,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const [school] = await db.select().from(schools).where(eq(schools.slug, "greenfield-college"));
+  const [school] = await db.select().from(schools).where(eq(schools.slug, "adalin-college"));
   if (!school) throw new Error("Run pnpm db:seed first.");
   const student = await withTenant(db, school.id, async (tx) => {
     const [gold] = await tx.select().from(classes).where(eq(classes.name, "JSS 1 Gold"));

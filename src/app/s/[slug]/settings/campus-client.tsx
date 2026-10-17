@@ -42,7 +42,7 @@ export function StartGroup({ slug, schoolName }: { slug: string; schoolName: str
     >
       <Result r={result} />
       <Field label="Group name" htmlFor="group-name" hint={`${schoolName} becomes the first campus. You can add the others next.`}>
-        <Input id="group-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Greenfield Schools" required />
+        <Input id="group-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Adalin Schools" required />
       </Field>
       <Button type="submit" className="self-start" disabled={pending}>
         {pending ? "Setting up…" : "Start the group"}
@@ -66,7 +66,7 @@ export function AddCampus({ slug, linkable }: { slug: string; linkable: { id: st
         }}
       >
         <Field label="New campus" htmlFor="campus-name" className="min-w-[240px] flex-1">
-          <Input id="campus-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Greenfield College, Ikoyi" required />
+          <Input id="campus-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Adalin College, Ikoyi" required />
         </Field>
         <Button type="submit" disabled={pending}>
           Add campus

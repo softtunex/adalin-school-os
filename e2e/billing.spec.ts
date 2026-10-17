@@ -8,7 +8,7 @@ test("the proprietor sees the term's bill, pays it, and chooses a cheaper plan f
   await page.getByLabel("Password").fill("Demo2026!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
-  await page.goto("/s/greenfield-college/settings?tab=plan");
+  await page.goto("/s/adalin-college/settings?tab=plan");
 
   // Free can't take 56 students, so it isn't offered.
   await expect(page.getByText(/Allows 50 students; you have \d+ on roll/)).toBeVisible({ timeout: 30_000 });

@@ -89,7 +89,7 @@ function ItemForm({ slug, item, lists, onDone }: { slug: string; item: ItemDraft
         </Field>
         {asset ? (
           <Field label="Asset tag" htmlFor="it-tag" hint="The code painted or stuck on it.">
-            <Input id="it-tag" value={d.tag} onChange={set("tag")} placeholder="GFC-ICT-001" />
+            <Input id="it-tag" value={d.tag} onChange={set("tag")} placeholder="ADC-ICT-001" />
           </Field>
         ) : (
           <Field label="Reorder at" htmlFor="it-reorder" hint="Flag it when the store drops to this. 0 to never flag.">

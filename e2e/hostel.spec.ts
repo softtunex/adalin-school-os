@@ -11,12 +11,12 @@ test("the warden approves a parent's exeat request and the parent sees it", asyn
   await warden.getByLabel("Password").fill("Demo2026!");
   await warden.getByRole("button", { name: "Log in" }).click();
   await expect(warden).toHaveURL(/\/s\//, { timeout: 60_000 });
-  await warden.goto("/s/greenfield-college/hostel?tab=exeats&view=pending");
+  await warden.goto("/s/adalin-college/hostel?tab=exeats&view=pending");
   const row = warden.getByRole("row").filter({ hasText: "Folake Lawal" });
   await expect(row).toBeVisible({ timeout: 30_000 });
   await row.getByRole("button", { name: "Approve" }).click();
   await expect(warden.getByRole("row").filter({ hasText: "Folake Lawal" })).toHaveCount(0, { timeout: 30_000 });
-  await warden.goto("/s/greenfield-college/hostel?tab=exeats&view=upcoming");
+  await warden.goto("/s/adalin-college/hostel?tab=exeats&view=upcoming");
   await expect(warden.getByRole("row").filter({ hasText: "Folake Lawal" }).getByRole("button", { name: "Sign out" })).toBeVisible({ timeout: 30_000 });
 
   const parent = await signInParent(browser);

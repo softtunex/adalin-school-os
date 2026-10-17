@@ -30,9 +30,9 @@ beforeAll(async () => {
   database = await createTestDatabase();
   const { user, school } = await registerSchoolOwner(database.db, {
     name: "Mrs Adeyemi",
-    email: "owner@greenfield.test",
-    password: "Greenfield2026",
-    schoolName: "Greenfield College",
+    email: "owner@adalin.test",
+    password: "Adalin2026",
+    schoolName: "Adalin College",
   });
   slug = school.slug;
   ownerAccess = (await loadAccess(database.db, user.id, slug))!;
@@ -44,19 +44,19 @@ afterAll(async () => {
 
 describe("registration and login", () => {
   it("creates a school with a slug and the owner as Proprietor", () => {
-    expect(slug).toBe("greenfield-college");
+    expect(slug).toBe("adalin-college");
     expect(ownerAccess.roles.map((r) => r.key)).toEqual(["owner"]);
     expect(can(ownerAccess, "school:billing")).toBe(true);
   });
 
   it("refuses a duplicate email", async () => {
     await expect(
-      registerSchoolOwner(database.db, { name: "X", email: "OWNER@greenfield.test", password: "abc12345", schoolName: "Other" }),
+      registerSchoolOwner(database.db, { name: "X", email: "OWNER@adalin.test", password: "abc12345", schoolName: "Other" }),
     ).rejects.toThrow(/already exists/);
   });
 
   it("logs in with the right password and creates a working session", async () => {
-    const user = await authenticate(database.db, "owner@greenfield.test", "Greenfield2026", "1.1.1.1");
+    const user = await authenticate(database.db, "owner@adalin.test", "Adalin2026", "1.1.1.1");
     const { token } = await createSession(database.db, user.id);
     expect((await getUserBySessionToken(database.db, token))?.id).toBe(user.id);
     expect(await getUserBySessionToken(database.db, "forged-token")).toBeNull();
@@ -70,13 +70,13 @@ describe("registration and login", () => {
   });
 
   it("resets a password once, and kills existing sessions", async () => {
-    const user = await authenticate(database.db, "owner@greenfield.test", "Greenfield2026", null);
+    const user = await authenticate(database.db, "owner@adalin.test", "Adalin2026", null);
     const { token: sessionToken } = await createSession(database.db, user.id);
-    const reset = await createPasswordReset(database.db, "owner@greenfield.test");
+    const reset = await createPasswordReset(database.db, "owner@adalin.test");
     await resetPassword(database.db, reset!.token, "NewPassword9");
     await expect(resetPassword(database.db, reset!.token, "Another99")).rejects.toThrow(/expired/);
     expect(await getUserBySessionToken(database.db, sessionToken)).toBeNull();
-    await authenticate(database.db, "owner@greenfield.test", "NewPassword9", null);
+    await authenticate(database.db, "owner@adalin.test", "NewPassword9", null);
     expect(await createPasswordReset(database.db, "nobody@x.test")).toBeNull();
   });
 });
@@ -88,7 +88,7 @@ describe("staff, roles and permissions", () => {
     const teacherRole = await roleId(ownerAccess.school.id, "subject_teacher");
     const { token } = await inviteStaff(database.db, ownerAccess, {
       name: "Mr Okon",
-      email: "okon@greenfield.test",
+      email: "okon@adalin.test",
       roleIds: [teacherRole],
     });
     const { userId } = await acceptInvitation(database.db, token, { name: "Mr Okon", password: "Teacher2026" });
@@ -111,7 +111,7 @@ describe("staff, roles and permissions", () => {
     const ownerRole = await roleId(ownerAccess.school.id, "owner");
     const { token } = await inviteStaff(database.db, ownerAccess, {
       name: "Dr Bello",
-      email: "bello@greenfield.test",
+      email: "bello@adalin.test",
       roleIds: [principalRole],
     });
     const { userId } = await acceptInvitation(database.db, token, { name: "Dr Bello", password: "Principal2026" });

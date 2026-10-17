@@ -11,7 +11,7 @@ test("the transport officer takes the bus register and the parent sees their chi
   await officer.getByLabel("Password").fill("Demo2026!");
   await officer.getByRole("button", { name: "Log in" }).click();
   await expect(officer).toHaveURL(/\/s\//, { timeout: 60_000 });
-  await officer.goto("/s/greenfield-college/transport?tab=register");
+  await officer.goto("/s/adalin-college/transport?tab=register");
   await officer.getByRole("link", { name: "Lekki – Ajah" }).click();
   await expect(officer).toHaveURL(/route=/);
   const seun = officer.getByRole("checkbox", { name: /Oluwaseun Lawal/ });

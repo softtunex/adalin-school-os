@@ -18,7 +18,7 @@ async function main() {
   const db = database.db;
   const user = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, user.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, user.id, "adalin-college"))!;
   const setup = await getTimetableSetup(db, owner);
   const lessonPeriods = setup.schedules[0].periods.filter((p) => p.kind === "lesson");
   const days = setup.schedules[0].days;

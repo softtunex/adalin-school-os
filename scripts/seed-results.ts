@@ -31,7 +31,7 @@ async function main() {
   await database.migrate();
   const user = await findUserByEmail(database.db, "director@demo.schoolos.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
-  const access = (await loadAccess(database.db, user.id, "greenfield-college"))!;
+  const access = (await loadAccess(database.db, user.id, "adalin-college"))!;
 
   await withTenant(database.db, access.school.id, async (tx) => {
     const current = await getCurrentTerm(tx);

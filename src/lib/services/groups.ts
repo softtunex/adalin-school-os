@@ -15,7 +15,7 @@ import { recordAudit } from "./audit";
  * its own records, staff and bill, and the group dashboard compares them side by side.
  */
 
-export const groupNameSchema = z.string().trim().min(2, "Name the group, e.g. Greenfield Schools.").max(80);
+export const groupNameSchema = z.string().trim().min(2, "Name the group, e.g. Adalin Schools.").max(80);
 
 async function isGroupAdmin(db: DB, groupId: string, userId: string) {
   const [row] = await db.select().from(schoolGroupAdmins).where(and(eq(schoolGroupAdmins.groupId, groupId), eq(schoolGroupAdmins.userId, userId)));

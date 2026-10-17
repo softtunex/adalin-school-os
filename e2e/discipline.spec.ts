@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { signInParent } from "./parent-session";
 
-const SLUG = "greenfield-college";
+const SLUG = "adalin-college";
 const run = `${Date.now()}`.slice(-6);
 
 test("a class teacher records a merit and the parent sees it", async ({ browser, isMobile }) => {

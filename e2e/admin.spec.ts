@@ -10,8 +10,8 @@ test("Adalin's team finds a school, bills it and cancels the bill; the proprieto
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
 
   await page.goto("/admin/schools");
-  await page.getByPlaceholder("Name, code, email or city…").fill("greenfield");
-  await page.getByRole("row").filter({ hasText: "greenfield-college" }).getByRole("link").first().click();
+  await page.getByPlaceholder("Name, code, email or city…").fill("adalin");
+  await page.getByRole("row").filter({ hasText: "adalin-college" }).getByRole("link").first().click();
   await expect(page.getByRole("heading", { name: "Account" })).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole("button", { name: "New bill" }).click();
@@ -31,7 +31,7 @@ test("Adalin's team finds a school, bills it and cancels the bill; the proprieto
   await page.goto("/admin/activity");
   await expect(page.getByText(/Cancelled ADL-\d{4}-\d{5} \(Raised by the e2e test\)/).first()).toBeVisible();
 
-  await page.goto("/s/greenfield-college/settings?tab=plan");
+  await page.goto("/s/adalin-college/settings?tab=plan");
   await page.getByLabel("What do you need help with?").fill("E2E check");
   await page.getByRole("button", { name: "Let support in" }).click();
   await expect(page.getByText("Adalin support can sign in for the next 24 hours.")).toBeVisible({ timeout: 30_000 });

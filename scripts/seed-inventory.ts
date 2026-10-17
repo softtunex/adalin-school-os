@@ -23,12 +23,12 @@ const ITEMS: Seed[] = [
   ["Liquid soap (5 litres)", "consumable", "Cleaning supplies", "gallons", 9, 4, 4_800, "Main store"],
   ["Toilet roll (pack of 12)", "consumable", "Cleaning supplies", "packs", 14, 6, 5_200, "Main store"],
   ["First aid refill kit", "consumable", "Laboratory", "kits", 4, 2, 9_000, "Sick bay"],
-  ["Epson projector", "asset", "ICT equipment", "units", 3, 0, 385_000, "ICT lab", "GFC-ICT-001"],
-  ["HP laptop", "asset", "ICT equipment", "units", 6, 0, 520_000, "ICT lab", "GFC-ICT-010"],
+  ["Epson projector", "asset", "ICT equipment", "units", 3, 0, 385_000, "ICT lab", "ADC-ICT-001"],
+  ["HP laptop", "asset", "ICT equipment", "units", 6, 0, 520_000, "ICT lab", "ADC-ICT-010"],
   ["Plastic chairs", "asset", "Furniture", "chairs", 150, 0, 9_500, "Hall"],
-  ["Student microscope", "asset", "Laboratory", "units", 8, 0, 145_000, "Science lab", "GFC-LAB-020"],
+  ["Student microscope", "asset", "Laboratory", "units", 8, 0, 145_000, "Science lab", "ADC-LAB-020"],
   ["Football", "asset", "Sports", "balls", 10, 0, 12_000, "Main store"],
-  ["Mikano 20kVA generator", "asset", "Fuel and power", "units", 1, 0, 9_800_000, "Main store", "GFC-PWR-001"],
+  ["Mikano 20kVA generator", "asset", "Fuel and power", "units", 1, 0, 9_800_000, "Main store", "ADC-PWR-001"],
 ];
 
 async function main() {
@@ -37,7 +37,7 @@ async function main() {
   const db = database.db;
   const director = await findUserByEmail(db, "director@demo.schoolos.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
-  const owner = (await loadAccess(db, director.id, "greenfield-college"))!;
+  const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: inventoryItems.id }).from(inventoryItems).limit(1));
   if (existing.length) {
     console.log("Inventory demo data already there.");
@@ -51,7 +51,7 @@ async function main() {
     await acceptInvitation(db, token, { name: "Mr Sunday Eze", password: "Demo2026!" });
     keeperUser = await findUserByEmail(db, "storekeeper7@demo.schoolos.ng");
   }
-  const keeper = (await loadAccess(db, keeperUser!.id, "greenfield-college"))!;
+  const keeper = (await loadAccess(db, keeperUser!.id, "adalin-college"))!;
   const member = async (email: string) => {
     const u = await findUserByEmail(db, email);
     if (!u) return null;
