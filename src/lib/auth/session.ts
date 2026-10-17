@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { SESSION_COOKIE } from "../config";
+import { AppError } from "../errors";
 import { getDb } from "../db/client";
 import { createSession, getUserBySessionToken, revokeSession } from "../services/accounts";
 import { can, loadAccess } from "../services/access";
@@ -52,13 +53,25 @@ export async function requireUser() {
   return user;
 }
 
-/** The signed-in user's access to a school. 404s for non-members so school slugs can't be probed. */
-export const requireAccess = cache(async (slug: string) => {
+const loadSchoolAccess = cache(async (slug: string) => {
   const user = await requireUser();
   const access = await loadAccess(getDb(), user.id, slug);
   if (!access) notFound();
   return access;
 });
+
+export const READ_ONLY_MESSAGE = "Your school is read-only until the overdue School OS bill is paid. A proprietor can pay it under Settings, Plan & billing.";
+
+/**
+ * The signed-in user's access to a school. 404s for non-members so school slugs can't be probed.
+ * While the school is read-only for an unpaid bill, changes (server actions) are refused and
+ * viewing carries on; paying the bill passes allowReadOnly.
+ */
+export async function requireAccess(slug: string, opts: { allowReadOnly?: boolean } = {}) {
+  const access = await loadSchoolAccess(slug);
+  if (access.school.status === "read_only" && !opts.allowReadOnly && (await headers()).has("next-action")) throw new AppError(READ_ONLY_MESSAGE, "forbidden");
+  return access;
+}
 
 /** For pages: a missing permission looks the same as a missing page. */
 export async function requirePageAccess(slug: string, anyOf: Permission[]) {

@@ -259,6 +259,16 @@ export const schools = pgTable(
     logoUrl: text("logo_url"),
     /** The school's own colour on documents and its pages (Premium). Null keeps School OS orange. */
     brandColor: text("brand_color"),
+    // ---------- Our billing ----------
+    /** The plan to return to when a free trial ends. Null when not on trial. */
+    trialReturnPlanKey: text("trial_return_plan_key"),
+    trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }),
+    /** A school gets one free trial. */
+    trialUsed: boolean("trial_used").notNull().default(false),
+    /** A cheaper plan chosen mid-term, which starts with the next term's bill. */
+    pendingPlanKey: text("pending_plan_key"),
+    /** Set by the platform when a school is read-only for an unpaid bill (cleared on payment). */
+    readOnlySince: timestamp("read_only_since", { withTimezone: true }),
     onboarding: jsonb("onboarding").$type<Record<string, boolean>>().notNull().default({}),
     admissionPrefix: text("admission_prefix"),
     nextAdmissionSeq: integer("next_admission_seq").notNull().default(1),
@@ -2056,6 +2066,39 @@ export const issuedDocuments = pgTable(
   (t) => [uniqueIndex("issued_documents_token_uq").on(t.token), uniqueIndex("issued_documents_serial_uq").on(t.schoolId, t.serial), index("issued_documents_holder_idx").on(t.studentId, t.kind), index("issued_documents_batch_idx").on(t.batch)],
 );
 
+// ---------- Platform billing (Adalin bills schools) ----------
+
+export const PLATFORM_INVOICE_KINDS = ["term", "upgrade", "addon", "manual"] as const;
+export const PLATFORM_INVOICE_STATUSES = ["open", "paid", "void"] as const;
+export type BillLine = { description: string; amountKobo: number };
+
+/** What a school owes Adalin: a bill per term for students on roll, upgrades and add-ons. */
+export const platformInvoices = pgTable(
+  "platform_invoices",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    number: text("number").notNull(),
+    kind: text("kind", { enum: PLATFORM_INVOICE_KINDS }).notNull(),
+    termId: uuid("term_id").references(() => terms.id, { onDelete: "set null" }),
+    period: text("period").notNull(),
+    planKey: text("plan_key").notNull(),
+    studentCount: integer("student_count").notNull().default(0),
+    lines: jsonb("lines").$type<BillLine[]>().notNull().default([]),
+    totalKobo: kobo("total_kobo").notNull(),
+    status: text("status", { enum: PLATFORM_INVOICE_STATUSES }).notNull().default("open"),
+    issuedOn: date("issued_on").notNull(),
+    dueOn: date("due_on").notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    paidVia: text("paid_via"),
+    reference: text("reference"),
+    remindersSent: integer("reminders_sent").notNull().default(0),
+    lastReminderOn: date("last_reminder_on"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("platform_invoices_number_uq").on(t.number), uniqueIndex("platform_invoices_reference_uq").on(t.reference), index("platform_invoices_school_idx").on(t.schoolId, t.status)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -2141,4 +2184,5 @@ export const TENANT_TABLES = [
   "exeats",
   "document_templates",
   "issued_documents",
+  "platform_invoices",
 ] as const;

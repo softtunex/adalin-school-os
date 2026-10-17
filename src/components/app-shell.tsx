@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { cn } from "@/lib/cn";
 import { usePathname } from "next/navigation";
 import { Suspense, useState, type CSSProperties, type ReactNode } from "react";
 import { flattenNav, type ResolvedNav } from "@/lib/navigation";
@@ -15,6 +16,8 @@ type Props = {
   nav: ResolvedNav;
   /** The school colour as CSS variables, when the school has one. */
   brand?: CSSProperties;
+  /** A school-wide message, e.g. an overdue bill, shown above every page. */
+  notice?: { tone: "danger" | "warning" | "blue"; text: string; href: string } | null;
   children: ReactNode;
 };
 
@@ -108,6 +111,13 @@ export function AppShell(props: Props) {
       ) : null}
 
       <main className="relative min-w-0">
+        {props.notice ? (
+          <Link href={props.notice.href} className={cn("flex items-center justify-center gap-2 px-4 py-2.5 text-center fs-14 font-semibold", { danger: "bg-danger text-white", warning: "bg-warning-wash text-warning-deep", blue: "bg-blue-wash text-ink" }[props.notice.tone])}>
+            <Icon name="alert" size={16} className="shrink-0" />
+            <span>{props.notice.text}</span>
+            <span className="whitespace-nowrap underline">Plan & billing</span>
+          </Link>
+        ) : null}
         {props.children}
         <Suspense>
           <RouteLoader />

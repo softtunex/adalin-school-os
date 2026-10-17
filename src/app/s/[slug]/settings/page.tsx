@@ -2,19 +2,14 @@ import type { Metadata } from "next";
 import { PageBody, Topbar } from "@/components/topbar";
 import { UpgradeCard } from "@/components/upgrade-card";
 import { Alert, Badge, Card } from "@/components/ui/display";
-import { Icon } from "@/components/ui/icons";
 import { Tabs } from "@/components/ui/tabs";
 import { requirePageAccess } from "@/lib/auth/session";
-import { cn } from "@/lib/cn";
-import { SUPPORT_WHATSAPP } from "@/lib/config";
 import { getDb } from "@/lib/db/client";
 import { formatNaira } from "@/lib/money";
-import { FEATURES, LIMITS, type FeatureKey, type LimitKey } from "@/lib/plans/catalog";
 import { hasFeature } from "@/lib/plans/entitlements";
 import { can, type Access } from "@/lib/services/access";
 import { CREDIT_PACKS, getMessaging } from "@/lib/services/credits";
 import { listBanks, paystackMode } from "@/lib/services/paystack";
-import { listPlans } from "@/lib/services/school-profile";
 import { AdmissionSettings } from "../admissions/admission-settings";
 import { HrSettingsForm } from "../hr/hr-settings-form";
 import { PayrollSettingsForm } from "../payroll/payroll-client";
@@ -39,11 +34,12 @@ import { LogoCard } from "./logo-card";
 import { BuyCredits, CommsSettingsForm } from "./messaging-forms";
 import { FeeRulesForm, SettlementForm } from "./payments-forms";
 import { ProfileForm } from "./profile-form";
+import { PlanTab } from "./plan-tab";
 import { BrandColorCard } from "./brand-color";
 
 export const metadata: Metadata = { title: "Settings" };
 
-export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
+export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string; paid?: string }> }) {
   const { slug } = await params;
   const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory", "operations:health", "operations:transport", "operations:hostel", "documents:issue"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
@@ -117,7 +113,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
         ) : tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
           <PaymentsTab slug={slug} access={access} />
         ) : !canProfile ? null : tab === "plan" ? (
-          <PlanTab currentKey={access.plan.key} canBill={can(access, "school:billing")} />
+          <PlanTab slug={slug} access={access} canBill={can(access, "school:billing")} paid={sp.paid} failed={sp.failed} />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
             <div>
@@ -263,56 +259,4 @@ async function MessagingTab({ slug, access, bought, failed }: { slug: string; ac
   );
 }
 
-async function PlanTab({ currentKey, canBill }: { currentKey: string; canBill: boolean }) {
-  const plans = await listPlans(getDb());
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="fs-16 font-semibold">Plans</h2>
-          <p className="mt-1 fs-14 text-muted">Priced per student, per term. You only pay for students on roll.</p>
-        </div>
-        {canBill ? (
-          <p className="fs-14 text-muted">
-            To change plan, message us on WhatsApp: <span className="select-all font-semibold text-ink">{SUPPORT_WHATSAPP}</span>
-          </p>
-        ) : null}
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {plans.map((p, i) => {
-          const current = p.key === currentKey;
-          const previous = plans[i - 1];
-          const added = previous ? p.features.filter((f) => !previous.features.includes(f)) : p.features;
-          return (
-            <Card key={p.key} className={cn("flex flex-col gap-3 p-5", current && "border-brand shadow-[0_4px_0_var(--brand)]")}>
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="fs-17 font-semibold">{p.name}</h3>
-                {current ? <Badge tone="brand">Current</Badge> : null}
-              </div>
-              <p className="tabular fs-24 font-semibold tracking-[-0.02em] text-ink">
-                {p.pricePerStudentKobo === null ? "Custom" : p.pricePerStudentKobo === 0 ? "Free" : formatNaira(p.pricePerStudentKobo)}
-                {p.pricePerStudentKobo ? <span className="block fs-13 font-normal tracking-normal text-muted">per student / term</span> : null}
-              </p>
-              <ul className="flex flex-col gap-1.5 border-t border-line pt-3 fs-13.5">
-                {Object.entries(p.limits).map(([k, n]) =>
-                  k === "audit_days" ? null : (
-                    <li key={k} className="font-medium text-ink">
-                      Up to {n} {LIMITS[k as LimitKey].toLowerCase()}
-                    </li>
-                  ),
-                )}
-                {previous ? <li className="text-muted">Everything in {previous.name}, plus:</li> : null}
-                {added.map((f) => (
-                  <li key={f} className="flex gap-1.5 text-body">
-                    <Icon name="check" size={15} strokeWidth={2.6} className="mt-0.5 shrink-0 text-success" />
-                    {FEATURES[f as FeatureKey] ?? f}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+

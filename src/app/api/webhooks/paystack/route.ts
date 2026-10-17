@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/db/client";
 import { deliverSoon } from "@/lib/deliver";
 import { handleApplicationFeeEvent } from "@/lib/services/admissions";
+import { settleBill } from "@/lib/services/billing";
 import { settleCreditPurchase } from "@/lib/services/credits";
 import { handlePaystackEvent, verifyWebhookSignature } from "@/lib/services/paystack";
 
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
     const reference = String(event.data?.reference ?? "");
     if (event?.event === "charge.success" && reference.startsWith("sosc_")) await settleCreditPurchase(getDb(), event.data);
     else if (event?.event === "charge.success" && reference.startsWith("sosa_")) await handleApplicationFeeEvent(getDb(), event.data);
+    else if (event?.event === "charge.success" && reference.startsWith("sosb_")) await settleBill(getDb(), event.data);
     else await handlePaystackEvent(getDb(), event);
     deliverSoon();
   } catch (error) {
