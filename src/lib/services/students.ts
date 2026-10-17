@@ -10,6 +10,7 @@ import { can, requirePermission, type Access } from "./access";
 import { studentScope } from "./academics";
 import { recordAudit } from "./audit";
 import { markOnboarding } from "./onboarding";
+import { queueWebhookEvent } from "./webhooks";
 
 // ---------- Validation (shared by the form and the Excel import) ----------
 
@@ -201,6 +202,16 @@ export async function insertStudent(tx: Tx, schoolId: string, input: StudentInpu
       .onConflictDoNothing();
   }
   await enroll(tx, schoolId, student.id, input.classId ?? null);
+  await queueWebhookEvent(tx, schoolId, "student.created", {
+    id: student.id,
+    admission_no: student.admissionNo,
+    first_name: student.firstName,
+    middle_name: student.middleName,
+    last_name: student.lastName,
+    gender: student.gender,
+    class_id: student.classId,
+    status: student.status,
+  });
   return student;
 }
 
@@ -387,6 +398,9 @@ export async function setStudentStatus(
     if (!student) throw new AppError("That student wasn't found.", "not_found");
     if (status === "active" && student.status !== "active") requireWithinLimit(access.plan, "students", await activeStudentCount(tx));
     await tx.update(students).set({ status, updatedAt: new Date() }).where(eq(students.id, studentId));
+    if (status !== student.status) {
+      await queueWebhookEvent(tx, access.school.id, "student.status_changed", { id: student.id, admission_no: student.admissionNo, status, previous_status: student.status });
+    }
     const sessionId = await currentSessionId(tx);
     if (sessionId && (status === "withdrawn" || status === "graduated")) {
       await tx

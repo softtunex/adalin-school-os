@@ -12,6 +12,7 @@ import { paymentAlert } from "./alerts";
 import { recordAudit } from "./audit";
 import { pickTerm } from "./fees";
 import { balanceOf, refreshInvoice, reserveNumbers } from "./invoices";
+import { queueWebhookEvent } from "./webhooks";
 
 const actor = (access: Access, ip?: string | null) => ({ userId: access.user.id, name: access.user.name, ip });
 
@@ -32,6 +33,22 @@ export const recordPaymentSchema = z.object({
 });
 
 /** Records cash, transfer, POS or cheque money against an invoice and issues a receipt number. */
+/** What the payment.received webhook carries. */
+function paymentEvent(p: typeof payments.$inferSelect, invoiceNumber: string, balanceKobo: number) {
+  return {
+    id: p.id,
+    invoice_id: p.invoiceId,
+    invoice_number: invoiceNumber,
+    student_id: p.studentId,
+    amount_kobo: p.amountKobo,
+    method: p.method,
+    reference: p.reference,
+    receipt_no: p.receiptNo,
+    paid_on: p.paidOn,
+    balance_kobo: balanceKobo,
+  };
+}
+
 export async function recordPayment(db: DB, access: Access, input: z.infer<typeof recordPaymentSchema>, ip?: string | null, opts: { emailReceipt?: boolean } = {}) {
   requirePermission(access, "fees:record_payment");
   requireFeature(access.plan, "fees_basic");
@@ -61,6 +78,7 @@ export async function recordPayment(db: DB, access: Access, input: z.infer<typeo
       })
       .returning();
     const updated = await refreshInvoice(tx, inv.id);
+    await queueWebhookEvent(tx, access.school.id, "payment.received", paymentEvent(payment, inv.number, balanceOf(updated)));
     await recordAudit(tx, access.school.id, actor(access, ip), {
       action: "fees.payment_recorded",
       summary: `Recorded ${formatNaira(input.amount)} (${METHOD_LABEL[input.method]}) on ${inv.number}, receipt ${receiptNo}`,
@@ -129,6 +147,7 @@ export async function settleIntent(tx: Tx, schoolId: string, reference: string, 
     .returning();
   await tx.update(paymentIntents).set({ status: "succeeded", paymentId: payment.id, completedAt: new Date() }).where(eq(paymentIntents.id, intent.id));
   const updated = await refreshInvoice(tx, inv.id);
+  await queueWebhookEvent(tx, schoolId, "payment.received", paymentEvent(payment, inv.number, balanceOf(updated)));
   await paymentAlert(tx, schoolId, { studentId: inv.studentId, receiptNo, amountKobo: paid.amountKobo, balanceKobo: balanceOf(updated), invoiceNumber: inv.number, paidOn });
   await recordAudit(tx, schoolId, null, {
     action: "fees.payment_online",

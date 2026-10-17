@@ -29,6 +29,7 @@ import { classAttendanceTotals } from "./attendance";
 import { resultAlerts } from "./alerts";
 import { recordAudit } from "./audit";
 import { subjectRoster } from "./electives";
+import { queueWebhookEvent } from "./webhooks";
 
 function actor(access: Access, ip?: string | null) {
   return { userId: access.user.id, name: access.user.name, ip };
@@ -436,7 +437,10 @@ export async function setClassResultStatus(
       .insert(classResults)
       .values({ schoolId: access.school.id, termId: current.term.id, classId: input.classId, ...patch })
       .onConflictDoUpdate({ target: [classResults.termId, classResults.classId], set: patch });
-    if (input.status === "published") await resultAlerts(tx, access.school.id, input.classId, { id: current.term.id, name: current.term.name, session: current.session.name });
+    if (input.status === "published") {
+      await resultAlerts(tx, access.school.id, input.classId, { id: current.term.id, name: current.term.name, session: current.session.name });
+      await queueWebhookEvent(tx, access.school.id, "results.published", { class_id: input.classId, class_name: cls?.name ?? null, term_id: current.term.id, term: current.term.name, session: current.session.name });
+    }
     const verb = { open: "Reopened", reviewed: "Reviewed", approved: "Approved", published: "Published" }[input.status];
     await recordAudit(tx, access.school.id, actor(access, ip), {
       action: input.status === "open" ? "results.unlocked" : `results.${input.status}`,

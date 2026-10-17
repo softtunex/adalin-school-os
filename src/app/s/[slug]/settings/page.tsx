@@ -38,12 +38,13 @@ import { PlanTab } from "./plan-tab";
 import { AddonsTab } from "./addons-tab";
 import { BrandColorCard } from "./brand-color";
 import { DataTab } from "./data-tab";
+import { ApiTab } from "./api-tab";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string; paid?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory", "operations:health", "operations:transport", "operations:hostel", "documents:issue", "school:export"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory", "operations:health", "operations:transport", "operations:hostel", "documents:issue", "school:export", "school:api"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
   const sp = await searchParams;
   const canAdmissions = can(access, "admissions:manage") && hasFeature(access.plan, "admissions");
@@ -83,6 +84,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canDocuments ? [{ key: "documents", label: "Documents", href: `${base}?tab=documents` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
             ...(can(access, "school:billing") ? [{ key: "addons", label: "Add-ons", href: `${base}?tab=addons` }] : []),
+            ...(can(access, "school:api") ? [{ key: "api", label: "API & webhooks", href: `${base}?tab=api` }] : []),
             ...(can(access, "school:export") ? [{ key: "data", label: "Data & privacy", href: `${base}?tab=data` }] : []),
           ]}
         />
@@ -116,6 +118,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
           <MessagingTab slug={slug} access={access} bought={sp.bought} failed={!!sp.failed} />
         ) : tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
           <PaymentsTab slug={slug} access={access} />
+        ) : tab === "api" && can(access, "school:api") ? (
+          <ApiTab slug={slug} access={access} />
         ) : tab === "data" && can(access, "school:export") ? (
           <DataTab slug={slug} access={access} />
         ) : tab === "addons" && can(access, "school:billing") ? (

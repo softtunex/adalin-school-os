@@ -1,7 +1,7 @@
 export const PERMISSION_GROUPS = {
   school: {
     label: "School",
-    actions: { view: "View school profile", update: "Edit school profile", billing: "Manage plan and billing", analytics: "View school analytics", export: "Export all school data" },
+    actions: { view: "View school profile", update: "Edit school profile", billing: "Manage plan and billing", analytics: "View school analytics", export: "Export all school data", api: "Manage API keys and webhooks" },
   },
   staff: {
     label: "Staff",

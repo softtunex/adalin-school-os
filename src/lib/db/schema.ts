@@ -2161,6 +2161,67 @@ export const platformAudit = pgTable(
   (t) => [index("platform_audit_time_idx").on(t.createdAt), index("platform_audit_school_idx").on(t.schoolId)],
 );
 
+/** Keys a school's own systems use to read its data through the public API. Only a hash is kept. */
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    name: text("name").notNull(),
+    /** The first characters, shown so people can tell keys apart. */
+    prefix: text("prefix").notNull(),
+    keyHash: text("key_hash").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("api_keys_hash_uq").on(t.keyHash), index("api_keys_school_idx").on(t.schoolId)],
+);
+
+/** Where a school wants to be told when things happen (a payment, a new student). */
+export const webhooks = pgTable(
+  "webhooks",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    url: text("url").notNull(),
+    events: jsonb("events").$type<string[]>().notNull().default([]),
+    /** Signs each delivery so the receiver knows it came from School OS. */
+    signingSecret: text("signing_secret").notNull(),
+    active: boolean("active").notNull().default(true),
+    /** Deliveries that failed in a row; it switches off after too many. */
+    failures: integer("failures").notNull().default(0),
+    createdBy: uuid("created_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("webhooks_school_idx").on(t.schoolId)],
+);
+
+export const WEBHOOK_DELIVERY_STATUSES = ["pending", "sent", "failed"] as const;
+
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    webhookId: uuid("webhook_id")
+      .notNull()
+      .references(() => webhooks.id, { onDelete: "cascade" }),
+    event: text("event").notNull(),
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    status: text("status", { enum: WEBHOOK_DELIVERY_STATUSES }).notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    responseStatus: integer("response_status"),
+    error: text("error"),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("webhook_deliveries_due_idx").on(t.status, t.nextAttemptAt), index("webhook_deliveries_hook_idx").on(t.webhookId, t.createdAt)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -2249,4 +2310,7 @@ export const TENANT_TABLES = [
   "platform_invoices",
   "school_addons",
   "support_grants",
+  "api_keys",
+  "webhooks",
+  "webhook_deliveries",
 ] as const;

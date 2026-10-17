@@ -11,7 +11,7 @@ test("Adalin's team finds a school, bills it and cancels the bill; the proprieto
 
   await page.goto("/admin/schools");
   await page.getByPlaceholder("Name, code, email or city…").fill("greenfield");
-  await page.getByRole("link", { name: "Greenfield College" }).click();
+  await page.getByRole("row").filter({ hasText: "greenfield-college" }).getByRole("link").first().click();
   await expect(page.getByRole("heading", { name: "Account" })).toBeVisible({ timeout: 30_000 });
 
   await page.getByRole("button", { name: "New bill" }).click();
