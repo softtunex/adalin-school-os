@@ -9,6 +9,7 @@ import { users } from "@/lib/db/schema";
 import { userMessage } from "@/lib/errors";
 import { type FormState } from "@/lib/form-state";
 import { changePassword, revokeAllSessions } from "@/lib/services/accounts";
+import { unlinkSsoIdentity } from "@/lib/services/sso";
 import { nameSchema, passwordSchema } from "@/lib/validation";
 
 export async function updateNameAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -44,4 +45,14 @@ export async function signOutEverywhereAction() {
   await revokeAllSessions(getDb(), user.id);
   await endSession();
   redirect("/login");
+}
+
+export async function disconnectSsoAction(identityId: string): Promise<FormState> {
+  try {
+    const user = await requireUser();
+    await unlinkSsoIdentity(getDb(), user.id, identityId);
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+  redirect("/account");
 }

@@ -5,7 +5,8 @@ import { cache } from "react";
 import { SESSION_COOKIE } from "../config";
 import { AppError } from "../errors";
 import { getDb } from "../db/client";
-import { createSession, getUserBySessionToken, revokeSession } from "../services/accounts";
+import { createSession, getSessionByToken, revokeSession } from "../services/accounts";
+import { ssoAllows } from "../services/sso";
 import { can, loadAccess } from "../services/access";
 import type { Permission } from "../rbac/permissions";
 
@@ -23,8 +24,8 @@ export async function appUrl() {
   return `${proto}://${host}`;
 }
 
-export async function startSession(userId: string) {
-  const { token, expiresAt } = await createSession(getDb(), userId, await requestMeta());
+export async function startSession(userId: string, method = "password") {
+  const { token, expiresAt } = await createSession(getDb(), userId, { ...(await requestMeta()), method });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -41,11 +42,13 @@ export async function endSession() {
   jar.delete(SESSION_COOKIE);
 }
 
-export const getCurrentUser = cache(async () => {
+const getCurrentSession = cache(async () => {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  return getUserBySessionToken(getDb(), token);
+  return getSessionByToken(getDb(), token);
 });
+
+export const getCurrentUser = cache(async () => (await getCurrentSession())?.user ?? null);
 
 export async function requireUser() {
   const user = await getCurrentUser();
@@ -57,6 +60,10 @@ const loadSchoolAccess = cache(async (slug: string) => {
   const user = await requireUser();
   const access = await loadAccess(getDb(), user.id, slug);
   if (!access) notFound();
+  // The school may require staff to sign in with Google or Microsoft.
+  const method = (await getCurrentSession())?.method ?? "password";
+  const allowed = ssoAllows(access.school.ssoSettings, method, { isOwner: access.roles.some((r) => r.key === "owner"), isSupport: Boolean(access.supportUntil), features: access.plan.features });
+  if (!allowed && access.isStaff) redirect(`/sso-required/${slug}`);
   return access;
 });
 

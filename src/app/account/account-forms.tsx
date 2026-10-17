@@ -5,7 +5,7 @@ import { SubmitButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/display";
 import { Field, Input } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
-import { changePasswordAction, signOutEverywhereAction, updateNameAction } from "./actions";
+import { changePasswordAction, disconnectSsoAction, signOutEverywhereAction, updateNameAction } from "./actions";
 
 export function NameForm({ name }: { name: string }) {
   const [state, action] = useActionState(updateNameAction, initialFormState);
@@ -48,6 +48,18 @@ export function SignOutEverywhere() {
       <SubmitButton variant="danger" pendingText="Signing out…">
         Sign out everywhere
       </SubmitButton>
+    </form>
+  );
+}
+
+export function DisconnectSso({ identityId, name }: { identityId: string; name: string }) {
+  const [state, action] = useActionState(() => disconnectSsoAction(identityId), initialFormState);
+  return (
+    <form action={action} className="flex flex-col items-end gap-1">
+      <SubmitButton size="sm" variant="secondary" pendingText="Disconnecting…" aria-label={`Disconnect ${name}`}>
+        Disconnect
+      </SubmitButton>
+      {state.error ? <span className="fs-13 text-danger">{state.error}</span> : null}
     </form>
   );
 }

@@ -89,7 +89,7 @@ export async function authenticate(db: DB, email: string, password: string, ip: 
   return user;
 }
 
-export async function createSession(db: DB, userId: string, meta: { ip?: string | null; userAgent?: string | null } = {}) {
+export async function createSession(db: DB, userId: string, meta: { ip?: string | null; userAgent?: string | null; method?: string } = {}) {
   const token = newToken();
   const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 86_400_000);
   await db.insert(sessions).values({
@@ -98,18 +98,24 @@ export async function createSession(db: DB, userId: string, meta: { ip?: string 
     expiresAt,
     ip: meta.ip ?? null,
     userAgent: meta.userAgent?.slice(0, 300) ?? null,
+    method: meta.method ?? "password",
   });
   return { token, expiresAt };
 }
 
 export async function getUserBySessionToken(db: DB, token: string) {
+  return (await getSessionByToken(db, token))?.user ?? null;
+}
+
+/** The signed-in person and how they signed in. */
+export async function getSessionByToken(db: DB, token: string) {
   const [row] = await db
-    .select({ user: users, expiresAt: sessions.expiresAt })
+    .select({ user: users, method: sessions.method })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(and(eq(sessions.tokenHash, hashToken(token)), gt(sessions.expiresAt, new Date())))
     .limit(1);
-  return row?.user ?? null;
+  return row ?? null;
 }
 
 export async function revokeSession(db: DB, token: string) {

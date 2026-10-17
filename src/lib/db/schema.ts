@@ -185,9 +185,29 @@ export const sessions = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ip: text("ip"),
     userAgent: text("user_agent"),
+    /** How they signed in: password, google or microsoft. Schools can require single sign-on. */
+    method: text("method").notNull().default("password"),
     createdAt: createdAt(),
   },
   (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+/** A Google or Microsoft account connected to a School OS login. */
+export const ssoIdentities = pgTable(
+  "sso_identities",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider", { enum: ["google", "microsoft"] }).notNull(),
+    /** The provider's permanent id for the person. Never the email, which can change. */
+    subject: text("subject").notNull(),
+    email: text("email"),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("sso_identities_subject_uq").on(t.provider, t.subject), index("sso_identities_user_idx").on(t.userId)],
 );
 
 export const passwordResets = pgTable("password_resets", {
@@ -294,6 +314,8 @@ export const schools = pgTable(
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
+    /** Single sign-on rules for staff (Enterprise). */
+    ssoSettings: jsonb("sso_settings").$type<{ required?: boolean; providers?: ("google" | "microsoft")[] }>().notNull().default({}),
     documentSettings: jsonb("document_settings").$type<DocumentSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
