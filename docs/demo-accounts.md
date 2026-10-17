@@ -12,7 +12,7 @@ Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
 | --- | --- | --- | --- |
 | Olatunji Buari | Proprietor (owner) | `director@demo.schoolos.ng` | Everything. Lesson notes → For approval has a note waiting. |
 | Dr Adebayo Ogunleye | Principal | `ogunleye0@demo.schoolos.ng` | Results approval, lesson-note approval |
-| Mrs Chioma Nwosu | School admin | `nwosu1@demo.schoolos.ng` | Students, classes, timetable |
+| Mrs Chioma Nwosu | School admin | `nwosu1@demo.schoolos.ng` | Students, classes, timetable, Documents (ID cards, testimonials, certificates, transcripts, letters) |
 | Mr Ibrahim Musa | Bursar | `musa2@demo.schoolos.ng` | Fees, payments, expenses |
 | Mrs Funmilayo Adeyemi | Class teacher, JSS 1 Gold | `adeyemi3@demo.schoolos.ng` | Attendance, report-card comments |
 | Mr Emeka Obi | Maths teacher, JSS 1 | `obi4@demo.schoolos.ng` | Assignments, CBT exams, lesson notes, score entry |

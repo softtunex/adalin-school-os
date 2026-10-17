@@ -93,6 +93,14 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+export type DocumentSettings = {
+  /** Who signs testimonials, certificates and letters. */
+  signatoryName?: string;
+  signatoryTitle?: string;
+  /** Printed on the back line of ID cards, e.g. "If found, please return to the school." */
+  cardNote?: string;
+};
+
 export type HostelSettings = {
   /** Parents can ask for an exeat in the app. */
   parentRequests?: boolean;
@@ -262,6 +270,7 @@ export const schools = pgTable(
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
+    documentSettings: jsonb("document_settings").$type<DocumentSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -2000,6 +2009,47 @@ export const exeats = pgTable(
   (t) => [index("exeats_student_idx").on(t.studentId, t.leaveAt), index("exeats_school_status_idx").on(t.schoolId, t.status)],
 );
 
+// ---------- Documents ----------
+
+export const DOCUMENT_KINDS = ["id_card", "testimonial", "certificate", "transcript", "letter"] as const;
+export const TEMPLATE_KINDS = ["letter", "certificate"] as const;
+
+/** Letter and certificate wording the school writes, with {{fields}} filled in per student. */
+export const documentTemplates = pgTable("document_templates", {
+  id: id(),
+  schoolId: schoolId(),
+  kind: text("kind", { enum: TEMPLATE_KINDS }).notNull(),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  createdAt: createdAt(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Every document the school issues, with a public token its QR code checks against. */
+export const issuedDocuments = pgTable(
+  "issued_documents",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    kind: text("kind", { enum: DOCUMENT_KINDS }).notNull(),
+    studentId: uuid("student_id").references(() => students.id, { onDelete: "cascade" }),
+    membershipId: uuid("membership_id").references(() => memberships.id, { onDelete: "cascade" }),
+    holderName: text("holder_name").notNull(),
+    title: text("title").notNull(),
+    serial: text("serial").notNull(),
+    token: text("token").notNull(),
+    data: jsonb("data").$type<Record<string, unknown>>().notNull().default({}),
+    /** Documents printed together share a batch, so they come out as one PDF. */
+    batch: uuid("batch").notNull(),
+    issuedBy: uuid("issued_by").references(() => memberships.id, { onDelete: "set null" }),
+    issuedAt: timestamp("issued_at", { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokeReason: text("revoke_reason"),
+  },
+  (t) => [uniqueIndex("issued_documents_token_uq").on(t.token), uniqueIndex("issued_documents_serial_uq").on(t.schoolId, t.serial), index("issued_documents_holder_idx").on(t.studentId, t.kind), index("issued_documents_batch_idx").on(t.batch)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -2083,4 +2133,6 @@ export const TENANT_TABLES = [
   "hostel_rooms",
   "hostel_beds",
   "exeats",
+  "document_templates",
+  "issued_documents",
 ] as const;

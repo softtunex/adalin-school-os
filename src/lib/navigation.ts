@@ -30,6 +30,7 @@ const SETTINGS_ACCESS: Permission[] = [
   "operations:health",
   "operations:transport",
   "operations:hostel",
+  "documents:issue",
 ];
 
 /** Top-level links, and groups that open to show their pages. */
@@ -92,6 +93,7 @@ export const NAV: (NavItem | NavGroup)[] = [
     items: [
       { href: "/staff", label: "Staff", icon: "users", anyOf: ["staff:view"], staffOnly: true, keywords: "teachers employees invite" },
       { href: "/hr", label: "Attendance & leave", icon: "userCheck", feature: "staff_attendance", staffOnly: true, keywords: "clock in leave hr my day payslips" },
+      { href: "/documents", label: "Documents", icon: "idCard", anyOf: ["documents:issue"], feature: "documents", staffOnly: true, keywords: "id cards testimonial certificate transcript letters verify qr" },
       { href: "/inventory", label: "Inventory", icon: "box", anyOf: ["operations:inventory"], feature: "inventory", staffOnly: true, keywords: "store stock assets equipment" },
       { href: "/roles", label: "Roles & permissions", icon: "shield", anyOf: ["roles:view"], staffOnly: true, keywords: "access" },
       { href: "/audit", label: "Audit log", icon: "history", anyOf: ["audit:view"], feature: "audit_log", staffOnly: true, keywords: "history activity" },

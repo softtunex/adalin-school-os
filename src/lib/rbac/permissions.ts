@@ -99,6 +99,10 @@ export const PERMISSION_GROUPS = {
       hostel: "Hostel",
     },
   },
+  documents: {
+    label: "Documents",
+    actions: { issue: "Issue ID cards, testimonials, certificates, transcripts and letters", templates: "Edit letter and certificate templates" },
+  },
   audit: {
     label: "Audit",
     actions: { view: "View audit log" },
