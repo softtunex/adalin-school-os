@@ -36,7 +36,7 @@ export function BrandColorCard({ slug, current, allowed, editable }: { slug: str
       </div>
       {msg ? <Alert tone={msg.tone}>{msg.text}</Alert> : null}
       <fieldset disabled={!allowed || !editable || pending} className="flex flex-col gap-4 disabled:opacity-70">
-        <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Colours">
+        <div className="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Colours">
           {BRAND_PRESETS.map(([name, hex]) => (
             <button
               key={hex}
@@ -46,10 +46,10 @@ export function BrandColorCard({ slug, current, allowed, editable }: { slug: str
               aria-label={name}
               title={name}
               onClick={() => pick(hex)}
-              className={cn("grid size-10 place-items-center rounded-full border-2 transition-transform hover:scale-105", normalizeHex(color) === hex ? "border-ink" : "border-transparent")}
+              className={cn("grid size-7 place-items-center rounded-full ring-offset-2 ring-offset-canvas transition-transform hover:scale-110", normalizeHex(color) === hex ? "ring-2 ring-ink" : "")}
               style={{ background: hex }}
             >
-              {normalizeHex(color) === hex ? <Icon name="check" size={18} strokeWidth={3} className="text-white" /> : null}
+              {normalizeHex(color) === hex ? <Icon name="check" size={14} strokeWidth={3} className="text-white" /> : null}
             </button>
           ))}
         </div>
@@ -69,18 +69,24 @@ export function BrandColorCard({ slug, current, allowed, editable }: { slug: str
           </div>
           {problem ? <span className="fs-13.5 text-danger">{problem}</span> : null}
         </div>
-        {/* A small likeness of the school's things in the chosen colour. */}
-        <div className="grid gap-3 rounded-chunk border border-line bg-paper p-4 sm:grid-cols-2" style={problem ? undefined : brandStyle(normalizeHex(color) ?? DEFAULT_BRAND)}>
-          <div className="flex flex-col gap-3">
-            <span className="fs-12.5 font-semibold uppercase tracking-wider text-muted">In the app</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex h-10 items-center rounded-chunk bg-brand px-4 fs-14 font-bold text-white shadow-[0_3px_0_var(--brand-deep)]">Save</span>
-              <span className="inline-flex h-7 items-center rounded-full bg-brand-wash px-2.5 fs-13 font-semibold text-brand-ink">Approved</span>
-              <span className="fs-14 font-semibold text-brand-ink underline">A link</span>
+        {/* A likeness of where the colour shows, made of things that can't be mistaken for controls. */}
+        <div aria-hidden className="pointer-events-none select-none rounded-chunk border border-line bg-paper p-4" style={problem ? undefined : brandStyle(normalizeHex(color) ?? DEFAULT_BRAND)}>
+          <p className="mb-3 fs-12.5 font-semibold uppercase tracking-wider text-muted">Preview</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2.5">
+              <div className="relative flex h-9 items-center gap-2.5 rounded-chunk border border-line bg-canvas px-3 fs-14 font-semibold text-ink">
+                <span className="absolute -left-px top-2 h-5 w-1 rounded-r-full bg-brand" />
+                <Icon name="grid" size={16} className="text-brand-ink" />
+                Overview
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-brand-wash px-2.5 py-0.5 fs-12.5 font-semibold text-brand-ink">Approved</span>
+                <span className="grid h-5 min-w-5 place-items-center rounded-full bg-brand px-1.5 fs-11.5 font-bold text-white">3</span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-sunken">
+                <div className="h-full w-2/3 rounded-full bg-brand" />
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <span className="fs-12.5 font-semibold uppercase tracking-wider text-muted">On documents</span>
             <div className="rounded-md bg-white p-2.5 shadow-card">
               <div className="flex items-center gap-2 border-b-2 border-brand pb-1.5">
                 <span className="size-5 rounded-full bg-brand" />
