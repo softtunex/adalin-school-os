@@ -93,6 +93,13 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+export type HostelSettings = {
+  /** Parents can ask for an exeat in the app. */
+  parentRequests?: boolean;
+  /** Tell parents when their child signs out of school and back in. */
+  notifyMovements?: boolean;
+};
+
 export type TransportSettings = {
   /** Tell parents when their child is marked on the bus. */
   notifyBoarding?: boolean;
@@ -254,6 +261,7 @@ export const schools = pgTable(
     inventorySettings: jsonb("inventory_settings").$type<InventorySettings>().notNull().default({}),
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
+    hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1916,6 +1924,82 @@ export const transportTrips = pgTable(
   (t) => [uniqueIndex("transport_trips_uq").on(t.routeId, t.tripDate, t.direction)],
 );
 
+// ---------- Hostel ----------
+
+export const HOSTEL_GENDERS = ["male", "female", "mixed"] as const;
+export const EXEAT_KINDS = ["weekend", "day", "medical", "family", "other"] as const;
+export const EXEAT_STATUSES = ["pending", "approved", "declined", "out", "back", "cancelled"] as const;
+
+export const hostels = pgTable("hostels", {
+  id: id(),
+  schoolId: schoolId(),
+  name: text("name").notNull(),
+  gender: text("gender", { enum: HOSTEL_GENDERS }).notNull(),
+  wardenId: uuid("warden_id").references(() => memberships.id, { onDelete: "set null" }),
+  termFeeKobo: kobo("term_fee_kobo").notNull().default(0),
+  createdAt: createdAt(),
+});
+
+export const hostelRooms = pgTable(
+  "hostel_rooms",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    hostelId: uuid("hostel_id")
+      .notNull()
+      .references(() => hostels.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    beds: integer("beds").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("hostel_rooms_name_uq").on(t.hostelId, t.name)],
+);
+
+/** A boarder's bed. One bed per student, one student per bed. */
+export const hostelBeds = pgTable(
+  "hostel_beds",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    roomId: uuid("room_id")
+      .notNull()
+      .references(() => hostelRooms.id, { onDelete: "cascade" }),
+    bed: integer("bed").notNull(),
+    since: date("since").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("hostel_beds_student_uq").on(t.studentId), uniqueIndex("hostel_beds_bed_uq").on(t.roomId, t.bed)],
+);
+
+/** Permission for a boarder to leave school, and their sign-out and return. */
+export const exeats = pgTable(
+  "exeats",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: EXEAT_KINDS }).notNull(),
+    reason: text("reason").notNull(),
+    leaveAt: timestamp("leave_at", { withTimezone: true }).notNull(),
+    returnBy: timestamp("return_by", { withTimezone: true }).notNull(),
+    collectedBy: text("collected_by"),
+    status: text("status", { enum: EXEAT_STATUSES }).notNull().default("pending"),
+    requestedByUser: uuid("requested_by_user").references(() => users.id, { onDelete: "set null" }),
+    requestedByStaff: boolean("requested_by_staff").notNull().default(false),
+    decidedBy: uuid("decided_by").references(() => memberships.id, { onDelete: "set null" }),
+    decisionNote: text("decision_note"),
+    outAt: timestamp("out_at", { withTimezone: true }),
+    backAt: timestamp("back_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("exeats_student_idx").on(t.studentId, t.leaveAt), index("exeats_school_status_idx").on(t.schoolId, t.status)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1995,4 +2079,8 @@ export const TENANT_TABLES = [
   "transport_routes",
   "transport_riders",
   "transport_trips",
+  "hostels",
+  "hostel_rooms",
+  "hostel_beds",
+  "exeats",
 ] as const;

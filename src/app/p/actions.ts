@@ -9,6 +9,7 @@ import { users } from "@/lib/db/schema";
 import { deliverSoon } from "@/lib/deliver";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
+import { cancelExeat, exeatSchema, requestExeat } from "@/lib/services/hostel";
 import { newConversationSchema, parentReply, parentStartConversation } from "@/lib/services/messaging";
 import { markAnnouncementRead, markParentNotificationsRead } from "@/lib/services/parent-portal";
 import { eq } from "drizzle-orm";
@@ -77,4 +78,28 @@ export async function saveParentAccountAction(_prev: FormState, formData: FormDa
 export async function parentLogoutAction() {
   await endSession();
   redirect("/parent");
+}
+
+export async function requestExeatAction(input: unknown): Promise<FormState> {
+  const parsed = exeatSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the exeat." };
+  try {
+    const user = await requireUser();
+    await requestExeat(getDb(), user.id, parsed.data);
+    revalidatePath(`/p/children/${parsed.data.studentId}`);
+    return { success: "Sent to the hostel warden. You'll hear as soon as they decide." };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function cancelExeatAction(studentId: string, exeatId: string): Promise<FormState> {
+  try {
+    const user = await requireUser();
+    await cancelExeat(getDb(), user.id, exeatId);
+    revalidatePath(`/p/children/${studentId}`);
+    return { success: "Cancelled." };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
 }

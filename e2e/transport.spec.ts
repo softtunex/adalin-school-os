@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { signInParent } from "./parent-session";
 
 test("the transport officer takes the bus register and the parent sees their child got on", async ({ browser, isMobile }) => {
   test.skip(isMobile, "desktop journey; the parent side runs at phone size");
@@ -20,14 +21,7 @@ test("the transport officer takes the bus register and the parent sees their chi
   await officer.getByRole("button", { name: "Save register" }).click();
   await expect(officer.getByText(/Saved: \d+ of \d+ on the bus/)).toBeVisible({ timeout: 30_000 });
 
-  const parent = await (await browser.newContext({ viewport: { width: 412, height: 860 } })).newPage();
-  await parent.goto("/parent");
-  await parent.getByLabel("Phone number or email").fill("parent8@example.com");
-  await parent.getByRole("button", { name: "Send me a code" }).click();
-  await expect(parent.getByLabel("6-digit code")).toBeVisible({ timeout: 30_000 });
-  await parent.getByLabel("6-digit code").fill("123456");
-  await parent.getByRole("button", { name: "Continue" }).click();
-  await expect(parent).toHaveURL(/\/p$/, { timeout: 60_000 });
+  const parent = await signInParent(browser);
   const child = parent.locator("main a[href^='/p/children/']").filter({ hasText: "Oluwaseun" }).first();
   const href = await child.getAttribute("href");
   await parent.goto(`${href}?tab=bus`);

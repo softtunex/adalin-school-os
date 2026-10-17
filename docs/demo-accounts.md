@@ -21,6 +21,7 @@ Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
 | Mr Sunday Eze | Storekeeper | `storekeeper7@demo.schoolos.ng` | Inventory: stock in, issue, sign out and take back assets, stock counts (A4 paper and diesel running low) |
 | Nurse Kemi Adebayo | School nurse | `nurse8@demo.schoolos.ng` | Sick bay: one student resting now, three weeks of visits, health records with allergies (try giving Ibuprofen to someone allergic) |
 | Mr Tunde Bakare | Transport officer | `transport9@demo.schoolos.ng` | Transport: three Lagos routes, the bus register (Bus register tab), riders, buses. The Director can add bus fees to invoices. |
+| Mrs Esther Okoro | Hostel warden | `warden10@demo.schoolos.ng` | Hostel: two hostels, rooms and beds, exeats (Folake Lawal's parent has one waiting for approval; one student is out now) |
 
 ## Parent
 

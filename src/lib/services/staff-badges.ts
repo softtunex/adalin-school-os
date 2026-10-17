@@ -1,6 +1,6 @@
 import { and, count, eq, isNull } from "drizzle-orm";
 import type { DB } from "../db/client";
-import { leaveRequests, lessonNotes, notifications, sickBayVisits } from "../db/schema";
+import { exeats, leaveRequests, lessonNotes, notifications, sickBayVisits } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import type { Access } from "./access";
 import { lowStockCount } from "./inventory";
@@ -10,7 +10,7 @@ import { staffUnreadCount } from "./messaging";
 export async function staffBadges(db: DB, access: Access): Promise<Record<string, number>> {
   const reviews = access.permissions.has("teaching:review") && access.plan.features.includes("assignments");
   const approvesLeave = access.permissions.has("staff:leave") && access.plan.features.includes("staff_attendance");
-  const [messages, [{ n }], [{ notes }], [{ leave }], low, [{ inBay }]] = await Promise.all([
+  const [messages, [{ n }], [{ notes }], [{ leave }], low, [{ inBay }], [{ exeat }]] = await Promise.all([
     access.permissions.has("comms:message") ? staffUnreadCount(db, access) : Promise.resolve(0),
     withTenant(db, access.school.id, (tx) =>
       tx.select({ n: count() }).from(notifications).where(and(eq(notifications.userId, access.user.id), eq(notifications.kind, "announcement"), isNull(notifications.readAt))),
@@ -25,8 +25,11 @@ export async function staffBadges(db: DB, access: Access): Promise<Record<string
     access.permissions.has("operations:health") && access.plan.features.includes("health")
       ? withTenant(db, access.school.id, (tx) => tx.select({ inBay: count() }).from(sickBayVisits).where(isNull(sickBayVisits.leftAt)))
       : Promise.resolve([{ inBay: 0 }]),
+    access.permissions.has("operations:hostel") && access.plan.features.includes("hostel")
+      ? withTenant(db, access.school.id, (tx) => tx.select({ exeat: count() }).from(exeats).where(eq(exeats.status, "pending")))
+      : Promise.resolve([{ exeat: 0 }]),
   ]);
-  return { "/messages": messages, "/announcements": n, "/lesson-notes": notes, "/hr": leave, "/inventory": low, "/sick-bay": inBay };
+  return { "/messages": messages, "/announcements": n, "/lesson-notes": notes, "/hr": leave, "/inventory": low, "/sick-bay": inBay, "/hostel": exeat };
 }
 
 /** Opening a page clears its badge. */

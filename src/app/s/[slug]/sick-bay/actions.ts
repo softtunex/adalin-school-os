@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requestMeta, requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
+import { deliverSoon } from "@/lib/deliver";
 import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { healthRecordSchema, healthSettingsSchema, OUTCOME_LABEL, recordVisit, saveHealthRecord, saveHealthSettings, updateVisit, updateVisitSchema, visitSchema } from "@/lib/services/health";
@@ -24,6 +25,7 @@ export async function recordVisitAction(slug: string, input: unknown): Promise<F
   try {
     const { access, ip } = await ctx(slug);
     const r = await recordVisit(getDb(), access, parsed.data, ip);
+    if (r.told) deliverSoon();
     done(slug);
     return { success: closed(r.visit.outcome, r.told) };
   } catch (error) {
@@ -37,6 +39,7 @@ export async function updateVisitAction(slug: string, input: unknown): Promise<F
   try {
     const { access, ip } = await ctx(slug);
     const r = await updateVisit(getDb(), access, parsed.data, ip);
+    if (r.told) deliverSoon();
     done(slug);
     return { success: r.visit.outcome ? closed(r.visit.outcome, r.told) : "Saved." };
   } catch (error) {

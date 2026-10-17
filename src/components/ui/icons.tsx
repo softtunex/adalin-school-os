@@ -73,6 +73,7 @@ const PATHS = {
   library: "M4 4v16M8 6v14M12 6v14M16 6l4 14",
   health: "M9 3h6v6h6v6h-6v6H9v-6H3V9h6z",
   bus: "M5 17V6a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v11zM5 11h14M8 21v-4M16 21v-4M8 14h.01M16 14h.01",
+  bed: "M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5M7 11.5a1.5 1.5 0 1 0 0-.01",
   box: "M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5",
 } as const;
 
