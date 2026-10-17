@@ -40,6 +40,7 @@ import { BrandColorCard } from "./brand-color";
 import { DataTab } from "./data-tab";
 import { ApiTab } from "./api-tab";
 import { SsoTab } from "./sso-tab";
+import { CampusTab } from "./campus-tab";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -85,6 +86,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canDocuments ? [{ key: "documents", label: "Documents", href: `${base}?tab=documents` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
             ...(can(access, "school:billing") ? [{ key: "addons", label: "Add-ons", href: `${base}?tab=addons` }] : []),
+            ...(can(access, "school:billing") ? [{ key: "campuses", label: "Campuses", href: `${base}?tab=campuses` }] : []),
             ...(can(access, "school:sso") ? [{ key: "signin", label: "Staff sign-in", href: `${base}?tab=signin` }] : []),
             ...(can(access, "school:api") ? [{ key: "api", label: "API & webhooks", href: `${base}?tab=api` }] : []),
             ...(can(access, "school:export") ? [{ key: "data", label: "Data & privacy", href: `${base}?tab=data` }] : []),
@@ -120,6 +122,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
           <MessagingTab slug={slug} access={access} bought={sp.bought} failed={!!sp.failed} />
         ) : tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
           <PaymentsTab slug={slug} access={access} />
+        ) : tab === "campuses" && can(access, "school:billing") ? (
+          <CampusTab slug={slug} access={access} />
         ) : tab === "signin" && can(access, "school:sso") ? (
           <SsoTab slug={slug} access={access} />
         ) : tab === "api" && can(access, "school:api") ? (

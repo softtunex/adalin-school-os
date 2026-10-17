@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/icons";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { listUserSchools } from "@/lib/services/access";
+import { listUserGroups } from "@/lib/services/groups";
 import { myChildren } from "@/lib/services/parent-portal";
 
 export const metadata: Metadata = { title: "Your schools" };
@@ -19,9 +20,9 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
   const schools = await listUserSchools(getDb(), user.id);
 
   if (user.username) redirect("/learn");
-  const children = await myChildren(getDb(), user.id);
+  const [children, groups] = await Promise.all([myChildren(getDb(), user.id), listUserGroups(getDb(), user.id)]);
   if (schools.length === 0 && children.length > 0) redirect("/p");
-  if (schools.length === 1 && !pick && children.length === 0) redirect(`/s/${schools[0].slug}`);
+  if (schools.length === 1 && !pick && children.length === 0 && groups.length === 0) redirect(`/s/${schools[0].slug}`);
   const last = schools.find((s) => s.id === user.lastSchoolId);
 
   return (
@@ -50,6 +51,22 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
             </Card>
           </Link>
         ) : null}
+        {groups.map((g) => (
+          <Link key={g.id} href={`/g/${g.id}`} className="group">
+            <Card className="flex items-center gap-4 border-brand/40 bg-brand-wash p-4 transition-colors group-hover:border-brand">
+              <span className="grid size-11 place-items-center rounded-full bg-canvas text-brand">
+                <Icon name="building" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate fs-16 font-extrabold text-ink">{g.name}</span>
+                <span className="block fs-13 font-semibold text-muted">
+                  All {g.campuses} {g.campuses === 1 ? "campus" : "campuses"} side by side
+                </span>
+              </span>
+              <Icon name="arrowRight" className="text-muted group-hover:text-brand" />
+            </Card>
+          </Link>
+        ))}
         {schools.length === 0 ? (
           <EmptyState icon="school" title="You're not part of a school yet">
             If your school invited you, open the link in your invitation email. Otherwise, set up your own school.

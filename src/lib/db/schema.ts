@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigint,
   boolean,
   date,
@@ -314,6 +315,8 @@ export const schools = pgTable(
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
+    /** The group of campuses this school belongs to, if any (Enterprise). */
+    groupId: uuid("group_id").references((): AnyPgColumn => schoolGroups.id, { onDelete: "set null" }),
     /** Single sign-on rules for staff (Enterprise). */
     ssoSettings: jsonb("sso_settings").$type<{ required?: boolean; providers?: ("google" | "microsoft")[] }>().notNull().default({}),
     documentSettings: jsonb("document_settings").$type<DocumentSettings>().notNull().default({}),
@@ -2151,6 +2154,29 @@ export const schoolAddons = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("school_addons_school_idx").on(t.schoolId, t.status)],
+);
+
+/** Several campuses run by one proprietor. Each campus is still its own school, with its own records and bill. */
+export const schoolGroups = pgTable("school_groups", {
+  id: id(),
+  name: text("name").notNull(),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});
+
+/** Who can see a group's dashboard and add campuses to it. */
+export const schoolGroupAdmins = pgTable(
+  "school_group_admins",
+  {
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => schoolGroups.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: createdAt(),
+  },
+  (t) => [primaryKey({ columns: [t.groupId, t.userId] }), index("school_group_admins_user_idx").on(t.userId)],
 );
 
 /** A school letting Adalin support sign in for a while. Only the school can grant it. */
