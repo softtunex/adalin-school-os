@@ -123,7 +123,7 @@ async function Exams({ slug, access, sp }: { slug: string; access: Access; sp: S
                     <Td>
                       <div className="flex items-center gap-2.5">
                         <div className="flex-1">
-                          <Progress value={r.roll ? (r.done / r.roll) * 100 : 0} tone="brand" />
+                          <Progress value={r.roll ? (r.done / r.roll) * 100 : 0} tone="brand" label="Finished" />
                         </div>
                         <span className="tabular fs-13.5 text-body">
                           {r.done}/{r.roll}

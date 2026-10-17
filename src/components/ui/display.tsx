@@ -79,7 +79,7 @@ export function StatCard({
         {value}
         {sub ? <span className="fs-14 font-normal tracking-normal text-muted">{sub}</span> : null}
       </p>
-      {progress ? <Progress value={progress.value} tone={progress.tone} /> : null}
+      {progress ? <Progress value={progress.value} tone={progress.tone} label={typeof label === "string" ? label : undefined} /> : null}
       {caption ? <p className="mt-3 fs-12.5 text-muted sm:fs-13">{caption}</p> : null}
     </Card>
   );
@@ -124,7 +124,8 @@ export function Alert({ tone = "blue", title, children, className }: { tone?: "b
   );
 }
 
-const AVATAR_COLORS = ["#1a8fd6", "#7c5cdb", "#d6457a", "#239a3d", "#c98a00", "#e0612a", "#0f9d9a", "#5b6ee1"];
+// Deep enough for white initials to meet WCAG AA (4.5:1).
+const AVATAR_COLORS = ["#1670b0", "#6a4bc9", "#c2386b", "#1b7a30", "#946500", "#c2501f", "#0b7d7a", "#4a5bd0"];
 
 export function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter((p) => !/^(mr|mrs|ms|miss|dr|prof|chief)\.?$/i.test(p));
@@ -170,11 +171,11 @@ export function EmptyState({ illustration, icon, title, children, action }: { il
   );
 }
 
-export function Progress({ value, tone = "success" }: { value: number; tone?: "success" | "brand" | "blue" | "warning" | "danger" }) {
+export function Progress({ value, tone = "success", label = "Progress" }: { value: number; tone?: "success" | "brand" | "blue" | "warning" | "danger"; label?: string }) {
   const pct = Math.max(0, Math.min(100, value));
   const bg = { success: "bg-success", brand: "bg-brand", blue: "bg-blue", warning: "bg-warning", danger: "bg-danger" }[tone];
   return (
-    <div className="mt-4 h-2 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+    <div className="mt-4 h-2 overflow-hidden rounded-full bg-sunken" role="progressbar" aria-label={label} aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
       <div className={cn("h-full rounded-full", bg)} style={{ width: `${pct}%` }} />
     </div>
   );

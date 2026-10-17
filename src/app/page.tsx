@@ -184,11 +184,12 @@ export default async function HomePage() {
         </section>
       </main>
 
-      <footer className="bg-brand text-white">
+      {/* A deeper orange than the brand, so white text meets WCAG AA (5.5:1). */}
+      <footer className="bg-[#b84300] text-white">
         <div className="mx-auto grid max-w-[1120px] gap-10 px-5 py-14 sm:grid-cols-2 md:grid-cols-4">
           <div className="sm:col-span-2 md:col-span-1">
             <p className="font-display fs-26 font-black">{APP_NAME.toLowerCase()}</p>
-            <p className="mt-2 max-w-[30ch] fs-14.5 text-white/85">School management for schools that want their evenings back.</p>
+            <p className="mt-2 max-w-[30ch] fs-14.5 text-white">School management for schools that want their evenings back.</p>
           </div>
           {[
             { title: "Product", links: [["Features", "/#"], ["Pricing", "/#"], ["Get started", "/signup"]] },
@@ -200,7 +201,7 @@ export default async function HomePage() {
               <ul className="mt-3 flex flex-col gap-2">
                 {col.links.map(([label, href]) => (
                   <li key={label}>
-                    <Link href={href} className="fs-14.5 text-[#FFD9C2] hover:text-white">
+                    <Link href={href} className="fs-14.5 text-white underline-offset-4 hover:underline">
                       {label}
                     </Link>
                   </li>
@@ -210,7 +211,7 @@ export default async function HomePage() {
           ))}
         </div>
         <div className="border-t border-white/20">
-          <p className="mx-auto max-w-[1120px] px-5 py-5 fs-13.5 text-white/80">
+          <p className="mx-auto max-w-[1120px] px-5 py-5 fs-13.5 text-white">
             © {new Date().getFullYear()} Adalin Technologies · Lagos, Nigeria
           </p>
         </div>

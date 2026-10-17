@@ -207,7 +207,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
             <Card className="p-5">
               <p className="fs-14 text-muted">{balance > 0 ? "Still owing" : "Balance"}</p>
               <p className={`tabular mt-1 fs-30 font-semibold leading-none tracking-[-0.02em] ${balance > 0 ? (overdue ? "text-danger" : "text-ink") : "text-success"}`}>{formatNaira(Math.max(0, balance))}</p>
-              <Progress value={paidPct} tone={paidPct >= 100 ? "success" : "brand"} />
+              <Progress value={paidPct} tone={paidPct >= 100 ? "success" : "brand"} label="Paid" />
               <p className="mt-2 fs-13.5 text-muted">
                 {formatNaira(invoice.paidKobo)} of {formatNaira(net)} paid
               </p>

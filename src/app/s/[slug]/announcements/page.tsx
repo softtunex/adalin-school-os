@@ -95,7 +95,7 @@ export default async function AnnouncementsPage({ params }: { params: Promise<{ 
                 {reach.linked}
                 <span className="fs-15 font-normal text-muted"> of {reach.total} parents</span>
               </p>
-              <Progress value={reach.total ? (reach.linked / reach.total) * 100 : 0} tone="brand" />
+              <Progress value={reach.total ? (reach.linked / reach.total) * 100 : 0} tone="brand" label="Parents on the app" />
               {portal ? (
                 <>
                   <p className="fs-14 text-muted">Parents sign in with the phone number or email on their child&apos;s record. No passwords. Share this link in your WhatsApp groups:</p>

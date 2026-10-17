@@ -162,7 +162,7 @@ export default async function FeesOverviewPage({ params, searchParams }: { param
                           <Td>
                             <div className="flex items-center gap-2.5">
                               <div className="-mt-4 flex-1">
-                                <Progress value={pct} tone={pct >= 100 ? "success" : pct >= 50 ? "blue" : "warning"} />
+                                <Progress value={pct} tone={pct >= 100 ? "success" : pct >= 50 ? "blue" : "warning"} label="Collected" />
                               </div>
                               <span className="tabular w-11 text-right fs-13 text-muted">{Math.round(pct)}%</span>
                             </div>

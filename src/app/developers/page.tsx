@@ -20,7 +20,8 @@ const ENDPOINTS: { path: string; scope: string | null; about: string; params?: s
 
 function Code({ children }: { children: string }) {
   return (
-    <pre className="overflow-x-auto rounded-chunk bg-ink p-4 font-mono fs-13 leading-relaxed text-canvas">
+    // Focusable, so the code can be scrolled sideways from the keyboard.
+    <pre tabIndex={0} aria-label="Code example" className="overflow-x-auto rounded-chunk bg-ink p-4 font-mono fs-13 leading-relaxed text-canvas focus-visible:outline-2 focus-visible:outline-brand">
       <code>{children}</code>
     </pre>
   );
