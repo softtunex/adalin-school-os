@@ -31,6 +31,7 @@ export const FEATURES = {
   hostel: "Hostel",
   documents: "ID cards, certificates, transcripts",
   branding: "School branding",
+  brand_theme: "School colours and theme",
   audit_log: "Audit log",
   multi_campus: "Multi-campus",
   custom_domain: "Custom domain and white-label",
@@ -95,6 +96,7 @@ const PREMIUM: FeatureKey[] = [
   "transport",
   "hostel",
   "documents",
+  "brand_theme",
 ];
 const ENTERPRISE: FeatureKey[] = [...PREMIUM, "multi_campus", "custom_domain", "api_access", "sso"];
 

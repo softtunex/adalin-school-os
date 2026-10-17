@@ -132,13 +132,13 @@ const s = StyleSheet.create({
   },
 });
 
-export type SchoolHeader = { name: string; address: string | null; phone: string | null; email: string | null; logo: Buffer | string | null; initials: string };
+export type SchoolHeader = { name: string; address: string | null; phone: string | null; email: string | null; logo: Buffer | string | null; initials: string; /** The school colour (Premium); School OS orange otherwise. */ accent?: string };
 
 function Header({ school }: { school: SchoolHeader }) {
   return (
-    <View style={s.header}>
+    <View style={[s.header, school.accent ? { borderBottomColor: school.accent } : {}]}>
       {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not an HTML img */}
-      {school.logo ? <Image src={school.logo} style={s.logo} /> : <Text style={s.crest}>{school.initials}</Text>}
+      {school.logo ? <Image src={school.logo} style={s.logo} /> : <Text style={[s.crest, school.accent ? { backgroundColor: school.accent } : {}]}>{school.initials}</Text>}
       <View style={{ flex: 1 }}>
         <Text style={s.schoolName}>{school.name}</Text>
         {school.address ? <Text style={s.small}>{school.address}</Text> : null}

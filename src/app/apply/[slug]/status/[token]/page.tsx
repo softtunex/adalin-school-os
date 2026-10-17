@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { brandStyle } from "@/lib/brand";
 import { notFound } from "next/navigation";
 import { Kola } from "@/components/illustrations/art";
 import { buttonClass } from "@/components/ui/button-styles";
@@ -44,7 +45,7 @@ export default async function StatusPage({ params, searchParams }: { params: Pro
   const base = `/apply/${slug}/status/${token}`;
 
   return (
-    <div className="min-h-dvh bg-paper px-4 py-8 sm:py-12">
+    <div className="min-h-dvh bg-paper px-4 py-8 sm:py-12" style={brandStyle(page.school.accent)}>
       <div className="mx-auto flex w-full max-w-[560px] flex-col gap-5">
         <SchoolBrand school={page.school} caption="Admissions" />
 

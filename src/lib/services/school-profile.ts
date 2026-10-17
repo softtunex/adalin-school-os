@@ -3,6 +3,9 @@ import { z } from "zod";
 import type { DB } from "../db/client";
 import { plans, schools } from "../db/schema";
 import { withTenant } from "../db/tenant";
+import { brandProblem, normalizeHex } from "../brand";
+import { AppError } from "../errors";
+import { hasFeature } from "../plans/entitlements";
 import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 import { markOnboarding } from "./onboarding";
@@ -89,4 +92,20 @@ export async function setSchoolLogo(db: DB, access: Access, logoUrl: string | nu
 
 export async function listPlans(db: DB) {
   return db.select().from(plans).orderBy(asc(plans.sort));
+}
+
+/** The school's own colour (Premium). Null goes back to School OS orange. */
+export async function setBrandColor(db: DB, access: Access, color: string | null, ip?: string | null) {
+  requirePermission(access, "school:update");
+  if (!hasFeature(access.plan, "brand_theme")) throw new AppError("School colours are on the Premium plan.", "upgrade");
+  let value: string | null = null;
+  if (color) {
+    const problem = brandProblem(color);
+    if (problem) throw new AppError(problem, "invalid");
+    value = normalizeHex(color);
+  }
+  await withTenant(db, access.school.id, async (tx) => {
+    await tx.update(schools).set({ brandColor: value }).where(eq(schools.id, access.school.id));
+    await recordAudit(tx, access.school.id, { userId: access.user.id, name: access.user.name, ip }, { action: "school.brand_color", summary: value ? `Set the school colour to ${value}` : "Went back to the standard colour" });
+  });
 }

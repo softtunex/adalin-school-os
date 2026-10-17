@@ -10,6 +10,7 @@ import {
   guardians,
   issuedDocuments,
   memberships,
+  plans,
   schools,
   scores,
   studentGuardians,
@@ -18,8 +19,10 @@ import {
   TEMPLATE_KINDS,
   users,
   type DocumentSettings,
+  type Signatory,
 } from "../db/schema";
 import { withTenant } from "../db/tenant";
+import { brandOf } from "../brand";
 import { AppError } from "../errors";
 import { hasFeature } from "../plans/entitlements";
 import { requirePermission, type Access } from "./access";
@@ -27,6 +30,7 @@ import { getCurrentTerm } from "./academics";
 import { lagosToday } from "./attendance";
 import { recordAudit } from "./audit";
 import { buildClassResults, resolveTerm } from "./results";
+import { fillTemplate, MERGE_FIELDS, unknownFields, type MergeData } from "../documents/template";
 
 /*
  * Documents the school issues: ID cards, testimonials, certificates, transcripts and letters.
@@ -40,10 +44,13 @@ export const KIND_LABEL: Record<DocumentKind, string> = { id_card: "ID card", te
 const SERIAL_CODE: Record<DocumentKind, string> = { id_card: "ID", testimonial: "TES", certificate: "CRT", transcript: "TRN", letter: "LTR" };
 export const DOC_PAGE_SIZE = 30;
 
-export const DEFAULT_DOCUMENTS: Required<DocumentSettings> = { signatoryName: "", signatoryTitle: "Principal", cardNote: "This card belongs to the school. If found, please return it to the school office." };
+export const DEFAULT_CARD_NOTE = "This card belongs to the school. If found, please return it to the school office.";
+export type DocSettings = { signatories: Signatory[]; cardNote: string };
 
-export function documentSettings(s: DocumentSettings): Required<DocumentSettings> {
-  return { ...DEFAULT_DOCUMENTS, ...s };
+/** The school's document settings, reading the older single-signatory form as the first signatory. */
+export function documentSettings(s: DocumentSettings): DocSettings {
+  const signatories = s.signatories?.length ? s.signatories : [{ name: s.signatoryName ?? "", title: s.signatoryTitle || "Principal", signatureUrl: null }];
+  return { signatories, cardNote: s.cardNote ?? DEFAULT_CARD_NOTE };
 }
 
 function actor(access: Access, ip?: string | null) {
@@ -59,9 +66,19 @@ const fullName = (s: { firstName: string; middleName?: string | null; lastName: 
 
 // ---------- Settings ----------
 
+/** Only images this app stored: local uploads, or Cloudinary in production. */
+const storedImage = z
+  .string()
+  .max(500)
+  .refine((u) => u.startsWith("/uploads/") || u.startsWith("https://res.cloudinary.com/"), "Upload the signature again.")
+  .nullable()
+  .default(null);
+
 export const documentSettingsSchema = z.object({
-  signatoryName: z.string().trim().max(120),
-  signatoryTitle: z.string().trim().min(2, "Give the signatory's title.").max(80),
+  signatories: z
+    .array(z.object({ name: z.string().trim().max(120), title: z.string().trim().min(2, "Give each signatory's title, e.g. Principal.").max(80), signatureUrl: storedImage }))
+    .min(1, "Keep at least one signatory.")
+    .max(3, "Up to three people can sign."),
   cardNote: z.string().trim().max(160),
 });
 
@@ -69,35 +86,16 @@ export async function saveDocumentSettings(db: DB, access: Access, input: z.infe
   requireDocuments(access);
   await db.update(schools).set({ documentSettings: input }).where(eq(schools.id, access.school.id));
   await withTenant(db, access.school.id, (tx) =>
-    recordAudit(tx, access.school.id, actor(access, ip), { action: "documents.settings", summary: `Documents signed by ${input.signatoryName || "the school"}, ${input.signatoryTitle}` }),
+    recordAudit(tx, access.school.id, actor(access, ip), {
+      action: "documents.settings",
+      summary: `Documents signed by ${input.signatories.map((s) => [s.name, s.title].filter(Boolean).join(", ")).join("; ")}`,
+    }),
   );
 }
 
 // ---------- Templates ----------
 
-/** Words a template can use. Filled in per student when the letter is printed. */
-export const MERGE_FIELDS = [
-  ["name", "Student's full name"],
-  ["first_name", "Student's first name"],
-  ["admission_no", "Admission number"],
-  ["class", "Current class"],
-  ["parent", "Parent or guardian's name"],
-  ["school", "School name"],
-  ["date", "Today's date"],
-  ["session", "Current session"],
-  ["term", "Current term"],
-] as const;
-
-export type MergeData = Partial<Record<(typeof MERGE_FIELDS)[number][0], string>>;
-
-export function fillTemplate(text: string, data: MergeData) {
-  return text.replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (m, k: string) => data[k as keyof MergeData] ?? m);
-}
-
-export function unknownFields(text: string) {
-  const known = new Set<string>(MERGE_FIELDS.map(([k]) => k));
-  return [...new Set([...text.matchAll(/\{\{\s*([a-z_]+)\s*\}\}/g)].map((m) => m[1]).filter((k) => !known.has(k)))];
-}
+export { fillTemplate, MERGE_FIELDS, unknownFields, type MergeData } from "../documents/template";
 
 export const BUILT_IN_TEMPLATES: { kind: TemplateKind; name: string; title: string; body: string }[] = [
   {
@@ -501,8 +499,21 @@ export async function documentPeople(db: DB, access: Access) {
 
 /** What anyone scanning the QR code sees. Needs only the school and the code on the paper. */
 export async function verifyDocument(db: DB, slug: string, token: string) {
-  const [school] = await db.select({ id: schools.id, name: schools.name, slug: schools.slug, logoUrl: schools.logoUrl }).from(schools).where(eq(schools.slug, slug));
-  if (!school || !/^[\w-]{10,40}$/.test(token)) return null;
+  const [row] = await db.select({ school: schools, features: plans.features }).from(schools).leftJoin(plans, eq(plans.key, schools.planKey)).where(eq(schools.slug, slug));
+  const s = row?.school;
+  const school = s
+    ? {
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        logoUrl: s.logoUrl,
+        address: [s.address, s.city, s.state].filter(Boolean).join(", ") || null,
+        phone: s.phone,
+        email: s.email,
+        accent: brandOf(s, row.features ?? []),
+      }
+    : null;
+  if (!school ||!/^[\w-]{10,40}$/.test(token)) return null;
   return withTenant(db, school.id, async (tx) => {
     const [doc] = await tx.select().from(issuedDocuments).where(eq(issuedDocuments.token, token));
     if (!doc) return { school, doc: null, holderActive: null };

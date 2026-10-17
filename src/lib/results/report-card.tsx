@@ -49,7 +49,7 @@ const s = StyleSheet.create({
 });
 
 export type ReportCardData = {
-  school: { name: string; motto: string | null; address: string | null; phone: string | null; email: string | null; logo: Buffer | string | null; initials: string };
+  school: { name: string; motto: string | null; address: string | null; phone: string | null; email: string | null; logo: Buffer | string | null; initials: string; accent?: string };
   term: { name: string; session: string };
   className: string;
   classSize: number;
@@ -92,10 +92,10 @@ export function ReportCards({ data }: { data: ReportCardData }) {
         return (
           <Page key={st.admissionNo} size="A4" style={s.page}>
             {data.watermark ? <Text style={s.watermark} fixed>School OS · Free plan</Text> : null}
-            <View style={s.header}>
+            <View style={[s.header, data.school.accent ? { borderBottomColor: data.school.accent } : {}]}>
               {/* react-pdf images have no alt attribute; the school name sits beside the logo. */}
               {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              {data.school.logo ? <Image src={data.school.logo} style={s.logo} /> : <Text style={s.crest}>{data.school.initials}</Text>}
+              {data.school.logo ? <Image src={data.school.logo} style={s.logo} /> : <Text style={[s.crest, data.school.accent ? { backgroundColor: data.school.accent } : {}]}>{data.school.initials}</Text>}
               <View style={{ flex: 1 }}>
                 <Text style={s.schoolName}>{data.school.name.toUpperCase()}</Text>
                 {data.school.motto ? <Text style={s.motto}>{data.school.motto}</Text> : null}

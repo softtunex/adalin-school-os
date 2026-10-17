@@ -39,6 +39,7 @@ import { LogoCard } from "./logo-card";
 import { BuyCredits, CommsSettingsForm } from "./messaging-forms";
 import { FeeRulesForm, SettlementForm } from "./payments-forms";
 import { ProfileForm } from "./profile-form";
+import { BrandColorCard } from "./brand-color";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -125,6 +126,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             </div>
             <div className="flex flex-col gap-5">
             {can(access, "school:update") ? <LogoCard slug={slug} name={s.name} logoUrl={s.logoUrl} /> : null}
+            {can(access, "school:update") ? <BrandColorCard slug={slug} current={s.brandColor} allowed={hasFeature(access.plan, "brand_theme")} editable /> : null}
             <Card className="p-5 sm:p-6">
               <ProfileForm
                 slug={slug}

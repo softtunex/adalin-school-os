@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requestMeta, requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { userMessage } from "@/lib/errors";
+import { requirePermission } from "@/lib/services/access";
+import { storeImage } from "@/lib/storage";
 import type { FormState } from "@/lib/form-state";
 import {
   deleteTemplate,
@@ -96,8 +98,22 @@ export async function deleteTemplateAction(slug: string, id: string): Promise<Re
   });
 }
 
-export async function saveDocumentSettingsAction(slug: string, _prev: FormState, formData: FormData): Promise<FormState> {
-  const parsed = documentSettingsSchema.safeParse({ signatoryName: formData.get("signatoryName") ?? "", signatoryTitle: formData.get("signatoryTitle") ?? "", cardNote: formData.get("cardNote") ?? "" });
+/** Stores a signature image. It takes effect when the settings are saved. */
+export async function uploadSignatureAction(slug: string, formData: FormData): Promise<FormState & { url?: string }> {
+  const file = formData.get("signature");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image first." };
+  try {
+    const access = await requireAccess(slug);
+    requirePermission(access, "documents:issue");
+    const url = await storeImage(`signatures/${access.school.id}`, new Uint8Array(await file.arrayBuffer()), 512 * 1024);
+    return { success: "Uploaded.", url };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function saveDocumentSettingsAction(slug: string, input: unknown): Promise<FormState> {
+  const parsed = documentSettingsSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the settings." };
   return run(slug, async ({ access, ip }) => {
     await saveDocumentSettings(getDb(), access, parsed.data, ip);

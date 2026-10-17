@@ -1,8 +1,18 @@
 import "server-only";
+import { eq } from "drizzle-orm";
 import { initials } from "@/components/ui/display";
-import type { schools } from "../db/schema";
+import { brandOf } from "../brand";
+import { getDb } from "../db/client";
+import { plans, type schools } from "../db/schema";
 import { readLocalUpload } from "../storage";
 import type { SchoolHeader } from "./documents";
+
+/** The school's colour for its documents: its own on plans with school colours, School OS orange otherwise. */
+export async function schoolAccent(school: typeof schools.$inferSelect) {
+  if (!school.brandColor) return undefined;
+  const [plan] = await getDb().select({ features: plans.features }).from(plans).where(eq(plans.key, school.planKey));
+  return brandOf(school, plan?.features ?? []);
+}
 
 /** School letterhead for PDFs, with the logo read from local storage or Cloudinary. */
 export async function schoolHeader(school: typeof schools.$inferSelect): Promise<SchoolHeader> {
@@ -16,6 +26,7 @@ export async function schoolHeader(school: typeof schools.$inferSelect): Promise
     email: school.email,
     logo,
     initials: initials(school.name),
+    accent: await schoolAccent(school),
   };
 }
 

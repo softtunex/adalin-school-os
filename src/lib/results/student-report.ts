@@ -8,6 +8,7 @@ import { hasFeature } from "../plans/entitlements";
 import { getPlanForSchool } from "../plans/plan-for-school";
 import type { buildClassResults } from "../services/results";
 import { readLocalUpload } from "../storage";
+import { schoolAccent } from "../fees/school-header";
 import { ReportCards } from "./report-card";
 
 function age(dob: string | null) {
@@ -31,7 +32,7 @@ export async function renderStudentReportCard(db: DB, school: typeof schools.$in
   const pdf = await renderToBuffer(
     createElement(ReportCards, {
       data: {
-        school: { name: school.name, motto: school.motto, address: [school.address, school.city, school.state].filter(Boolean).join(", ") || null, phone: school.phone, email: school.email, logo, initials: initials(school.name) },
+        school: { name: school.name, motto: school.motto, address: [school.address, school.city, school.state].filter(Boolean).join(", ") || null, phone: school.phone, email: school.email, logo, initials: initials(school.name), accent: await schoolAccent(school) },
         term: { name: built.term.term.name, session: built.term.session.name },
         className: built.class.name,
         classSize: built.summary.withResults,

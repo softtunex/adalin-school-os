@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, useState, type CSSProperties, type ReactNode } from "react";
 import { flattenNav, type ResolvedNav } from "@/lib/navigation";
 import { Avatar, initials } from "./ui/display";
 import { Icon } from "./ui/icons";
@@ -13,6 +13,8 @@ type Props = {
   school: { name: string; slug: string; planName: string; logoUrl: string | null };
   user: { name: string; email: string; roleNames: string[] };
   nav: ResolvedNav;
+  /** The school colour as CSS variables, when the school has one. */
+  brand?: CSSProperties;
   children: ReactNode;
 };
 
@@ -76,7 +78,7 @@ export function AppShell(props: Props) {
   const unread = flattenNav(props.nav).reduce((n, i) => n + (i.locked ? 0 : (i.badge ?? 0)), 0);
 
   return (
-    <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--paper)_287px,var(--line)_287px,var(--line)_288px,var(--canvas)_288px)]">
+    <div style={props.brand} className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:bg-[linear-gradient(to_right,var(--paper)_287px,var(--line)_287px,var(--line)_288px,var(--canvas)_288px)]">
       <aside className="sticky top-0 hidden h-dvh border-r border-line bg-paper lg:block">
         <SidebarBody {...props} pathname={pathname} />
       </aside>

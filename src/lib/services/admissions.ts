@@ -13,6 +13,7 @@ import { recordAudit } from "./audit";
 import { schoolComms } from "./notify";
 import { enqueue, type Outgoing } from "./outbox";
 import { paystack, paystackMode } from "./paystack";
+import { brandOf } from "../brand";
 import { createStudent, guardianInputSchema, normalizePhone, studentInputSchema } from "./students";
 
 /*
@@ -112,7 +113,7 @@ export async function getApplyPage(db: DB, slug: string) {
     ]);
     const open = enabled && !!settings.open;
     return {
-      school: { id: school.id, name: school.name, slug: school.slug, logoUrl: school.logoUrl, city: school.city, state: school.state, phone: school.phone, email: school.email },
+      school: { id: school.id, name: school.name, slug: school.slug, logoUrl: school.logoUrl, city: school.city, state: school.state, phone: school.phone, email: school.email, accent: brandOf(school, plan.features) },
       open,
       levels: settings.levelIds?.length ? levels.filter((l) => settings.levelIds!.includes(l.id)) : levels,
       session: current?.session.name ?? null,

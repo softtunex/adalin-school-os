@@ -11,6 +11,10 @@ import { can, type Access } from "@/lib/services/access";
 import { lagosToday } from "@/lib/services/attendance";
 import { DOC_PAGE_SIZE, documentPeople, KIND_LABEL, listIssued, listTemplates } from "@/lib/services/documents";
 import { IssuePanel, RevokeButton, TemplateActions, TemplateButton } from "./documents-client";
+import type { Brand } from "./preview";
+import { brandOf } from "@/lib/brand";
+import { initials } from "@/components/ui/display";
+import { documentSettings } from "@/lib/services/documents";
 
 export const metadata: Metadata = { title: "Documents" };
 
@@ -31,13 +35,21 @@ export default async function DocumentsPage({ params, searchParams }: { params: 
     );
   }
   const tab = sp.tab === "issued" || sp.tab === "templates" ? sp.tab : "issue";
+  const ds = documentSettings(access.school.documentSettings);
+  const brand: Brand = {
+    name: access.school.name,
+    logoUrl: access.school.logoUrl,
+    accent: brandOf(access.school, access.plan.features),
+    initials: initials(access.school.name),
+    signers: ds.signatories.map((x) => ({ name: x.name, title: x.title, signatureUrl: x.signatureUrl ?? null })),
+  };
   const base = `/s/${slug}/documents`;
   const db = getDb();
   const register = await listIssued(db, access, tab === "issued" ? { q: sp.q, kind: sp.kind, page: Number(sp.page) || 1 } : {});
   const st = register.stats;
   return (
     <>
-      <Topbar title="Documents" context={access.school.name} actions={tab === "templates" && can(access, "documents:templates") ? <TemplateButton slug={slug} /> : null} />
+      <Topbar title="Documents" context={access.school.name} actions={tab === "templates" && can(access, "documents:templates") ? <TemplateButton slug={slug} brand={brand} /> : null} />
       <PageBody>
         <StatGrid>
           <StatCard label="ID cards" value={st.id_card ?? 0} icon="idCard" tone="brand" caption="Printed with QR codes" />
@@ -53,19 +65,20 @@ export default async function DocumentsPage({ params, searchParams }: { params: 
             { key: "templates", label: "Templates", href: `${base}?tab=templates` },
           ]}
         />
-        {tab === "issued" ? <Register slug={slug} sp={sp} register={register} /> : tab === "templates" ? <Templates slug={slug} access={access} /> : <Issue slug={slug} access={access} />}
+        {tab === "issued" ? <Register slug={slug} sp={sp} register={register} /> : tab === "templates" ? <Templates slug={slug} access={access} brand={brand} /> : <Issue slug={slug} access={access} brand={brand} />}
       </PageBody>
     </>
   );
 }
 
-async function Issue({ slug, access }: { slug: string; access: Access }) {
+async function Issue({ slug, access, brand }: { slug: string; access: Access; brand: Brand }) {
   const db = getDb();
   const [people, templates] = await Promise.all([documentPeople(db, access), listTemplates(db, access)]);
   return (
     <IssuePanel
       slug={slug}
       thisYear={lagosToday().slice(0, 4)}
+      brand={brand}
       students={people.students.map((s) => ({ id: s.id, name: s.name, detail: [s.className, s.admissionNo].filter(Boolean).join(" · "), joined: s.admittedOn, className: s.className }))}
       staff={people.staff.map((s) => ({ id: s.id, name: s.name, detail: s.jobTitle ?? "" }))}
       classes={people.classes}
@@ -147,7 +160,7 @@ function Register({ slug, sp, register }: { slug: string; sp: SP; register: Awai
   );
 }
 
-async function Templates({ slug, access }: { slug: string; access: Access }) {
+async function Templates({ slug, access, brand }: { slug: string; access: Access; brand: Brand }) {
   const templates = await listTemplates(getDb(), access);
   const editable = can(access, "documents:templates");
   return (
@@ -172,7 +185,7 @@ async function Templates({ slug, access }: { slug: string; access: Access }) {
               </Td>
               <Td className="text-body">{t.kind === "letter" ? "Letter" : "Certificate"}</Td>
               <Td className="text-body">{t.title}</Td>
-              <Td className="text-right">{editable ? <TemplateActions slug={slug} tpl={{ id: t.id, kind: t.kind, name: t.name, title: t.title, body: t.body }} /> : null}</Td>
+              <Td className="text-right">{editable ? <TemplateActions slug={slug} brand={brand} tpl={{ id: t.id, kind: t.kind, name: t.name, title: t.title, body: t.body }} /> : null}</Td>
             </tr>
           ))}
         </tbody>

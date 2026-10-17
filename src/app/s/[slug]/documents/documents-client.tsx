@@ -11,7 +11,8 @@ import { Icon, type IconName } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/cn";
 import { initialFormState, type FormState } from "@/lib/form-state";
-import { deleteTemplateAction, fromTemplateAction, idCardsAction, revokeAction, saveDocumentSettingsAction, saveTemplateAction, testimonialAction, transcriptAction } from "./actions";
+import { DocPreview, sampleData, type Brand } from "./preview";
+import { deleteTemplateAction, fromTemplateAction, idCardsAction, revokeAction, saveDocumentSettingsAction, saveTemplateAction, testimonialAction, transcriptAction, uploadSignatureAction } from "./actions";
 
 type Result = FormState & { print?: string };
 export type Person = { id: string; name: string; detail: string };
@@ -29,6 +30,16 @@ function useRun() {
       if (!r.error) router.refresh();
     });
   return { pending, msg, setMsg, run };
+}
+
+/** The form's main button, with what's still needed said out loud instead of a silent grey button. */
+function ActionRow({ missing, children }: { missing: string[]; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-3">
+      {missing.length ? <p className="mr-auto fs-13.5 text-muted">Still needed: {missing.join(", ")}.</p> : null}
+      {children}
+    </div>
+  );
 }
 
 function Outcome({ msg }: { msg: Msg }) {
@@ -199,8 +210,11 @@ function IdCardsForm({ slug, students, staff, classes }: { slug: string; student
           ))}
         </div>
       )}
-      <p className="fs-13.5 text-muted">Eight cards to an A4 sheet, bank-card size. A reprinted card keeps the same code, so the old one still checks out; revoke a lost card in the register.</p>
-      <div className="flex justify-end">
+      <p className="fs-13.5 text-muted">
+        Eight cards to an A4 sheet, bank-card size, with the backs on the next page. Print double-sided, flipping on the long edge, and each back lines up behind its card. A reprinted card keeps the same code; revoke a lost card in the
+        register.
+      </p>
+      <ActionRow missing={who === "students" ? (!pick.classId && !pick.ids.length ? ["a class or some students"] : []) : !staffIds.size ? ["at least one member of staff"] : []}>
         <Button
           disabled={pending || (who === "students" ? !pick.classId && !pick.ids.length : !staffIds.size)}
           onClick={() =>
@@ -211,7 +225,7 @@ function IdCardsForm({ slug, students, staff, classes }: { slug: string; student
         >
           {pending ? "Preparing…" : "Make the cards"}
         </Button>
-      </div>
+      </ActionRow>
     </div>
   );
 }
@@ -263,16 +277,27 @@ function TestimonialForm({ slug, students, thisYear }: { slug: string; students:
               <Input id="ts-act" value={d.activities} onChange={set("activities")} placeholder="Debate club, JETS club" />
             </Field>
           </div>
-          <Field label="About them" htmlFor="ts-remark">
+          <Field label="About them" htmlFor="ts-remark" hint={`A sentence or two, at least 10 characters (${d.remark.trim().length} so far).`}>
             <Textarea id="ts-remark" rows={3} value={d.remark} onChange={set("remark")} placeholder="A diligent and respectful student who led the debate team to the state finals." />
           </Field>
         </>
       ) : null}
-      <div className="flex justify-end">
-        <Button disabled={pending || !chosen || d.remark.trim().length < 10} onClick={() => run(() => testimonialAction(slug, { studentId: chosen!.id, ...d }))}>
+      <ActionRow
+        missing={[
+          ...(!chosen ? ["the student"] : []),
+          ...(chosen && !/^\d{4}$/.test(d.yearsFrom) ? ["the year they joined"] : []),
+          ...(chosen && !/^\d{4}$/.test(d.yearsTo) ? ["the year they left"] : []),
+          ...(chosen && !d.lastClass.trim() ? ["their last class"] : []),
+          ...(chosen && d.remark.trim().length < 10 ? ["a sentence or two about them (at least 10 characters)"] : []),
+        ]}
+      >
+        <Button
+          disabled={pending || !chosen || d.remark.trim().length < 10 || !/^\d{4}$/.test(d.yearsFrom) || !/^\d{4}$/.test(d.yearsTo) || !d.lastClass.trim()}
+          onClick={() => run(() => testimonialAction(slug, { studentId: chosen!.id, ...d }))}
+        >
           {pending ? "Issuing…" : "Issue testimonial"}
         </Button>
-      </div>
+      </ActionRow>
     </div>
   );
 }
@@ -285,16 +310,16 @@ function TranscriptForm({ slug, students }: { slug: string; students: Person[] }
       <Outcome msg={msg} />
       <StudentPick people={students} value={pick} single onChange={setPick} />
       <p className="fs-13.5 text-muted">Every published term&apos;s results, subject by subject, with averages and positions.</p>
-      <div className="flex justify-end">
+      <ActionRow missing={pick.ids.length ? [] : ["the student"]}>
         <Button disabled={pending || !pick.ids.length} onClick={() => run(() => transcriptAction(slug, { studentId: pick.ids[0].id }))}>
           {pending ? "Preparing…" : "Issue transcript"}
         </Button>
-      </div>
+      </ActionRow>
     </div>
   );
 }
 
-function TemplateIssueForm({ slug, kind, templates, students, classes }: { slug: string; kind: "letter" | "certificate"; templates: Template[]; students: Person[]; classes: { id: string; name: string }[] }) {
+function TemplateIssueForm({ slug, kind, templates, students, classes, brand }: { slug: string; kind: "letter" | "certificate"; templates: Template[]; students: (Person & { className?: string | null })[]; classes: { id: string; name: string }[]; brand: Brand }) {
   const mine = templates.filter((t) => t.kind === kind);
   const [templateId, setTemplateId] = useState(mine[0]?.id ?? "");
   const [pick, setPick] = useState<{ classId: string; ids: Person[] }>({ classId: "", ids: [] });
@@ -312,21 +337,23 @@ function TemplateIssueForm({ slug, kind, templates, students, classes }: { slug:
           ))}
         </Select>
       </Field>
+      <StudentPick people={students} classes={classes} value={pick} onChange={setPick} />
       {tpl ? (
-        <div className="rounded-chunk border border-line bg-paper p-3.5">
-          <p className="fs-14 font-semibold text-ink">{tpl.title}</p>
-          <p className="mt-1 line-clamp-3 whitespace-pre-line fs-13.5 text-body">{tpl.body}</p>
+        <div className="flex flex-col gap-1.5">
+          <span className="fs-13.5 text-muted">{pick.ids.length ? `Preview for ${pick.ids[0].name}` : "Preview with sample details"}</span>
+          <div className="rounded-chunk bg-sunken p-3">
+            <DocPreview kind={kind} title={tpl.title} body={tpl.body} brand={brand} data={sampleData(brand, pick.ids[0] ? { name: pick.ids[0].name, className: students.find((s) => s.id === pick.ids[0].id)?.className ?? null } : null)} />
+          </div>
         </div>
       ) : null}
-      <StudentPick people={students} classes={classes} value={pick} onChange={setPick} />
-      <div className="flex justify-end">
+      <ActionRow missing={[...(!templateId ? ["a template"] : []), ...(!pick.classId && !pick.ids.length ? ["a class or some students"] : [])]}>
         <Button
           disabled={pending || !templateId || (!pick.classId && !pick.ids.length)}
           onClick={() => run(() => fromTemplateAction(slug, { templateId, classId: pick.classId || null, studentIds: pick.ids.map((p) => p.id) }))}
         >
           {pending ? "Preparing…" : kind === "letter" ? "Make the letters" : "Make the certificates"}
         </Button>
-      </div>
+      </ActionRow>
     </div>
   );
 }
@@ -338,6 +365,7 @@ export function IssuePanel({
   classes,
   templates,
   thisYear,
+  brand,
 }: {
   slug: string;
   students: (Person & { joined: string | null; className: string | null })[];
@@ -345,6 +373,7 @@ export function IssuePanel({
   classes: { id: string; name: string }[];
   templates: Template[];
   thisYear: string;
+  brand: Brand;
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -358,10 +387,10 @@ export function IssuePanel({
         {() => <TranscriptForm slug={slug} students={students} />}
       </IssueCard>
       <IssueCard icon="star" title="Certificates" text="Awards and completion certificates from your templates, for one student or a class.">
-        {() => <TemplateIssueForm slug={slug} kind="certificate" templates={templates} students={students} classes={classes} />}
+        {() => <TemplateIssueForm slug={slug} kind="certificate" templates={templates} students={students} classes={classes} brand={brand} />}
       </IssueCard>
       <IssueCard icon="send" title="Letters" text="Letters to parents from your templates, with each child's details filled in.">
-        {() => <TemplateIssueForm slug={slug} kind="letter" templates={templates} students={students} classes={classes} />}
+        {() => <TemplateIssueForm slug={slug} kind="letter" templates={templates} students={students} classes={classes} brand={brand} />}
       </IssueCard>
     </div>
   );
@@ -403,7 +432,7 @@ export function RevokeButton({ slug, id, serial }: { slug: string; id: string; s
 
 const FIELDS = ["name", "first_name", "admission_no", "class", "parent", "school", "date", "session", "term"];
 
-function TemplateForm({ slug, tpl, onDone }: { slug: string; tpl: Partial<Template>; onDone: () => void }) {
+function TemplateForm({ slug, tpl, brand, onDone }: { slug: string; tpl: Partial<Template>; brand: Brand; onDone: () => void }) {
   const [d, setD] = useState({ kind: tpl.kind ?? "letter", name: tpl.name ?? "", title: tpl.title ?? "", body: tpl.body ?? "" });
   const { pending, msg, run } = useRun();
   const router = useRouter();
@@ -427,6 +456,12 @@ function TemplateForm({ slug, tpl, onDone }: { slug: string; tpl: Partial<Templa
       <Field label="Wording" htmlFor="tp-body" hint="Leave a blank line between paragraphs.">
         <Textarea id="tp-body" rows={9} value={d.body} onChange={(e) => setD({ ...d, body: e.target.value })} />
       </Field>
+      <div className="flex flex-col gap-1.5">
+        <span className="fs-13.5 text-muted">Preview, with sample details</span>
+        <div className="rounded-chunk bg-sunken p-3">
+          <DocPreview kind={d.kind} title={d.title || "Heading"} body={d.body || "Your wording appears here."} data={sampleData(brand)} brand={brand} />
+        </div>
+      </div>
       <div className="flex flex-wrap gap-1.5">
         <span className="fs-13 text-muted">Insert:</span>
         {FIELDS.map((f) => (
@@ -456,7 +491,7 @@ function TemplateForm({ slug, tpl, onDone }: { slug: string; tpl: Partial<Templa
   );
 }
 
-export function TemplateButton({ slug }: { slug: string }) {
+export function TemplateButton({ slug, brand }: { slug: string; brand: Brand }) {
   const [open, setOpen] = useState(false);
   const [key, setKey] = useState(0);
   const close = () => {
@@ -469,13 +504,13 @@ export function TemplateButton({ slug }: { slug: string }) {
         <Icon name="plus" size={18} strokeWidth={2.4} /> New template
       </Button>
       <Modal open={open} onClose={close} title="New template" size="lg">
-        <TemplateForm key={key} slug={slug} tpl={{}} onDone={close} />
+        <TemplateForm key={key} slug={slug} tpl={{}} brand={brand} onDone={close} />
       </Modal>
     </>
   );
 }
 
-export function TemplateActions({ slug, tpl }: { slug: string; tpl: Template }) {
+export function TemplateActions({ slug, tpl, brand }: { slug: string; tpl: Template; brand: Brand }) {
   const router = useRouter();
   const [mode, setMode] = useState<null | "edit" | "delete">(null);
   return (
@@ -488,7 +523,7 @@ export function TemplateActions({ slug, tpl }: { slug: string; tpl: Template }) 
         ]}
       />
       <Modal open={mode === "edit"} onClose={() => setMode(null)} title={`Edit ${tpl.name}`} size="lg">
-        {mode === "edit" ? <TemplateForm slug={slug} tpl={tpl} onDone={() => setMode(null)} /> : null}
+        {mode === "edit" ? <TemplateForm slug={slug} tpl={tpl} brand={brand} onDone={() => setMode(null)} /> : null}
       </Modal>
       <ConfirmDialog
         open={mode === "delete"}
@@ -511,36 +546,120 @@ export function TemplateActions({ slug, tpl }: { slug: string; tpl: Template }) 
   );
 }
 
-export function DocumentSettingsForm({ slug, settings, editable }: { slug: string; settings: { signatoryName: string; signatoryTitle: string; cardNote: string }; editable: boolean }) {
-  const [state, formAction] = useActionState(saveDocumentSettingsAction.bind(null, slug), initialFormState);
+type Signer = { name: string; title: string; signatureUrl: string | null };
+
+function SignatureSlot({ slug, value, onChange, disabled }: { slug: string; value: string | null; onChange: (url: string | null) => void; disabled: boolean }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   return (
-    <Card className="flex max-w-2xl flex-col gap-5 p-5 sm:p-6">
+    <div className="flex flex-col gap-1.5">
+      <span className="fs-14 font-medium text-ink">Signature</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="grid h-16 w-44 place-items-center rounded-chunk border border-dashed border-line-strong bg-canvas">
+          {value ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={value} alt="Signature" className="max-h-14 max-w-40 object-contain" />
+          ) : (
+            <span className="fs-13 text-muted">No signature yet</span>
+          )}
+        </div>
+        <label className={cn("inline-flex h-10 cursor-pointer items-center gap-2 rounded-chunk border-2 border-line-strong bg-canvas px-3.5 fs-14 font-semibold text-ink hover:bg-paper", (disabled || pending) && "pointer-events-none opacity-60")}>
+          <Icon name="upload" size={16} />
+          {pending ? "Uploading…" : value ? "Replace" : "Upload"}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="sr-only"
+            disabled={disabled || pending}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              const fd = new FormData();
+              fd.set("signature", file);
+              setError(null);
+              start(async () => {
+                const r = await uploadSignatureAction(slug, fd);
+                if (r.error || !r.url) setError(r.error ?? "That didn't upload.");
+                else onChange(r.url);
+              });
+            }}
+          />
+        </label>
+        {value && !disabled ? (
+          <Button variant="ghost" size="sm" onClick={() => onChange(null)}>
+            Remove
+          </Button>
+        ) : null}
+      </div>
+      {error ? <span className="fs-13 text-danger">{error}</span> : <span className="fs-13 text-muted">A photo of the signature on white paper, or a PNG with a clear background. Up to 500 KB.</span>}
+    </div>
+  );
+}
+
+export function DocumentSettingsForm({ slug, settings, editable }: { slug: string; settings: { signatories: { name: string; title: string; signatureUrl?: string | null }[]; cardNote: string }; editable: boolean }) {
+  const router = useRouter();
+  const [signers, setSigners] = useState<Signer[]>(settings.signatories.map((x) => ({ name: x.name, title: x.title, signatureUrl: x.signatureUrl ?? null })));
+  const [cardNote, setCardNote] = useState(settings.cardNote);
+  const [pending, start] = useTransition();
+  const [msg, setMsg] = useState<Msg>(null);
+  const update = (i: number, patch: Partial<Signer>) => setSigners((xs) => xs.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  return (
+    <Card className="flex max-w-3xl flex-col gap-5 p-5 sm:p-6">
       <div>
         <h2 className="fs-16 font-semibold">Documents</h2>
-        <p className="mt-0.5 fs-14 text-muted">Who signs testimonials, certificates, transcripts and letters, and what ID cards say on the back line.</p>
+        <p className="mt-0.5 fs-14 text-muted">Who signs testimonials, certificates and transcripts, and what ID cards say on the back. Letters carry the first signature.</p>
       </div>
-      <form action={formAction} className="flex flex-col gap-4">
-        {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
-        {state.success ? <Alert tone="success">{state.success}</Alert> : null}
-        <fieldset disabled={!editable} className="flex flex-col gap-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Signed by" htmlFor="ds-name">
-              <Input id="ds-name" name="signatoryName" defaultValue={settings.signatoryName} placeholder="Dr Adebayo Ogunleye" />
-            </Field>
-            <Field label="Their title" htmlFor="ds-title">
-              <Input id="ds-title" name="signatoryTitle" defaultValue={settings.signatoryTitle} />
-            </Field>
+      {msg ? <Alert tone={msg.tone}>{msg.text}</Alert> : null}
+      <fieldset disabled={!editable || pending} className="flex flex-col gap-4">
+        {signers.map((sg, i) => (
+          <div key={i} className="flex flex-col gap-4 rounded-chunk border border-line bg-paper p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="fs-14 font-semibold text-ink">Signatory {i + 1}{i === 0 ? " (also signs letters and ID cards)" : ""}</span>
+              {signers.length > 1 ? (
+                <Button variant="ghost" size="sm" onClick={() => setSigners((xs) => xs.filter((_, j) => j !== i))}>
+                  <Icon name="x" size={15} /> Remove
+                </Button>
+              ) : null}
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Name" htmlFor={`ds-name-${i}`}>
+                <Input id={`ds-name-${i}`} value={sg.name} onChange={(e) => update(i, { name: e.target.value })} placeholder={i === 0 ? "Dr Adebayo Ogunleye" : "Mr Olatunji Buari"} />
+              </Field>
+              <Field label="Title" htmlFor={`ds-title-${i}`}>
+                <Input id={`ds-title-${i}`} value={sg.title} onChange={(e) => update(i, { title: e.target.value })} placeholder={i === 0 ? "Principal" : "Proprietor"} />
+              </Field>
+            </div>
+            <SignatureSlot slug={slug} value={sg.signatureUrl} onChange={(url) => update(i, { signatureUrl: url })} disabled={!editable} />
           </div>
-          <Field label="ID card note" htmlFor="ds-note">
-            <Input id="ds-note" name="cardNote" defaultValue={settings.cardNote} />
-          </Field>
-        </fieldset>
-        {editable ? (
+        ))}
+        {signers.length < 3 && editable ? (
           <div>
-            <SubmitButton>Save</SubmitButton>
+            <Button variant="secondary" size="sm" onClick={() => setSigners((xs) => [...xs, { name: "", title: xs.length === 1 ? "Proprietor" : "", signatureUrl: null }])}>
+              <Icon name="plus" size={16} /> Add a signatory
+            </Button>
           </div>
         ) : null}
-      </form>
+        <Field label="ID card note" htmlFor="ds-note" hint="Printed on the back of every card.">
+          <Input id="ds-note" value={cardNote} onChange={(e) => setCardNote(e.target.value)} />
+        </Field>
+      </fieldset>
+      {editable ? (
+        <div>
+          <Button
+            disabled={pending}
+            onClick={() =>
+              start(async () => {
+                const r = await saveDocumentSettingsAction(slug, { signatories: signers, cardNote });
+                setMsg(r.error ? { tone: "danger", text: r.error } : { tone: "success", text: r.success ?? "Saved." });
+                if (!r.error) router.refresh();
+              })
+            }
+          >
+            {pending ? "Saving…" : "Save"}
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 }

@@ -34,7 +34,12 @@ async function main() {
     await database.close();
     return;
   }
-  await saveDocumentSettings(db, admin, documentSettingsSchema.parse({ signatoryName: "Dr Adebayo Ogunleye", signatoryTitle: "Principal", cardNote: "This card belongs to Greenfield College. If found, please return it to the school office." }));
+  await saveDocumentSettings(db, admin, documentSettingsSchema.parse({
+      signatories: [
+        { name: "Dr Adebayo Ogunleye", title: "Principal" },
+        { name: "Olatunji Buari", title: "Proprietor" },
+      ],
+      cardNote: "This card belongs to Greenfield College. If found, please return it to the school office." }));
   admin = (await loadAccess(db, user.id, "greenfield-college"))!;
   const [gold] = await withTenant(db, admin.school.id, (tx) => tx.select().from(classes).where(eq(classes.name, "JSS 1 Gold")));
   if (gold) await issueIdCards(db, admin, idCardSchema.parse({ classId: gold.id }));

@@ -93,8 +93,12 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+export type Signatory = { name: string; title: string; signatureUrl?: string | null };
+
 export type DocumentSettings = {
-  /** Who signs testimonials, certificates and letters. */
+  /** Up to three people who sign testimonials, certificates and transcripts. Letters carry the first. */
+  signatories?: Signatory[];
+  /** Before several signatories: the one person who signed. Read as the first signatory. */
   signatoryName?: string;
   signatoryTitle?: string;
   /** Printed on the back line of ID cards, e.g. "If found, please return to the school." */
@@ -253,6 +257,8 @@ export const schools = pgTable(
     state: text("state"),
     country: text("country").notNull().default("Nigeria"),
     logoUrl: text("logo_url"),
+    /** The school's own colour on documents and its pages (Premium). Null keeps School OS orange. */
+    brandColor: text("brand_color"),
     onboarding: jsonb("onboarding").$type<Record<string, boolean>>().notNull().default({}),
     admissionPrefix: text("admission_prefix"),
     nextAdmissionSeq: integer("next_admission_seq").notNull().default(1),

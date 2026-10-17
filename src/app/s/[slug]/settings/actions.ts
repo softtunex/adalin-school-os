@@ -5,7 +5,7 @@ import { requestMeta, requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { userMessage } from "@/lib/errors";
 import { formValues, type FormState } from "@/lib/form-state";
-import { schoolProfileSchema, setSchoolLogo, updateSchoolProfile } from "@/lib/services/school-profile";
+import { schoolProfileSchema, setBrandColor, setSchoolLogo, updateSchoolProfile } from "@/lib/services/school-profile";
 import { storeImage } from "@/lib/storage";
 import { requirePermission } from "@/lib/services/access";
 import { fieldErrors } from "@/lib/validation";
@@ -51,6 +51,17 @@ export async function removeLogoAction(slug: string): Promise<FormState> {
     await setSchoolLogo(getDb(), access, null, (await requestMeta()).ip);
     revalidatePath(`/s/${slug}`, "layout");
     return { success: "Logo removed." };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function setBrandColorAction(slug: string, color: string | null): Promise<FormState> {
+  try {
+    const access = await requireAccess(slug);
+    await setBrandColor(getDb(), access, color, (await requestMeta()).ip);
+    revalidatePath(`/s/${slug}`, "layout");
+    return { success: color ? "School colour saved. Documents and pages use it from now on." : "Back to the standard colour." };
   } catch (error) {
     return { error: userMessage(error) };
   }

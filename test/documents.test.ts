@@ -7,6 +7,8 @@ import { loadAccess, type Access } from "@/lib/services/access";
 import { registerSchoolOwner } from "@/lib/services/accounts";
 import { getAcademicOverview, setupAcademics } from "@/lib/services/academics";
 import {
+  documentSettings,
+  documentSettingsSchema,
   fillTemplate,
   fromTemplateSchema,
   idCardSchema,
@@ -59,6 +61,14 @@ afterAll(async () => {
 });
 
 describe("documents", () => {
+  it("keeps up to three signatories, and reads the older single signatory", () => {
+    expect(documentSettings({ signatoryName: "Dr Ade", signatoryTitle: "Principal" }).signatories).toEqual([{ name: "Dr Ade", title: "Principal", signatureUrl: null }]);
+    const four = Array.from({ length: 4 }, () => ({ name: "A", title: "Principal" }));
+    expect(documentSettingsSchema.safeParse({ signatories: four, cardNote: "" }).success).toBe(false);
+    expect(documentSettingsSchema.safeParse({ signatories: [{ name: "A", title: "Principal", signatureUrl: "https://evil.example/x.png" }], cardNote: "" }).success).toBe(false);
+    expect(documentSettingsSchema.safeParse({ signatories: [{ name: "A", title: "Principal", signatureUrl: "/uploads/signatures/x.png" }, { name: "B", title: "Proprietor" }], cardNote: "" }).success).toBe(true);
+  });
+
   it("fills templates and rejects unknown fields", () => {
     expect(schoolCode("Greenfield College")).toBe("GC");
     expect(fillTemplate("Dear {{parent}}, {{first_name}} is in {{ class }}.", { parent: "Mrs Okafor", first_name: "Ada", class: "JSS 1 Gold" })).toBe("Dear Mrs Okafor, Ada is in JSS 1 Gold.");
