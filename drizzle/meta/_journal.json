@@ -141,6 +141,13 @@
       "when": 1792234566535,
       "tag": "0019_addons",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792235375585,
+      "tag": "0020_platform",
+      "breakpoints": true
     }
   ]
 }

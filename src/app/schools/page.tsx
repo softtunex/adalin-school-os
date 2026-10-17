@@ -36,6 +36,20 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
       <p className="mt-1 fs-15.5 text-muted">Signed in as {user.email}</p>
 
       <div className="mt-8 flex flex-col gap-3">
+        {user.isPlatformAdmin ? (
+          <Link href="/admin" className="group">
+            <Card className="flex items-center gap-4 bg-ink p-4 text-canvas transition-colors group-hover:border-brand">
+              <span className="grid size-11 place-items-center rounded-full bg-canvas/10">
+                <Icon name="shield" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block fs-16 font-extrabold">Adalin admin</span>
+                <span className="block fs-13 opacity-75">Every school, bills, plans and support</span>
+              </span>
+              <Icon name="arrowRight" />
+            </Card>
+          </Link>
+        ) : null}
         {schools.length === 0 ? (
           <EmptyState icon="school" title="You're not part of a school yet">
             If your school invited you, open the link in your invitation email. Otherwise, set up your own school.

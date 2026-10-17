@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import type { DB } from "../db/client";
 import { membershipRoles, memberships, plans, roles, schools, users } from "../db/schema";
 import { AppError } from "../errors";
@@ -22,7 +22,12 @@ export type Access = {
   roles: { id: string; key: string; name: string; kind: RoleKind }[];
   permissions: Set<Permission>;
   isStaff: boolean;
+  /** Set when this is Adalin support's temporary access, given by the school: when it ends. */
+  supportUntil: Date | null;
 };
+
+/** Real memberships, and support access that hasn't run out. */
+const liveMembership = () => or(isNull(memberships.supportUntil), gt(memberships.supportUntil, new Date()));
 
 /** Resolves what a user can do in a school, or null if they aren't an active member. */
 export async function loadAccess(db: DB, userId: string, schoolSlug: string): Promise<Access | null> {
@@ -32,7 +37,7 @@ export async function loadAccess(db: DB, userId: string, schoolSlug: string): Pr
     .innerJoin(schools, eq(schools.id, memberships.schoolId))
     .innerJoin(plans, eq(plans.key, schools.planKey))
     .innerJoin(users, eq(users.id, memberships.userId))
-    .where(and(eq(memberships.userId, userId), eq(schools.slug, schoolSlug), eq(memberships.status, "active")))
+    .where(and(eq(memberships.userId, userId), eq(schools.slug, schoolSlug), inArray(memberships.status, ["active", "support"]), liveMembership()))
     .limit(1);
   if (!row) return null;
 
@@ -53,6 +58,7 @@ export async function loadAccess(db: DB, userId: string, schoolSlug: string): Pr
     roles: assigned.map(({ role }) => ({ id: role.id, key: role.key, name: role.name, kind: role.kind })),
     permissions,
     isStaff: assigned.some(({ role }) => role.kind === "staff"),
+    supportUntil: row.membership.supportUntil,
   };
 }
 
@@ -69,6 +75,6 @@ export async function listUserSchools(db: DB, userId: string) {
     .select({ id: schools.id, name: schools.name, slug: schools.slug, logoUrl: schools.logoUrl })
     .from(memberships)
     .innerJoin(schools, eq(schools.id, memberships.schoolId))
-    .where(and(eq(memberships.userId, userId), eq(memberships.status, "active")))
+    .where(and(eq(memberships.userId, userId), inArray(memberships.status, ["active", "support"]), liveMembership()))
     .orderBy(schools.name);
 }

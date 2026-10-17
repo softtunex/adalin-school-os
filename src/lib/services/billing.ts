@@ -338,7 +338,7 @@ export async function verifyBillPayment(db: DB, reference: string) {
   return settleBill(db, data);
 }
 
-async function liftReadOnlyIfClear(db: DB, schoolId: string) {
+export async function liftReadOnlyIfClear(db: DB, schoolId: string) {
   const today = lagosToday();
   const [{ n }] = await db
     .select({ n: count() })

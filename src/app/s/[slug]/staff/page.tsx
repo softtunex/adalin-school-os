@@ -161,7 +161,7 @@ export default async function StaffPage({
                         {!isSelf ? (
                           <MemberActions
                             slug={slug}
-                            member={{ membershipId: m.membershipId, name: m.name, status: m.status, roleIds: m.roles.map((r) => r.roleId) }}
+                            member={{ membershipId: m.membershipId, name: m.name, status: m.status === "active" ? "active" : "deactivated", roleIds: m.roles.map((r) => r.roleId) }}
                             roles={grantable}
                             canAssign={can(access, "staff:assign_roles")}
                             canDeactivate={can(access, "staff:deactivate")}

@@ -8,7 +8,9 @@ import { FEATURES, LIMITS, type FeatureKey, type LimitKey } from "@/lib/plans/ca
 import type { Access } from "@/lib/services/access";
 import { lagosToday } from "@/lib/services/attendance";
 import { billingOverview, charge, termFraction, TRIAL_DAYS, TRIAL_PLANS } from "@/lib/services/billing";
+import { supportStatus } from "@/lib/services/platform";
 import { PayBillButton, PlanButton } from "./billing-client";
+import { SupportAccess } from "./support-access";
 
 function day(iso: string) {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
@@ -17,7 +19,7 @@ function day(iso: string) {
 /** Plan & billing: what you're on, what you owe, and how to change it. */
 export async function PlanTab({ slug, access, canBill, paid, failed }: { slug: string; access: Access; canBill: boolean; paid?: string; failed?: string }) {
   if (!canBill) return <ReadOnlyPlans access={access} />;
-  const b = await billingOverview(getDb(), access);
+  const [b, grant] = await Promise.all([billingOverview(getDb(), access), supportStatus(getDb(), access)]);
   const today = lagosToday();
   const fraction = b.term ? termFraction({ startsOn: b.term.startsOn, endsOn: b.term.endsOn }, today) : 1;
   const currentPrice = b.plan.pricePerStudentKobo ?? 0;
@@ -116,6 +118,8 @@ export async function PlanTab({ slug, access, canBill, paid, failed }: { slug: s
           </Table>
         )}
       </TableCard>
+
+      <SupportAccess slug={slug} openUntil={grant ? grant.expiresAt.toLocaleString("en-NG", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" }) : null} />
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>

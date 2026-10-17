@@ -275,6 +275,8 @@ export const schools = pgTable(
     adminGrants: jsonb("admin_grants").$type<string[]>().notNull().default([]),
     /** Switched off by Adalin for this school, even if the plan includes them. */
     adminBlocks: jsonb("admin_blocks").$type<string[]>().notNull().default([]),
+    /** Adalin's private notes on the school (deals, contacts, history). Never shown to the school. */
+    adminNote: text("admin_note"),
     onboarding: jsonb("onboarding").$type<Record<string, boolean>>().notNull().default({}),
     admissionPrefix: text("admission_prefix"),
     nextAdmissionSeq: integer("next_admission_seq").notNull().default(1),
@@ -325,10 +327,13 @@ export const memberships = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    status: text("status", { enum: ["active", "deactivated"] })
+    /** "support" is Adalin support's temporary access; staff lists only ever show "active". */
+    status: text("status", { enum: ["active", "deactivated", "support"] })
       .notNull()
       .default("active"),
     jobTitle: text("job_title"),
+    /** Adalin support's temporary access, given by the school. Ends at this time. Null for real staff. */
+    supportUntil: timestamp("support_until", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("memberships_school_user_uq").on(t.schoolId, t.userId), index("memberships_user_idx").on(t.userId)],
@@ -2126,6 +2131,36 @@ export const schoolAddons = pgTable(
   (t) => [index("school_addons_school_idx").on(t.schoolId, t.status)],
 );
 
+/** A school letting Adalin support sign in for a while. Only the school can grant it. */
+export const supportGrants = pgTable(
+  "support_grants",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    grantedBy: uuid("granted_by").references(() => memberships.id, { onDelete: "set null" }),
+    reason: text("reason"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("support_grants_school_idx").on(t.schoolId, t.expiresAt)],
+);
+
+/** What Adalin's team did in the admin console. Not tied to one school, so outside row-level security. */
+export const platformAudit = pgTable(
+  "platform_audit",
+  {
+    id: id(),
+    actorId: uuid("actor_id").references(() => users.id, { onDelete: "set null" }),
+    actorName: text("actor_name").notNull(),
+    schoolId: uuid("school_id").references(() => schools.id, { onDelete: "set null" }),
+    action: text("action").notNull(),
+    summary: text("summary").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("platform_audit_time_idx").on(t.createdAt), index("platform_audit_school_idx").on(t.schoolId)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -2213,4 +2248,5 @@ export const TENANT_TABLES = [
   "issued_documents",
   "platform_invoices",
   "school_addons",
+  "support_grants",
 ] as const;

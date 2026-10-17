@@ -62,6 +62,8 @@ export async function listStaff(db: DB, access: Access, filters: StaffFilters = 
       })
       .from(memberships)
       .innerJoin(users, eq(users.id, memberships.userId))
+      // Adalin support's temporary access isn't staff.
+      .where(ne(memberships.status, "support"))
       .orderBy(users.name);
     const assignments = await tx
       .select({ membershipId: membershipRoles.membershipId, roleId: roles.id, key: roles.key, name: roles.name, kind: roles.kind })

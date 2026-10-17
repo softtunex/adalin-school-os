@@ -8,6 +8,7 @@ import type { FormState } from "@/lib/form-state";
 import { formatNaira } from "@/lib/money";
 import { buyAddon, cancelAddon } from "@/lib/services/addons";
 import { changePlan, payBill, startTrial } from "@/lib/services/billing";
+import { grantSupport, revokeSupport } from "@/lib/services/platform";
 
 // Billing works in read-only mode: paying the bill is how a school gets out of it.
 async function ctx(slug: string) {
@@ -68,6 +69,28 @@ export async function cancelAddonAction(slug: string, addonId: string): Promise<
     await cancelAddon(getDb(), access, addonId, ip);
     revalidatePath(`/s/${slug}`, "layout");
     return { success: "Stopped. It keeps working until the end of this term." };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function grantSupportAction(slug: string, hours: number, reason: string): Promise<FormState> {
+  try {
+    const { access, ip } = await ctx(slug);
+    await grantSupport(getDb(), access, { hours, reason }, ip);
+    revalidatePath(`/s/${slug}`, "layout");
+    return { success: `Adalin support can sign in for the next ${hours} hours.` };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function revokeSupportAction(slug: string): Promise<FormState> {
+  try {
+    const { access, ip } = await ctx(slug);
+    await revokeSupport(getDb(), access, ip);
+    revalidatePath(`/s/${slug}`, "layout");
+    return { success: "Support access is closed." };
   } catch (error) {
     return { error: userMessage(error) };
   }
