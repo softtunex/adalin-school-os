@@ -8,6 +8,7 @@ import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import {
   addManualBill,
+  confirmSchoolDomain,
   extendTrial,
   manualBillSchema,
   markBillPaid,
@@ -123,4 +124,11 @@ export async function openAsSupportAction(schoolId: string): Promise<FormState> 
     return { error: userMessage(error) };
   }
   redirect(`/s/${slug}`);
+}
+
+export async function confirmDomainAction(schoolId: string) {
+  return run(async (a) => {
+    await confirmSchoolDomain(getDb(), a, schoolId);
+    return "Marked live.";
+  });
 }

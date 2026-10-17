@@ -364,3 +364,11 @@ export async function openAsSupport(db: DB, admin: Admin, schoolId: string) {
   await log(db, admin, "support.entered", `Opened ${school.name} as support`, schoolId);
   return school.slug;
 }
+
+/** For a custom domain Adalin connected by hand: confirms it works so the school's branding shows there. */
+export async function confirmSchoolDomain(db: DB, admin: Admin, schoolId: string) {
+  const school = await schoolOrThrow(db, schoolId);
+  if (!school.customDomain) throw new AppError("This school hasn't set a web address.", "conflict");
+  await db.update(schools).set({ domainVerifiedAt: new Date() }).where(eq(schools.id, schoolId));
+  await log(db, admin, "school.domain", `Marked ${school.customDomain} live for ${school.name}`, schoolId);
+}

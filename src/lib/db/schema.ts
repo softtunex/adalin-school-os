@@ -315,6 +315,10 @@ export const schools = pgTable(
     healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     transportSettings: jsonb("transport_settings").$type<TransportSettings>().notNull().default({}),
     hostelSettings: jsonb("hostel_settings").$type<HostelSettings>().notNull().default({}),
+    /** The school's own web address for School OS, e.g. portal.greenfield.edu.ng (Enterprise). */
+    customDomain: text("custom_domain"),
+    /** When the custom domain was confirmed working. Until then it only shows setup steps. */
+    domainVerifiedAt: timestamp("domain_verified_at", { withTimezone: true }),
     /** The group of campuses this school belongs to, if any (Enterprise). */
     groupId: uuid("group_id").references((): AnyPgColumn => schoolGroups.id, { onDelete: "set null" }),
     /** Single sign-on rules for staff (Enterprise). */
@@ -323,7 +327,7 @@ export const schools = pgTable(
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("schools_slug_uq").on(t.slug)],
+  (t) => [uniqueIndex("schools_slug_uq").on(t.slug), uniqueIndex("schools_custom_domain_uq").on(sql`lower(${t.customDomain})`)],
 );
 
 // ---------- Tenant tables (row-level security on school_id) ----------

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { hostSchool } from "@/lib/auth/host";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand";
 import { AttendanceScene, FeesScene, HeroScene, NigeriaScene, ParentsScene, ReportScene } from "@/components/illustrations/art";
@@ -81,7 +83,8 @@ function Section({ title, text, art, name, points, flip }: (typeof SECTIONS)[num
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  if (await hostSchool()) redirect("/login");
   const plans = DEFAULT_PLANS.filter((p) => p.key !== "enterprise");
   return (
     <div className="min-h-dvh bg-canvas">

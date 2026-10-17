@@ -9,7 +9,7 @@ import { formatNaira } from "@/lib/money";
 import { FEATURES, type FeatureKey } from "@/lib/plans/catalog";
 import { lagosToday } from "@/lib/services/attendance";
 import { schoolDetail } from "@/lib/services/platform";
-import { BillActions, ExtendTrial, FeatureOverrides, ManualBill, NoteForm, OpenAsSupport, PlanControl, StatusControl } from "../../admin-client";
+import { BillActions, ConfirmDomain, ExtendTrial, FeatureOverrides, ManualBill, NoteForm, OpenAsSupport, PlanControl, StatusControl } from "../../admin-client";
 import { BillStatus, KIND_LABEL, SchoolStatus, when, whenTime } from "../../shared";
 
 export const metadata = { title: "School" };
@@ -77,6 +77,17 @@ export default async function AdminSchool({ params }: { params: Promise<{ id: st
               <dd className="text-ink">{when(school.createdAt)}</dd>
               <dt className="text-muted">Contact</dt>
               <dd className="text-ink">{contact.length ? contact.join(" · ") : "—"}</dd>
+              <dt className="text-muted">Web address</dt>
+              <dd className="flex flex-wrap items-center gap-2 text-ink">
+                {school.customDomain ? (
+                  <>
+                    <span className="font-mono fs-13.5">{school.customDomain}</span>
+                    {school.domainVerifiedAt ? <Badge tone="success">Live</Badge> : <><Badge tone="warning">Waiting</Badge><ConfirmDomain schoolId={school.id} /></>}
+                  </>
+                ) : (
+                  "—"
+                )}
+              </dd>
               <dt className="text-muted">Proprietor</dt>
               <dd className="text-ink">
                 {d.owners.length

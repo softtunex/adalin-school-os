@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/modal";
 import type { FormState } from "@/lib/form-state";
 import { koboToInput, parseNaira } from "@/lib/money";
 import {
+  confirmDomainAction,
   deliveredAction,
   extendTrialAction,
   manualBillAction,
@@ -356,5 +357,17 @@ export function PlanEditor({
         ))}
       </div>
     </ActionModal>
+  );
+}
+
+export function ConfirmDomain({ schoolId }: { schoolId: string }) {
+  const act = useAct();
+  return (
+    <span className="inline-flex flex-col items-start gap-1">
+      <Button size="sm" variant="secondary" disabled={act.pending} onClick={() => act.run(() => confirmDomainAction(schoolId))}>
+        {act.pending ? "Saving…" : "Mark live"}
+      </Button>
+      {act.error ? <span className="fs-12.5 text-danger">{act.error}</span> : null}
+    </span>
   );
 }
