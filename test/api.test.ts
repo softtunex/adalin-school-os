@@ -137,6 +137,7 @@ describe("webhooks", () => {
     expect(isPrivateAddress("fd00::1")).toBe(true);
     expect(isPrivateAddress("102.89.1.1")).toBe(false);
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("ALLOW_LOCAL_DB", "");
     try {
       await expect(assertDeliverable("http://example.com/x")).rejects.toThrow(/https/);
       await expect(assertDeliverable("https://internal.example/x", async () => ["10.0.0.5"])).rejects.toThrow(/private network/);
