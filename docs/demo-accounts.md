@@ -19,6 +19,7 @@ Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
 | Miss Zainab Bello | English teacher, JSS 1 | `bello5@demo.schoolos.ng` | Score entry |
 | Mrs Grace Okafor | Librarian | `librarian6@demo.schoolos.ng` | Library: catalogue, lending, returns, fines (one loan overdue, one fine owed) |
 | Mr Sunday Eze | Storekeeper | `storekeeper7@demo.schoolos.ng` | Inventory: stock in, issue, sign out and take back assets, stock counts (A4 paper and diesel running low) |
+| Nurse Kemi Adebayo | School nurse | `nurse8@demo.schoolos.ng` | Sick bay: one student resting now, three weeks of visits, health records with allergies (try giving Ibuprofen to someone allergic) |
 
 ## Parent
 

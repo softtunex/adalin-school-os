@@ -93,6 +93,13 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+export type HealthSettings = {
+  /** Medicines the sick bay keeps, offered when recording a visit. */
+  medicines?: string[];
+  /** Which visits parents hear about when the student leaves the sick bay. */
+  notifyParents?: "every" | "serious" | "none";
+};
+
 export type InventorySettings = {
   categories?: string[];
   /** Rooms and places items can be assigned to. */
@@ -240,6 +247,7 @@ export const schools = pgTable(
     disciplineSettings: jsonb("discipline_settings").$type<DisciplineSettings>().notNull().default({}),
     librarySettings: jsonb("library_settings").$type<LibrarySettings>().notNull().default({}),
     inventorySettings: jsonb("inventory_settings").$type<InventorySettings>().notNull().default({}),
+    healthSettings: jsonb("health_settings").$type<HealthSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1785,6 +1793,56 @@ export const inventoryMoves = pgTable(
   (t) => [index("inventory_moves_item_idx").on(t.itemId, t.createdAt), index("inventory_moves_school_idx").on(t.schoolId, t.movedOn)],
 );
 
+// ---------- Sick bay ----------
+
+export const VISIT_OUTCOMES = ["returned", "rested", "sent_home", "referred"] as const;
+export type MedicineGiven = { medicine: string; dose: string; at: string; allergyOverride?: boolean };
+
+/** Standing health information per student, kept by the nurse. */
+export const studentHealth = pgTable(
+  "student_health",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    allergies: jsonb("allergies").$type<string[]>().notNull().default([]),
+    conditions: jsonb("conditions").$type<string[]>().notNull().default([]),
+    regularMedication: text("regular_medication"),
+    emergencyNote: text("emergency_note"),
+    doctor: text("doctor"),
+    updatedBy: uuid("updated_by").references(() => memberships.id, { onDelete: "set null" }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("student_health_student_uq").on(t.studentId)],
+);
+
+export const sickBayVisits = pgTable(
+  "sick_bay_visits",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    studentId: uuid("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    termId: uuid("term_id").references(() => terms.id, { onDelete: "set null" }),
+    arrivedAt: timestamp("arrived_at", { withTimezone: true }).notNull().defaultNow(),
+    complaint: text("complaint").notNull(),
+    /** Tenths of a degree Celsius, e.g. 378 for 37.8. */
+    temperature: integer("temperature"),
+    observations: text("observations"),
+    treatment: text("treatment"),
+    medicines: jsonb("medicines").$type<MedicineGiven[]>().notNull().default([]),
+    outcome: text("outcome", { enum: VISIT_OUTCOMES }),
+    leftAt: timestamp("left_at", { withTimezone: true }),
+    parentsTold: boolean("parents_told").notNull().default(false),
+    recordedBy: uuid("recorded_by").references(() => memberships.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("sick_bay_visits_student_idx").on(t.studentId, t.arrivedAt), index("sick_bay_visits_school_idx").on(t.schoolId, t.arrivedAt)],
+);
+
 /** Every table with a school_id column. Row-level security is applied to each. */
 export const TENANT_TABLES = [
   "roles",
@@ -1858,4 +1916,6 @@ export const TENANT_TABLES = [
   "inventory_items",
   "inventory_assignments",
   "inventory_moves",
+  "student_health",
+  "sick_bay_visits",
 ] as const;

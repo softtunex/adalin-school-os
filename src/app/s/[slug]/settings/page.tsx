@@ -23,6 +23,8 @@ import { LibrarySettingsForm } from "../library/library-client";
 import { librarySettings } from "@/lib/services/library";
 import { InventorySettingsForm } from "../inventory/inventory-client";
 import { inventorySettings } from "@/lib/services/inventory";
+import { HealthSettingsForm } from "../sick-bay/sick-bay-client";
+import { healthSettings } from "@/lib/services/health";
 import { disciplineSettings } from "@/lib/services/discipline";
 import { payrollSettings } from "@/lib/services/payroll";
 import { LEAVE_KINDS } from "@/lib/db/schema";
@@ -36,7 +38,7 @@ export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ tab?: string; bought?: string; failed?: string }> }) {
   const { slug } = await params;
-  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory"]);
+  const access = await requirePageAccess(slug, ["school:update", "school:billing", "fees:manage", "comms:announce", "admissions:manage", "staff:leave", "expenses:payroll", "operations:discipline", "operations:library", "operations:inventory", "operations:health"]);
   const canProfile = can(access, "school:update") || can(access, "school:billing");
   const sp = await searchParams;
   const canAdmissions = can(access, "admissions:manage") && hasFeature(access.plan, "admissions");
@@ -45,6 +47,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
   const canDiscipline = can(access, "operations:discipline") && hasFeature(access.plan, "discipline");
   const canLibrary = can(access, "operations:library") && hasFeature(access.plan, "library");
   const canInventory = can(access, "operations:inventory") && hasFeature(access.plan, "inventory");
+  const canHealth = can(access, "operations:health") && hasFeature(access.plan, "health");
   const tab = sp.tab ?? (canProfile ? "profile" : can(access, "fees:manage") ? "payments" : can(access, "comms:announce") ? "messaging" : "admissions");
   const s = access.school;
   const base = `/s/${slug}/settings`;
@@ -66,11 +69,14 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             ...(canDiscipline ? [{ key: "behaviour", label: "Behaviour", href: `${base}?tab=behaviour` }] : []),
             ...(canLibrary ? [{ key: "library", label: "Library", href: `${base}?tab=library` }] : []),
             ...(canInventory ? [{ key: "inventory", label: "Inventory", href: `${base}?tab=inventory` }] : []),
+            ...(canHealth ? [{ key: "health", label: "Sick bay", href: `${base}?tab=health` }] : []),
             ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
           ]}
         />
 
-        {tab === "inventory" && canInventory ? (
+        {tab === "health" && canHealth ? (
+          <HealthSettingsForm slug={slug} settings={healthSettings(s.healthSettings)} editable />
+        ) : tab === "inventory" && canInventory ? (
           <InventorySettingsForm slug={slug} settings={inventorySettings(s.inventorySettings)} editable />
         ) : tab === "library" && canLibrary ? (
           <LibrarySettingsForm slug={slug} settings={librarySettings(s.librarySettings)} editable />

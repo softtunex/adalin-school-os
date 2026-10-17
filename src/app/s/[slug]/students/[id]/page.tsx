@@ -22,6 +22,9 @@ import { ConductList } from "@/components/conduct-list";
 import { lagosToday } from "@/lib/services/attendance";
 import { behaviourStudents, disciplineSettings, studentConduct } from "@/lib/services/discipline";
 import { RecordButton } from "../../discipline/discipline-client";
+import { HealthPanel } from "@/components/health-panel";
+import { canSeeHealth, studentHealthView } from "@/lib/services/health";
+import { HealthRecordForm } from "../../sick-bay/sick-bay-client";
 
 export const metadata: Metadata = { title: "Student" };
 
@@ -64,7 +67,8 @@ export default async function StudentPage({
   const showFees = can(access, "fees:view") && hasFeature(access.plan, "fees_basic");
   const fees = showFees ? await getStudentFees(getDb(), access, id) : null;
   const showConduct = hasFeature(access.plan, "discipline") && access.isStaff;
-  const tab = ["details", "parents", "history", ...(fees ? ["fees"] : []), ...(showConduct ? ["conduct"] : [])].includes(sp.tab ?? "") ? sp.tab! : "details";
+  const tab = ["details", "parents", "history", ...(fees ? ["fees"] : []), ...(showConduct ? ["conduct"] : []), ...(canSeeHealth(access) ? ["health"] : [])].includes(sp.tab ?? "") ? sp.tab! : "details";
+  const health = tab === "health" ? await studentHealthView(getDb(), access, id) : null;
   const conduct = tab === "conduct" ? await studentConduct(getDb(), access, id) : null;
   const pupils = tab === "conduct" ? await behaviourStudents(getDb(), access) : [];
   const me = pupils.find((p) => p.id === id);
@@ -138,6 +142,7 @@ export default async function StudentPage({
                 { key: "history", label: "Class history", href: `${base}?tab=history`, count: history.length },
                 ...(fees ? [{ key: "fees", label: "Fees", href: `${base}?tab=fees`, count: fees.invoices.length }] : []),
                 ...(showConduct ? [{ key: "conduct", label: "Conduct", href: `${base}?tab=conduct` }] : []),
+                ...(canSeeHealth(access) ? [{ key: "health", label: "Health", href: `${base}?tab=health` }] : []),
               ]}
             />
 
@@ -266,6 +271,29 @@ export default async function StudentPage({
                   />
                 ) : null}
               </div>
+            ) : null}
+
+            {tab === "health" && health ? (
+              <HealthPanel
+                name={s.firstName}
+                record={health.record}
+                visits={health.visits}
+                editor={
+                  health.canEdit ? (
+                    <HealthRecordForm
+                      slug={slug}
+                      studentId={id}
+                      record={{
+                        allergies: health.record?.allergies ?? [],
+                        conditions: health.record?.conditions ?? [],
+                        regularMedication: health.record?.regularMedication ?? "",
+                        emergencyNote: health.record?.emergencyNote ?? "",
+                        doctor: health.record?.doctor ?? "",
+                      }}
+                    />
+                  ) : undefined
+                }
+              />
             ) : null}
 
             {tab === "conduct" && conduct ? (
