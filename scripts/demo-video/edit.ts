@@ -102,13 +102,18 @@ function chapterCard(n: number, total: number, title: string, plans: string[], l
     </div>`;
 }
 
+// The video starts a moment before the recorder's clock, so a cut begins this much earlier to be
+// sure nothing behind it (a test checkout, a loading page) slips through.
+const CUT_LEAD = 0.6;
+
 /** The parts of a take to keep, and where each caption lands once the cuts are made. */
 function timeline(take: Take) {
   const keep: [number, number][] = [];
   let from: number | null = null;
   for (const m of take.marks) {
     if (m.cut === "start" && from !== null) {
-      if (m.at - from > 0.05) keep.push([from, m.at]);
+      const to = Math.max(from, m.at - CUT_LEAD);
+      if (to - from > 0.05) keep.push([from, to]);
       from = null;
     } else if (m.cut === "end") from = m.at;
   }
