@@ -66,7 +66,14 @@
       var el = els[i];
       var text = (el.textContent || "").trim();
       if (text.indexOf("Test mode") !== 0) continue;
-      // Hide the outermost box that is only the notice (not a section that merely starts with it).
+      // Start from the innermost element holding the notice: a section that merely begins with it
+      // (the notice plus a pay form) has a child that starts with it too, so skip that section.
+      var inner = false;
+      for (var c = 0; c < el.children.length; c++) {
+        if ((el.children[c].textContent || "").trim().indexOf("Test mode") === 0) inner = true;
+      }
+      if (inner) continue;
+      // Then hide the outermost box that is only the notice.
       var box = el;
       while (box.parentElement && (box.parentElement.textContent || "").trim() === text) box = box.parentElement;
       box.style.display = "none";
