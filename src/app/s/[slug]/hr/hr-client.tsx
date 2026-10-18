@@ -19,6 +19,7 @@ export function ClockCard({
   status,
   onLeave,
   workday,
+  holiday = null,
   closed,
   resumeAt,
   compact,
@@ -29,6 +30,8 @@ export function ClockCard({
   status: string | null;
   onLeave: string | null;
   workday: boolean;
+  /** The school calendar's holiday today, if that's why there's no school. */
+  holiday?: string | null;
   closed: boolean;
   resumeAt: string;
   compact?: boolean;
@@ -66,7 +69,9 @@ export function ClockCard({
               : clockedIn
                 ? `In since ${clockedIn}${status === "late" ? " (late)" : ""}`
                 : !workday
-                  ? "No school today"
+                  ? holiday
+                    ? `No school today: ${holiday}`
+                    : "No school today"
                   : closed
                     ? "The school day is over"
                     : `Not clocked in yet · school resumes ${resumeAt}`}
@@ -74,7 +79,7 @@ export function ClockCard({
         {msg ? <p className={cn("mt-1 fs-13.5", msg.tone === "danger" ? "text-danger" : "text-success-deep")}>{msg.text}</p> : null}
       </div>
       {onLeave ? null : !clockedIn ? (
-        closed ? null : (
+        closed || !workday ? null : (
           <Button size={compact ? "md" : "lg"} disabled={pending} onClick={() => go("in")}>
             <Icon name="check" size={18} strokeWidth={2.6} /> {pending ? "Clocking in…" : "Clock in"}
           </Button>

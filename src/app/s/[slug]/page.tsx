@@ -93,6 +93,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
             status={myDay.record?.status ?? null}
             onLeave={myDay.onLeave ? LEAVE_LABEL[myDay.onLeave.kind] : null}
             workday={myDay.workday}
+            holiday={myDay.holiday}
             closed={myDay.closed}
             resumeAt={myDay.settings.resumeAt}
           />

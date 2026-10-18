@@ -97,6 +97,7 @@ async function MyDay({ slug, access }: { slug: string; access: Access }) {
         status={d.record?.status ?? null}
         onLeave={d.onLeave ? LEAVE_LABEL[d.onLeave.kind] : null}
         workday={d.workday}
+        holiday={d.holiday}
             closed={d.closed}
         resumeAt={d.settings.resumeAt}
       />
@@ -250,7 +251,7 @@ async function Register({ slug, access, date }: { slug: string; access: Access; 
         <button className={buttonClass("secondary", "sm")}>Show</button>
         <span className="fs-14 text-muted">
           {day(r.day, { weekday: "long", day: "numeric", month: "long" })}
-          {!r.workday ? " · not a workday" : ""}
+          {r.holiday ? ` · ${r.holiday}, no school` : !r.workday ? " · not a workday" : ""}
         </span>
       </form>
       <StatGrid>

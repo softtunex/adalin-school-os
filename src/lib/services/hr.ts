@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { DB, Tx } from "../db/client";
-import { leaveRequests, LEAVE_KINDS, membershipRoles, memberships, roles, schools, staffAttendance, users, type HrSettings, type LeaveKind } from "../db/schema";
+import { calendarEvents, leaveRequests, LEAVE_KINDS, membershipRoles, memberships, roles, schools, staffAttendance, users, type HrSettings, type LeaveKind } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { hasFeature } from "../plans/entitlements";
@@ -56,6 +56,17 @@ export function lagosClock(d = new Date()) {
 function isoDay(iso: string) {
   const d = new Date(`${iso}T12:00:00Z`).getUTCDay();
   return d === 0 ? 7 : d;
+}
+
+/** Whether staff are expected in: one of the school's working days, and not a holiday on its calendar. */
+export async function schoolDay(tx: Tx, s: { workDays: number[] }, day: string) {
+  if (!s.workDays.includes(isoDay(day))) return { open: false as const, holiday: null };
+  const [h] = await tx
+    .select({ title: calendarEvents.title })
+    .from(calendarEvents)
+    .where(and(eq(calendarEvents.kind, "holiday"), lte(calendarEvents.startsOn, day), gte(calendarEvents.endsOn, day)))
+    .limit(1);
+  return h ? { open: false as const, holiday: h.title } : { open: true as const, holiday: null };
 }
 
 function addDays(iso: string, n: number) {
@@ -115,6 +126,8 @@ export async function clockIn(db: DB, access: Access, now = new Date()) {
   return withTenant(db, access.school.id, async (tx) => {
     const [existing] = await tx.select().from(staffAttendance).where(and(eq(staffAttendance.membershipId, access.membershipId), eq(staffAttendance.date, today)));
     if (existing?.clockIn) throw new AppError(`You clocked in at ${lagosClock(existing.clockIn)}.`, "conflict");
+    const day = await schoolDay(tx, s, today);
+    if (!day.open) throw new AppError(day.holiday ? `There's no school today: ${day.holiday}.` : "There's no school today.", "conflict");
     if ((await approvedLeaveOn(tx, [access.membershipId], today)).length) throw new AppError("You're on approved leave today.", "conflict");
     if (lagosClock(now) >= s.closeAt) throw new AppError(`The school day closed at ${s.closeAt}. Ask your manager to mark today if you were in.`, "conflict");
     const status = lagosClock(now) > s.lateAfter ? "late" : "present";
@@ -154,6 +167,7 @@ export async function getMyDay(db: DB, access: Access, now = new Date()) {
   const today = lagosToday(now);
   const monthStart = `${today.slice(0, 7)}-01`;
   return withTenant(db, access.school.id, async (tx) => {
+    const day = await schoolDay(tx, s, today);
     const [[todayRow], month, requests, onLeave, used] = await Promise.all([
       tx.select().from(staffAttendance).where(and(eq(staffAttendance.membershipId, access.membershipId), eq(staffAttendance.date, today))),
       tx.select().from(staffAttendance).where(and(eq(staffAttendance.membershipId, access.membershipId), gte(staffAttendance.date, monthStart))).orderBy(desc(staffAttendance.date)),
@@ -164,7 +178,8 @@ export async function getMyDay(db: DB, access: Access, now = new Date()) {
     return {
       today,
       settings: s,
-      workday: s.workDays.includes(isoDay(today)),
+      workday: day.open,
+      holiday: day.holiday,
       closed: lagosClock(now) >= s.closeAt,
       record: todayRow ?? null,
       onLeave: onLeave[0] ?? null,
@@ -334,8 +349,8 @@ export async function getRegister(db: DB, access: Access, date?: string, now = n
   const today = lagosToday(now);
   const day = date && /^\d{4}-\d{2}-\d{2}$/.test(date) && date <= today ? date : today;
   const dayOver = day < today || lagosClock(now) >= s.closeAt;
-  const workday = s.workDays.includes(isoDay(day));
   return withTenant(db, access.school.id, async (tx) => {
+    const { open: workday, holiday } = await schoolDay(tx, s, day);
     const staff = await staffList(tx);
     const ids = staff.map((x) => x.membershipId);
     const [records, leave] = await Promise.all([
@@ -349,7 +364,7 @@ export async function getRegister(db: DB, access: Access, date?: string, now = n
       return { ...x, record: rec, leave: lv, status };
     });
     const tally = (k: DayStatus) => rows.filter((r) => r.status === k).length;
-    return { day, today, workday, dayOver, settings: s, rows, counts: { present: tally("present"), late: tally("late"), absent: tally("absent"), leave: tally("leave"), notIn: tally("not_in") } };
+    return { day, today, workday, holiday, dayOver, settings: s, rows, counts: { present: tally("present"), late: tally("late"), absent: tally("absent"), leave: tally("leave"), notIn: tally("not_in") } };
   });
 }
 

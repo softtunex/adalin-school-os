@@ -8,7 +8,7 @@ const base =
   "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-chunk border-2 font-bold transition-[transform,box-shadow,background-color,border-color] duration-75 active:translate-y-[3px] disabled:cursor-not-allowed disabled:opacity-55 disabled:active:translate-y-0";
 
 const variants: Record<Variant, string> = {
-  primary: "border-brand bg-brand text-white shadow-[0_3px_0_var(--brand-deep)] hover:bg-[#ff6d1c] active:shadow-none",
+  primary: "border-brand bg-brand text-white shadow-[0_3px_0_var(--brand-deep)] hover:bg-[color-mix(in_srgb,var(--brand)_88%,white)] active:shadow-none",
   secondary: "border-line-strong bg-canvas text-ink shadow-[0_3px_0_var(--line-strong)] hover:bg-paper active:shadow-none",
   outline: "border-line-strong bg-canvas text-blue shadow-[0_3px_0_var(--line-strong)] hover:bg-paper active:shadow-none",
   danger: "border-danger bg-danger text-white shadow-[0_3px_0_var(--danger-deep)] hover:brightness-105 active:shadow-none",

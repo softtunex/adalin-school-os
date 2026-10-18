@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Database } from "@/lib/db/client";
-import { notifications, roles, schools } from "@/lib/db/schema";
+import { calendarEvents, notifications, roles, schools } from "@/lib/db/schema";
 import { withTenant } from "@/lib/db/tenant";
 import { loadAccess, type Access } from "@/lib/services/access";
 import { registerSchoolOwner } from "@/lib/services/accounts";
@@ -79,6 +79,21 @@ describe("staff attendance", () => {
     owner = (await loadAccess(database.db, owner.user.id, owner.school.slug))!;
     bursar = (await loadAccess(database.db, bursar.user.id, owner.school.slug))!;
     expect((await clockIn(database.db, bursar, at("08:10", "2026-10-15"))).status).toBe("present");
+  });
+
+  it("has no clocking in at weekends or on the calendar's holidays, and nobody is absent then", async () => {
+    // 17 October 2026 is a Saturday.
+    await expect(clockIn(database.db, teacher, at("08:00", "2026-10-17"))).rejects.toThrow(/no school today/);
+    expect((await getMyDay(database.db, teacher, at("08:00", "2026-10-17"))).workday).toBe(false);
+    await withTenant(database.db, owner.school.id, (tx) =>
+      tx.insert(calendarEvents).values({ schoolId: owner.school.id, title: "Mid-term break", kind: "holiday", startsOn: "2026-10-22", endsOn: "2026-10-23" }),
+    );
+    await expect(clockIn(database.db, teacher, at("08:00", "2026-10-22"))).rejects.toThrow(/no school today: Mid-term break/);
+    const day = await getMyDay(database.db, teacher, at("08:00", "2026-10-22"));
+    expect(day).toMatchObject({ workday: false, holiday: "Mid-term break" });
+    const register = await getRegister(database.db, owner, "2026-10-22", at("17:00", "2026-10-22"));
+    expect(register.counts.absent).toBe(0);
+    expect(register.holiday).toBe("Mid-term break");
   });
 });
 
