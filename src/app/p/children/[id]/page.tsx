@@ -96,8 +96,9 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
             ...(bus ? [{ key: "bus", label: "Bus", icon: "bus" as const, value: bus.route.name, sub: bus.stop ? `Stop: ${bus.stop.name}` : "Bus route" }] : []),
             ...(boarding ? [{ key: "hostel", label: "Hostel", icon: "bed" as const, value: boarding.hostel, sub: /^room/i.test(boarding.room) ? boarding.room : `Room ${boarding.room}` }] : []),
             { key: "news", label: "News", icon: "bell" as const, value: String(d.news.length), sub: d.news.length === 1 ? "update" : "updates" },
-          ].map((t) => (
-            <Link key={t.key} href={`${base}?tab=${t.key}`} className="group">
+          ].map((t, i, all) => (
+            // The last tile widens to fill its row, so it never sits alone.
+            <Link key={t.key} href={`${base}?tab=${t.key}`} className={`group ${i === all.length - 1 ? `${all.length % 2 ? "max-sm:col-span-2" : ""} ${["", "sm:col-span-3", "sm:col-span-2"][all.length % 3]}` : ""}`}>
               <Card className={`flex h-full flex-col gap-2 p-4 transition-colors group-hover:border-brand ${"alert" in t && t.alert ? "border-danger" : ""}`}>
                 <span className="flex items-center justify-between gap-2">
                   <span className="fs-14 font-semibold text-ink">{t.label}</span>
