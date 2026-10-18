@@ -4,7 +4,8 @@ import { cn } from "@/lib/cn";
 /** URL-driven tabs, so each tab is linkable and survives refresh. */
 export function Tabs({ tabs, current }: { tabs: { key: string; label: string; href: string; count?: number }[]; current: string }) {
   return (
-    <nav className="-mb-px flex gap-1 overflow-x-auto border-b border-line" aria-label="Sections">
+    // On phones the row fades at the right edge, so tabs that run off screen show there are more.
+    <nav className="-mb-px flex gap-1 overflow-x-auto border-b border-line max-sm:pr-8 max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)]" aria-label="Sections">
       {tabs.map((t) => {
         const active = t.key === current;
         return (

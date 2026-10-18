@@ -18,7 +18,7 @@ test("a teacher reopens a register with no connection, and other pages say they'
   test.skip(!sw, "service worker only runs in production builds");
 
   await page.goto("/s/adalin-college/attendance");
-  await page.getByRole("link", { name: /Take register|View or edit register/ }).first().click();
+  await page.getByRole("link", { name: /Take (a )?register|View or edit register/ }).first().click();
   await expect(page.getByRole("button", { name: /Save register/ })).toBeVisible({ timeout: 30_000 });
   const register = page.url();
   // Let the worker take control, then visit once more so the page is saved for offline use.

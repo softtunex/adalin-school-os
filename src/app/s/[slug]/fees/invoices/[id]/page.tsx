@@ -62,7 +62,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ slug: 
               <Icon name="download" size={18} />
               <span className="hidden sm:inline">Download PDF</span>
             </a>
-            {!isVoid && can(access, "fees:record_payment") ? (
+            {!isVoid && balance > 0 && can(access, "fees:record_payment") ? (
               <RecordPaymentButton slug={slug} today={today} invoice={{ id: invoice.id, number: invoice.number, balance: Math.max(0, balance), balanceLabel: formatNaira(Math.max(0, balance)), hasEmail: contacts.some((c) => c.email) }} />
             ) : null}
           </>

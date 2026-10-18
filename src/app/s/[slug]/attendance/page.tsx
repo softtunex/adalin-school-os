@@ -4,11 +4,12 @@ import { AttendanceScene } from "@/components/illustrations/art";
 import { Illustration } from "@/components/illustrations";
 import { PageBody, Topbar } from "@/components/topbar";
 import { ButtonLink } from "@/components/ui/button";
-import { Badge, Card, EmptyState, StatCard, StatGrid } from "@/components/ui/display";
+import { Alert, Badge, Card, EmptyState, StatCard, StatGrid } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { lagosToday, listAttendanceClasses } from "@/lib/services/attendance";
+import { isSchoolDay } from "@/lib/services/hr";
 import { DatePicker } from "./date-picker";
 import { formatTime } from "@/lib/dates";
 
@@ -22,7 +23,7 @@ export default async function AttendancePage({ params, searchParams }: { params:
   const access = await requirePageAccess(slug, ["attendance:take", "attendance:edit_past", "attendance:report"]);
   const today = lagosToday();
   const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) && sp.date <= today ? sp.date : today;
-  const classes = await listAttendanceClasses(getDb(), access, date);
+  const [classes, day] = await Promise.all([listAttendanceClasses(getDb(), access, date), isSchoolDay(getDb(), access, date)]);
   const taken = classes.filter((c) => c.taken);
   const marked = taken.reduce((n, c) => n + c.present + c.late + c.absent + c.excused, 0);
   const presentish = taken.reduce((n, c) => n + c.present + c.late, 0);
@@ -48,6 +49,11 @@ export default async function AttendancePage({ params, searchParams }: { params:
           </Card>
         ) : (
           <>
+            {!day.open ? (
+              <Alert tone="blue" title={`No school ${isToday ? "today" : "that day"}${day.holiday ? `: ${day.holiday}` : ""}`}>
+                Registers aren&apos;t needed. If a class did meet, you can still take one.
+              </Alert>
+            ) : null}
             <StatGrid>
               <StatCard
                 label="Registers taken"
@@ -55,7 +61,7 @@ export default async function AttendancePage({ params, searchParams }: { params:
                 icon="clipboard"
                 tone="brand"
                 progress={{ value: (taken.length / classes.length) * 100, tone: taken.length === classes.length ? "success" : "brand" }}
-                caption={taken.length === classes.length ? "Every class is done" : `${classes.length - taken.length} still to take`}
+                caption={!day.open && !taken.length ? "Not a school day" : taken.length === classes.length ? "Every class is done" : `${classes.length - taken.length} still to take`}
               />
               <StatCard label="In school" value={marked ? `${Math.round((presentish / marked) * 100)}%` : "—"} icon="checkCircle" tone="success" caption={marked ? `${presentish} of ${marked} students` : "No registers yet"} />
               <StatCard label="Absent" value={absent} icon="userX" tone={absent ? "danger" : "neutral"} caption={absent ? "Parents can be alerted" : "Nobody absent"} />
@@ -101,12 +107,12 @@ export default async function AttendancePage({ params, searchParams }: { params:
                         </p>
                       </>
                     ) : (
-                      <p className="mt-4 fs-13.5 text-muted">{isToday ? "Everyone starts as present. It takes a few seconds." : "No register was taken on this day."}</p>
+                      <p className="mt-4 fs-13.5 text-muted">{!day.open ? "No school, so no register is needed." : isToday ? "Everyone starts as present. It takes a few seconds." : "No register was taken on this day."}</p>
                     )}
                     <div className="mt-auto pt-5">
-                      <ButtonLink href={`${base}/${c.id}${isToday ? "" : `?date=${date}`}`} variant={c.taken ? "secondary" : "primary"} className="w-full">
+                      <ButtonLink href={`${base}/${c.id}${isToday ? "" : `?date=${date}`}`} variant={c.taken || !day.open ? "secondary" : "primary"} className="w-full">
                         <Icon name={c.taken ? "edit" : "checkCircle"} size={18} />
-                        {c.taken ? "View or edit register" : "Take register"}
+                        {c.taken ? "View or edit register" : day.open ? "Take register" : "Take a register anyway"}
                       </ButtonLink>
                     </div>
                   </Card>

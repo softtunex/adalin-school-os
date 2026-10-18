@@ -58,6 +58,12 @@ function isoDay(iso: string) {
   return d === 0 ? 7 : d;
 }
 
+/** Whether a day is a school day for this school (its working days, minus calendar holidays). */
+export async function isSchoolDay(db: DB, access: Access, day: string) {
+  const s = hrSettings(access.school.hrSettings);
+  return withTenant(db, access.school.id, (tx) => schoolDay(tx, s, day));
+}
+
 /** Whether staff are expected in: one of the school's working days, and not a holiday on its calendar. */
 export async function schoolDay(tx: Tx, s: { workDays: number[] }, day: string) {
   if (!s.workDays.includes(isoDay(day))) return { open: false as const, holiday: null };

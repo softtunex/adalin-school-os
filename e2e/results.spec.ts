@@ -36,7 +36,7 @@ test("attendance, score entry, publishing and PDF report cards", async ({ page, 
 
   // Attendance: everyone present by default, mark one absent, save.
   await page.goto(`/s/${slug}/attendance`);
-  await page.getByRole("link", { name: /Take register/ }).first().click();
+  await page.getByRole("link", { name: /Take (a )?register/ }).first().click();
   await page.getByRole("radiogroup", { name: "Attendance for Bolaji Ade" }).getByRole("radio", { name: "Absent" }).click();
   await expect(page.getByText("2 in")).toBeVisible();
   await page.getByRole("button", { name: "Save register" }).click();
