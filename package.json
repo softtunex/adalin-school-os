@@ -32,7 +32,10 @@
     "db:seed-transport": "tsx scripts/seed-transport.ts",
     "db:seed-hostel": "tsx scripts/seed-hostel.ts",
     "db:seed-documents": "tsx scripts/seed-documents.ts",
-    "db:seed-enterprise": "tsx scripts/seed-enterprise.ts"
+    "db:seed-enterprise": "tsx scripts/seed-enterprise.ts",
+    "demo:server": "tsx scripts/demo-server.ts",
+    "demo:record": "tsx scripts/demo-video/overview.ts",
+    "demo:edit": "tsx scripts/demo-video/edit.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.10",
