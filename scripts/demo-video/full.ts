@@ -264,7 +264,8 @@ const SCENES: Scene[] = [
       r.caption("Or bring the whole school in from Excel");
       await r.wait(1600);
       await p.locator('input[type="file"]').setInputFiles(file);
-      await r.click(p.getByRole("button", { name: "Check file" }), 1000);
+      await r.click(p.getByRole("button", { name: "Check file" }), 300);
+      await r.offCamera(() => p.getByRole("button", { name: /Import \d+ students/ }).waitFor({ timeout: 120_000 }));
       r.caption("Every row is checked before anything is saved");
       await r.wait(2000);
       await r.click(p.getByRole("button", { name: /Import \d+ students/ }), 1500);
