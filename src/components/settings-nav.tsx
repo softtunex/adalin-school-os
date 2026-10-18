@@ -49,10 +49,10 @@ export function SettingsNav({ tabs, current }: { tabs: SettingsTab[]; current: s
         </select>
       </label>
       <nav aria-label="Settings sections" className="hidden lg:block">
-        <div className="sticky top-24 flex flex-col gap-5">
+        <div className="sticky top-24 flex flex-col gap-6">
           {groups.map((g) => (
             <div key={g.label} className="flex flex-col gap-0.5">
-              <p className="px-3 pb-1 fs-12 font-semibold uppercase tracking-[0.06em] text-muted">{g.label}</p>
+              <p className="px-3 pb-1.5 fs-12.5 font-bold uppercase tracking-[0.08em] text-ink">{g.label}</p>
               {g.items.map((t) => (
                 <Link
                   key={t.key}
@@ -60,8 +60,8 @@ export function SettingsNav({ tabs, current }: { tabs: SettingsTab[]; current: s
                   scroll={false}
                   aria-current={t.key === current ? "page" : undefined}
                   className={cn(
-                    "rounded-chunk px-3 py-2 fs-14.5 font-medium transition-colors",
-                    t.key === current ? "bg-brand-wash text-brand-ink" : "text-body hover:bg-sunken hover:text-ink",
+                    "rounded-chunk py-1.5 pl-6 pr-3 fs-14.5 transition-colors",
+                    t.key === current ? "bg-brand-wash font-semibold text-brand-ink" : "text-muted hover:bg-sunken hover:text-ink",
                   )}
                 >
                   {t.label}
