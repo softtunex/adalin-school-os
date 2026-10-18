@@ -140,7 +140,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
         ) : !canProfile ? null : tab === "plan" ? (
           <PlanTab slug={slug} access={access} canBill={can(access, "school:billing")} paid={sp.paid} failed={sp.failed} />
         ) : (
-          <div className="grid gap-6 2xl:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="grid gap-6">
             <div>
               <h2 className="fs-16 font-semibold">School profile</h2>
               <p className="mt-1 fs-14 text-muted">Shown on report cards, receipts and the parent app. Complete it to tick off the first setup step.</p>
@@ -183,7 +183,7 @@ async function PaymentsTab({ slug, access }: { slug: string; access: Access }) {
   const fs = access.school.feeSettings;
   const online = hasFeature(access.plan, "fees_online");
   return (
-    <div className="grid gap-6 2xl:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid gap-6">
       <div className="flex flex-col gap-3">
         <h2 className="fs-16 font-semibold">Payments</h2>
         <p className="fs-14 text-muted">Your school&apos;s bank account and how fee collection works.</p>
@@ -217,7 +217,7 @@ async function MessagingTab({ slug, access, bought, failed }: { slug: string; ac
   const failedN = data?.byChannel.filter((r) => r.status === "failed").reduce((n, r) => n + r.n, 0) ?? 0;
   const used = data?.byChannel.reduce((n, r) => n + (r.credits ?? 0), 0) ?? 0;
   return (
-    <div className="grid gap-6 2xl:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid gap-6">
       <div>
         <h2 className="fs-16 font-semibold">Messaging</h2>
         <p className="mt-1 fs-14 text-muted">SMS credits, automatic alerts to parents, and when parents can message staff.</p>
