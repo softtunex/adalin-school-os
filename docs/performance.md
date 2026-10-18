@@ -1,6 +1,6 @@
 # Performance
 
-School OS has to work on the phones and connections Nigerian teachers and parents actually have. These are the budgets, how to measure them, and the latest results.
+Adalin SchoolHub has to work on the phones and connections Nigerian teachers and parents actually have. These are the budgets, how to measure them, and the latest results.
 
 ## Budgets
 

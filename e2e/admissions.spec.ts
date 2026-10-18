@@ -30,7 +30,7 @@ test("a parent applies and pays, and the school offers and enrols", async ({ bro
   // The school invites, scores and offers.
   const staff = await (await browser.newContext()).newPage();
   await staff.goto("/login");
-  await staff.getByLabel("Email").fill("director@demo.schoolos.ng");
+  await staff.getByLabel("Email").fill("director@demo.adalinschoolhub.ng");
   await staff.getByLabel("Password").fill("Demo2026!");
   await staff.getByRole("button", { name: "Log in" }).click();
   await expect(staff).toHaveURL(/\/s\//, { timeout: 60_000 });

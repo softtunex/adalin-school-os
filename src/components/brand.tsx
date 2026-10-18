@@ -8,7 +8,11 @@ export function Logo({ href = "/", compact = false, className }: { href?: string
   return (
     <Link href={href} className={cn("inline-flex items-center gap-2 rounded-[12px]", className)} aria-label={`${APP_NAME} home`}>
       <Kola className="h-10 w-9 shrink-0" />
-      {compact ? null : <span className="font-display fs-26 font-black leading-none tracking-[-0.02em] text-brand">{APP_NAME.toLowerCase()}</span>}
+      {compact ? null : (
+        <span className="whitespace-nowrap font-display fs-24 font-black leading-none tracking-[-0.02em]">
+          <span className="text-ink">adalin</span> <span className="text-brand">schoolhub</span>
+        </span>
+      )}
     </Link>
   );
 }

@@ -11,7 +11,7 @@ test("a class teacher records a merit and the parent sees it", async ({ browser,
 
   const teacher = await (await browser.newContext()).newPage();
   await teacher.goto("/login");
-  await teacher.getByLabel("Email").fill("adeyemi3@demo.schoolos.ng");
+  await teacher.getByLabel("Email").fill("adeyemi3@demo.adalinschoolhub.ng");
   await teacher.getByLabel("Password").fill("Demo2026!");
   await teacher.getByRole("button", { name: "Log in" }).click();
   await expect(teacher).toHaveURL(/\/s\//, { timeout: 60_000 });

@@ -1,4 +1,4 @@
-# School OS illustration briefs
+# Adalin SchoolHub illustration briefs
 
 For the Director to generate. Each file drops into `public/illustrations/` under the exact filename given; the app picks it up automatically, no code change needed.
 

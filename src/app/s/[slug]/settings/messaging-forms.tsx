@@ -91,7 +91,7 @@ export function CommsSettingsForm({
             </div>
           ) : null}
           {sms ? (
-            <Field label="SMS sender name (optional)" htmlFor="sender" hint="Up to 11 letters, e.g. ADALIN. It must be registered with our SMS provider before use; until then texts come from SchoolOS.">
+            <Field label="SMS sender name (optional)" htmlFor="sender" hint="Up to 11 letters, e.g. ADALIN. It must be registered with our SMS provider before use; until then texts come from SchoolHub.">
               <Input id="sender" name="senderId" maxLength={11} defaultValue={settings.senderId} className="sm:w-60" />
             </Field>
           ) : null}

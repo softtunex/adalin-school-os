@@ -44,7 +44,7 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
   });
 
   test("the proprietor's main pages", async ({ page }) => {
-    await signIn(page, "director@demo.schoolos.ng");
+    await signIn(page, "director@demo.adalinschoolhub.ng");
     const found: string[] = [];
     for (const path of [
       `/s/${SLUG}`,
@@ -65,7 +65,7 @@ test.describe("accessibility (WCAG 2.2 AA)", () => {
   });
 
   test("a teacher's register and score sheet", async ({ page }) => {
-    await signIn(page, "adeyemi3@demo.schoolos.ng");
+    await signIn(page, "adeyemi3@demo.adalinschoolhub.ng");
     await page.goto(`/s/${SLUG}/attendance`);
     await page.getByRole("link", { name: /Take register|View or edit register/ }).first().click();
     await page.waitForLoadState("networkidle");

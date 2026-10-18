@@ -10,10 +10,10 @@ import { NewApiKey, NewWebhook, RevokeKey, WebhookActions } from "./api-client";
 
 const when = (d: Date | null) => (d ? d.toLocaleString("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" }) : "Never");
 
-/** API & webhooks: connect the school's other systems (website, accounting, SIS) to School OS. */
+/** API & webhooks: connect the school's other systems (website, accounting, SIS) to Adalin SchoolHub. */
 export async function ApiTab({ slug, access }: { slug: string; access: Access }) {
   if (!hasFeature(access.plan, "api_access")) {
-    return <UpgradeCard slug={slug} feature="api_access" text="Connect your website, accounting software or other systems to School OS with API keys and webhooks." />;
+    return <UpgradeCard slug={slug} feature="api_access" text="Connect your website, accounting software or other systems to Adalin SchoolHub with API keys and webhooks." />;
   }
   const db = getDb();
   const [keys, hooks] = await Promise.all([listApiKeys(db, access), listWebhooks(db, access)]);
@@ -23,7 +23,7 @@ export async function ApiTab({ slug, access }: { slug: string; access: Access })
     <div className="flex flex-col gap-5">
       <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
         <p className="max-w-[640px] fs-14.5 text-body">
-          Let your other systems read from School OS with an API key, and hear about new students, payments and results as they happen with webhooks. Keys are read-only and only see your school.
+          Let your other systems read from Adalin SchoolHub with an API key, and hear about new students, payments and results as they happen with webhooks. Keys are read-only and only see your school.
         </p>
         <Link href="/developers" className="fs-14.5 font-semibold text-brand hover:underline" target="_blank">
           API documentation
@@ -33,7 +33,7 @@ export async function ApiTab({ slug, access }: { slug: string; access: Access })
       <TableCard title="API keys" toolbar={<NewApiKey slug={slug} scopes={scopes} />}>
         {keys.length === 0 ? (
           <EmptyState icon="key" title="No keys yet">
-            Make one for each system that reads from School OS, so you can revoke one without breaking the others.
+            Make one for each system that reads from Adalin SchoolHub, so you can revoke one without breaking the others.
           </EmptyState>
         ) : (
           <Table>

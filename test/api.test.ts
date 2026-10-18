@@ -99,8 +99,8 @@ describe("webhooks", () => {
     const s = await createStudent(database.db, owner, studentInputSchema.parse({ firstName: "Tobi", lastName: "Hook", gender: "male", classId }), []);
     expect(await drainWebhooks(database.db, { send: ok })).toEqual({ sent: 1, failed: 0 });
     const [d] = sent;
-    expect(d.headers["X-SchoolOS-Event"]).toBe("student.created");
-    const [, t, v1] = d.headers["X-SchoolOS-Signature"].match(/^t=(\d+),v1=([0-9a-f]{64})$/)!;
+    expect(d.headers["X-SchoolHub-Event"]).toBe("student.created");
+    const [, t, v1] = d.headers["X-SchoolHub-Signature"].match(/^t=(\d+),v1=([0-9a-f]{64})$/)!;
     expect(v1).toBe(signPayload(secret, Number(t), d.body));
     const body = JSON.parse(d.body);
     expect(body).toMatchObject({ event: "student.created", data: { id: s.id, first_name: "Tobi" } });
@@ -127,7 +127,7 @@ describe("webhooks", () => {
     expect(h.secretHint).toMatch(/^whsec_.{4}…$/);
     const d = await testWebhook(database.db, owner, h.id, { send: ok });
     expect(d.status).toBe("sent");
-    expect(sent.at(-1)?.headers["X-SchoolOS-Event"]).toBe("ping");
+    expect(sent.at(-1)?.headers["X-SchoolHub-Event"]).toBe("ping");
   });
 
   it("only go to the public internet", async () => {

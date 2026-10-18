@@ -63,7 +63,7 @@ export function DomainForm({ slug, current }: { slug: string; current: string | 
           return r;
         }}
       >
-        Anyone who bookmarked it will need the usual School OS address instead. Nothing else changes.
+        Anyone who bookmarked it will need the usual Adalin SchoolHub address instead. Nothing else changes.
       </ConfirmDialog>
     </div>
   );

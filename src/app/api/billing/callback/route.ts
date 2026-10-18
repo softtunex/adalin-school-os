@@ -1,7 +1,7 @@
 import { getDb } from "@/lib/db/client";
 import { verifyBillPayment } from "@/lib/services/billing";
 
-/** Paystack returns the proprietor here after paying a School OS bill. The webhook settles it too. */
+/** Paystack returns the proprietor here after paying a Adalin SchoolHub bill. The webhook settles it too. */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const reference = url.searchParams.get("reference") ?? "";

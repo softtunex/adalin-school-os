@@ -29,7 +29,7 @@ function seeded(n: number) {
 async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
-  const user = await findUserByEmail(database.db, "director@demo.schoolos.ng");
+  const user = await findUserByEmail(database.db, "director@demo.adalinschoolhub.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
   const access = (await loadAccess(database.db, user.id, "adalin-college"))!;
 

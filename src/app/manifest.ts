@@ -1,11 +1,12 @@
 import type { MetadataRoute } from "next";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
 
-/** Lets School OS install on a phone's home screen like an app. */
+/** Lets Adalin SchoolHub install on a phone's home screen like an app. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_NAME,
-    short_name: APP_NAME,
+    // Phone home screens cut labels at about 12 characters.
+    short_name: "SchoolHub",
     description: APP_TAGLINE,
     start_url: "/schools",
     scope: "/",

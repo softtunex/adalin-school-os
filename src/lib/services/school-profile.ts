@@ -94,7 +94,7 @@ export async function listPlans(db: DB) {
   return db.select().from(plans).orderBy(asc(plans.sort));
 }
 
-/** The school's own colour (Premium). Null goes back to School OS orange. */
+/** The school's own colour (Premium). Null goes back to Adalin SchoolHub orange. */
 export async function setBrandColor(db: DB, access: Access, color: string | null, ip?: string | null) {
   requirePermission(access, "school:update");
   if (!hasFeature(access.plan, "brand_theme")) throw new AppError("School colours are on the Premium plan.", "upgrade");

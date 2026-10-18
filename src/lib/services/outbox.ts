@@ -98,7 +98,7 @@ export const defaultTransport: Transport = async (m) => {
   }
 };
 
-export const PLATFORM_SENDER = process.env.TERMII_SENDER_ID ?? "SchoolOS";
+export const PLATFORM_SENDER = process.env.TERMII_SENDER_ID ?? "SchoolHub";
 
 /**
  * Sends queued messages across all schools, oldest first. Failed SMS are refunded.

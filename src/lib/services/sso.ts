@@ -12,7 +12,7 @@ import { recordAudit } from "./audit";
  * Single sign-on with Google and Microsoft (OpenID Connect, authorisation code with PKCE).
  *
  * Who a person is comes from the provider's permanent subject id, never the email. Google
- * accounts with a verified email are linked to the School OS login with that email on first
+ * accounts with a verified email are linked to the Adalin SchoolHub login with that email on first
  * use. Microsoft accounts must be connected once from "Your account" while signed in, because
  * a Microsoft email claim isn't proof of owning the address. Nobody gets a new account this
  * way: staff are still invited by their school.
@@ -95,7 +95,7 @@ export async function finishSso(provider: Provider, code: string, verifier: stri
   return { subject: info.sub, email: info.email?.toLowerCase() ?? null, emailVerified: info.email_verified === true || info.email_verified === "true", name: info.name ?? null };
 }
 
-/** Which School OS login this provider account signs in to. */
+/** Which Adalin SchoolHub login this provider account signs in to. */
 export async function resolveSsoLogin(db: DB, provider: Provider, profile: SsoProfile) {
   const [linked] = await db.select({ userId: ssoIdentities.userId, id: ssoIdentities.id }).from(ssoIdentities).where(and(eq(ssoIdentities.provider, provider), eq(ssoIdentities.subject, profile.subject)));
   if (linked) {
@@ -103,11 +103,11 @@ export async function resolveSsoLogin(db: DB, provider: Provider, profile: SsoPr
     return linked.userId;
   }
   if (provider === "microsoft") {
-    throw new AppError("This Microsoft account isn't connected to School OS yet. Log in with your email and password once, then connect it under Your account.", "not_found");
+    throw new AppError("This Microsoft account isn't connected to Adalin SchoolHub yet. Log in with your email and password once, then connect it under Your account.", "not_found");
   }
-  if (!profile.email || !profile.emailVerified) throw new AppError("Your Google account's email isn't verified, so we can't match it to a School OS login.", "invalid");
+  if (!profile.email || !profile.emailVerified) throw new AppError("Your Google account's email isn't verified, so we can't match it to a Adalin SchoolHub login.", "invalid");
   const [user] = await db.select({ id: users.id }).from(users).where(sql`lower(${users.email}) = ${profile.email}`);
-  if (!user) throw new AppError(`No School OS login uses ${profile.email}. If your school invited you, open the link in the invitation email first.`, "not_found");
+  if (!user) throw new AppError(`No Adalin SchoolHub login uses ${profile.email}. If your school invited you, open the link in the invitation email first.`, "not_found");
   await db.insert(ssoIdentities).values({ userId: user.id, provider, subject: profile.subject, email: profile.email, lastUsedAt: new Date() });
   return user.id;
 }
@@ -115,7 +115,7 @@ export async function resolveSsoLogin(db: DB, provider: Provider, profile: SsoPr
 /** Connects a provider account to the signed-in person, from Your account. */
 export async function linkSsoIdentity(db: DB, userId: string, provider: Provider, profile: SsoProfile) {
   const [existing] = await db.select().from(ssoIdentities).where(and(eq(ssoIdentities.provider, provider), eq(ssoIdentities.subject, profile.subject)));
-  if (existing && existing.userId !== userId) throw new AppError(`That ${PROVIDERS[provider].name} account is already connected to another School OS login.`, "conflict");
+  if (existing && existing.userId !== userId) throw new AppError(`That ${PROVIDERS[provider].name} account is already connected to another Adalin SchoolHub login.`, "conflict");
   if (existing) return;
   const [mine] = await db.select().from(ssoIdentities).where(and(eq(ssoIdentities.userId, userId), eq(ssoIdentities.provider, provider)));
   if (mine) throw new AppError(`You already have a ${PROVIDERS[provider].name} account connected. Disconnect it first.`, "conflict");

@@ -5,7 +5,7 @@ test("a school sets its own web address, and its login page there carries its na
   test.setTimeout(process.env.CI ? 240_000 : 480_000);
   const host = "portal.e2e-school.sch.ng";
   await page.goto("/login");
-  await page.getByLabel("Email").fill("director@demo.schoolos.ng");
+  await page.getByLabel("Email").fill("director@demo.adalinschoolhub.ng");
   await page.getByLabel("Password").fill("Demo2026!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });
@@ -32,7 +32,7 @@ test("a school sets its own web address, and its login page there carries its na
 
     // A visitor with no session, arriving on the school's address.
     const visitor = await request.newContext({ baseURL, extraHTTPHeaders: { Host: host } });
-    // Not live yet: the address shows School OS as usual.
+    // Not live yet: the address shows Adalin SchoolHub as usual.
     const before = await visitor.get("/login");
     const beforeText = await before.text();
     expect(beforeText).toContain("Log in to your school.");

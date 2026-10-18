@@ -16,7 +16,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const user = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const user = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, user.id, "adalin-college"))!;
   const setup = await getTimetableSetup(db, owner);

@@ -32,7 +32,7 @@ export async function removeDomainAction(slug: string): Promise<FormState> {
   try {
     await removeCustomDomain(getDb(), await requireAccess(slug), { ip: (await requestMeta()).ip });
     revalidatePath(`/s/${slug}/settings`);
-    return { success: "Removed. Your school is only at the usual School OS address now." };
+    return { success: "Removed. Your school is only at the usual Adalin SchoolHub address now." };
   } catch (error) {
     return { error: userMessage(error) };
   }

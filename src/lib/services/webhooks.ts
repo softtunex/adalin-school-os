@@ -13,7 +13,7 @@ import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 
 /*
- * Webhooks: School OS tells a school's other systems when something happens. Each delivery is
+ * Webhooks: Adalin SchoolHub tells a school's other systems when something happens. Each delivery is
  * signed (HMAC-SHA256 of "<timestamp>.<body>" with the webhook's secret), retried with backoff,
  * and only ever sent to public internet addresses.
  */
@@ -155,10 +155,10 @@ export async function drainWebhooks(db: DB, opts: { send?: Sender; resolve?: (ho
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": "SchoolOS-Webhooks/1",
-          "X-SchoolOS-Event": d.event,
-          "X-SchoolOS-Delivery": d.id,
-          "X-SchoolOS-Signature": `t=${ts},v1=${signPayload(hook.signingSecret, ts, body)}`,
+          "User-Agent": "AdalinSchoolHub-Webhooks/1",
+          "X-SchoolHub-Event": d.event,
+          "X-SchoolHub-Delivery": d.id,
+          "X-SchoolHub-Signature": `t=${ts},v1=${signPayload(hook.signingSecret, ts, body)}`,
         },
         body,
       });

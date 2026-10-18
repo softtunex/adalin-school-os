@@ -1,6 +1,6 @@
 # Operations runbook
 
-How School OS is watched, backed up and recovered once it's live. Pair with `docs/security/breach-procedure.md` for incidents involving personal data.
+How Adalin SchoolHub is watched, backed up and recovered once it's live. Pair with `docs/security/breach-procedure.md` for incidents involving personal data.
 
 ## Monitoring
 

@@ -27,7 +27,7 @@ test("a teacher sets homework, a student hands it in with a file, and the teache
   const title = `Long division ${run}`;
 
   // The JSS 1 Gold Maths teacher sets work with a worksheet.
-  const teacher = await staffPage(browser, "obi4@demo.schoolos.ng");
+  const teacher = await staffPage(browser, "obi4@demo.adalinschoolhub.ng");
   await teacher.goto(`/s/${SLUG}/assignments`);
   await teacher.getByRole("button", { name: "New assignment" }).click();
   const form = teacher.getByRole("dialog");
@@ -79,7 +79,7 @@ test("a teacher sets homework, a student hands it in with a file, and the teache
   await expect(student.getByText("Good. Check question 3.")).toBeVisible();
 
   // School leadership can open the work; a signed-out visitor is sent to log in.
-  const outsider = await staffPage(browser, "director@demo.schoolos.ng");
+  const outsider = await staffPage(browser, "director@demo.adalinschoolhub.ng");
   expect((await outsider.request.get(fileHref!)).status()).toBe(200); // principal-level staff can open it
   const other = await (await browser.newContext()).newPage();
   expect((await other.request.get(fileHref!, { maxRedirects: 0 })).status()).toBe(303); // signed out: back to login
@@ -88,7 +88,7 @@ test("a teacher sets homework, a student hands it in with a file, and the teache
 test("the principal approves a lesson note from the queue", async ({ browser, isMobile }) => {
   test.skip(isMobile, "desktop journey");
   test.setTimeout(process.env.CI ? 240_000 : 480_000);
-  const director = await staffPage(browser, "director@demo.schoolos.ng");
+  const director = await staffPage(browser, "director@demo.adalinschoolhub.ng");
   await director.goto(`/s/${SLUG}/lesson-notes`);
   await expect(director.getByRole("heading", { name: "Waiting for you" })).toBeVisible();
   const first = director.locator("main tbody a").first();

@@ -1,5 +1,5 @@
 /*
- * The demo school's sick bay: a nurse (Nurse Kemi Adebayo, nurse8@demo.schoolos.ng, password
+ * The demo school's sick bay: a nurse (Nurse Kemi Adebayo, nurse8@demo.adalinschoolhub.ng, password
  * Demo2026!), health records with allergies and conditions, three weeks of visits, and one
  * student resting in the bay now. Oluwaseun Lawal is allergic to groundnuts and has one visit.
  * Run with the dev server stopped.
@@ -39,7 +39,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const director = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const director = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: sickBayVisits.id }).from(sickBayVisits).limit(1));
@@ -48,12 +48,12 @@ async function main() {
     await database.close();
     return;
   }
-  let nurseUser = await findUserByEmail(db, "nurse8@demo.schoolos.ng");
+  let nurseUser = await findUserByEmail(db, "nurse8@demo.adalinschoolhub.ng");
   if (!nurseUser) {
     const [role] = await withTenant(db, owner.school.id, (tx) => tx.select().from(roles).where(eq(roles.key, "nurse")));
-    const { token } = await inviteStaff(db, owner, { name: "Nurse Kemi Adebayo", email: "nurse8@demo.schoolos.ng", roleIds: [role.id] });
+    const { token } = await inviteStaff(db, owner, { name: "Nurse Kemi Adebayo", email: "nurse8@demo.adalinschoolhub.ng", roleIds: [role.id] });
     await acceptInvitation(db, token, { name: "Nurse Kemi Adebayo", password: "Demo2026!" });
-    nurseUser = await findUserByEmail(db, "nurse8@demo.schoolos.ng");
+    nurseUser = await findUserByEmail(db, "nurse8@demo.adalinschoolhub.ng");
   }
   const n = await withTenant(db, owner.school.id, async (tx) => {
     const [nurse] = await tx.select().from(memberships).where(eq(memberships.userId, nurseUser!.id));
@@ -106,7 +106,7 @@ async function main() {
     await tx.insert(sickBayVisits).values(rows);
     return { records: records.length, visits: rows.length };
   });
-  console.log(`Sick bay demo: ${n.records} health records, ${n.visits} visits. Nurse: nurse8@demo.schoolos.ng / Demo2026!`);
+  console.log(`Sick bay demo: ${n.records} health records, ${n.visits} visits. Nurse: nurse8@demo.adalinschoolhub.ng / Demo2026!`);
   await database.close();
 }
 

@@ -1,5 +1,5 @@
 /*
- * The demo school's boarding house: a warden (Mrs Esther Okoro, warden10@demo.schoolos.ng,
+ * The demo school's boarding house: a warden (Mrs Esther Okoro, warden10@demo.adalinschoolhub.ng,
  * password Demo2026!), a girls' and a boys' hostel with rooms and beds, about twenty boarders,
  * and exeats in every state. Folake Lawal boards, and her parent has an exeat request waiting.
  * Run with the dev server stopped.
@@ -22,7 +22,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const director = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const director = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: hostels.id }).from(hostels).limit(1));
@@ -31,12 +31,12 @@ async function main() {
     await database.close();
     return;
   }
-  let wardenUser = await findUserByEmail(db, "warden10@demo.schoolos.ng");
+  let wardenUser = await findUserByEmail(db, "warden10@demo.adalinschoolhub.ng");
   if (!wardenUser) {
     const [role] = await withTenant(db, owner.school.id, (tx) => tx.select().from(roles).where(eq(roles.key, "hostel_warden")));
-    const { token } = await inviteStaff(db, owner, { name: "Mrs Esther Okoro", email: "warden10@demo.schoolos.ng", roleIds: [role.id] });
+    const { token } = await inviteStaff(db, owner, { name: "Mrs Esther Okoro", email: "warden10@demo.adalinschoolhub.ng", roleIds: [role.id] });
     await acceptInvitation(db, token, { name: "Mrs Esther Okoro", password: "Demo2026!" });
-    wardenUser = await findUserByEmail(db, "warden10@demo.schoolos.ng");
+    wardenUser = await findUserByEmail(db, "warden10@demo.adalinschoolhub.ng");
   }
   const warden = (await loadAccess(db, wardenUser!.id, "adalin-college"))!;
   const girls = await saveHostel(db, warden, hostelSchema.parse({ name: "Queen Amina House", gender: "female", wardenId: warden.membershipId, termFeeKobo: 280_000_00 }));
@@ -99,7 +99,7 @@ async function main() {
   if (folake && parent) {
     await requestExeat(db, parent.id, exeatSchema.parse({ studentId: folake.id, kind: "weekend", reason: "Family thanksgiving service in Surulere", leaveAt: at(6, "15:00"), returnBy: at(8, "17:00"), collectedBy: "Mrs Blessing Lawal (mother)" })).catch((e) => console.log("Folake's request skipped:", e.message));
   }
-  console.log(`Hostel demo: 2 hostels, ${boarders.length} boarders. Warden: warden10@demo.schoolos.ng / Demo2026!`);
+  console.log(`Hostel demo: 2 hostels, ${boarders.length} boarders. Warden: warden10@demo.adalinschoolhub.ng / Demo2026!`);
   await database.close();
 }
 

@@ -10,7 +10,7 @@ import { acceptInvitation, inviteStaff } from "../src/lib/services/staff";
 import { createStudent, guardianInputSchema, studentInputSchema } from "../src/lib/services/students";
 
 const DEMO = {
-  email: "director@demo.schoolos.ng",
+  email: "director@demo.adalinschoolhub.ng",
   password: "Demo2026!",
   schoolName: "Adalin College",
 };
@@ -80,7 +80,7 @@ async function main() {
     const staffAccess = [];
     for (const [i, s] of STAFF.entries()) {
       const role = schoolRoles.find((r) => r.key === s.key)!;
-      const email = `${s.name.split(" ").slice(-1)[0].toLowerCase()}${i}@demo.schoolos.ng`;
+      const email = `${s.name.split(" ").slice(-1)[0].toLowerCase()}${i}@demo.adalinschoolhub.ng`;
       const { token } = await inviteStaff(db, owner, { name: s.name, email, roleIds: [role.id] });
       const { userId } = await acceptInvitation(db, token, { name: s.name, password: DEMO.password });
       staffAccess.push({ ...s, email, access: (await loadAccess(db, userId, school.slug))! });

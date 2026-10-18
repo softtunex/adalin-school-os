@@ -70,7 +70,7 @@ export async function lookupIsbn(raw: string) {
   const isbn = cleanIsbn(raw);
   if (!isbn) throw new AppError("ISBNs are 10 or 13 digits.", "invalid");
   try {
-    const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`, { headers: { "User-Agent": "SchoolOS/1.0 (library lookup)" }, signal: AbortSignal.timeout(6000) });
+    const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`, { headers: { "User-Agent": "AdalinSchoolHub/1.0 (library lookup)" }, signal: AbortSignal.timeout(6000) });
     if (!res.ok) return null;
     const data = (await res.json()) as Record<string, { title?: string; subtitle?: string; authors?: { name: string }[]; publishers?: { name: string }[]; publish_date?: string; subjects?: { name: string }[] }>;
     const b = data[`ISBN:${isbn}`];

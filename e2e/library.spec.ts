@@ -10,7 +10,7 @@ test("the librarian adds a book, lends it, and the student sees it", async ({ br
 
   const lib = await (await browser.newContext()).newPage();
   await lib.goto("/login");
-  await lib.getByLabel("Email").fill("librarian6@demo.schoolos.ng");
+  await lib.getByLabel("Email").fill("librarian6@demo.adalinschoolhub.ng");
   await lib.getByLabel("Password").fill("Demo2026!");
   await lib.getByRole("button", { name: "Log in" }).click();
   await expect(lib).toHaveURL(/\/s\//, { timeout: 60_000 });

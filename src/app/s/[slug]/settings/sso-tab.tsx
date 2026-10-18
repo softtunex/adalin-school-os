@@ -14,7 +14,7 @@ export function SsoTab({ slug, access }: { slug: string; access: Access }) {
   const settings = access.school.ssoSettings as SsoSettings;
   return (
     <div className="flex max-w-[720px] flex-col gap-5">
-      {ready.length === 0 ? <Alert tone="warning">Google and Microsoft sign-in aren&apos;t switched on for School OS yet. Adalin is setting this up; you can choose your rule now.</Alert> : null}
+      {ready.length === 0 ? <Alert tone="warning">Google and Microsoft sign-in aren&apos;t switched on for Adalin SchoolHub yet. Adalin is setting this up; you can choose your rule now.</Alert> : null}
       <SsoSettingsForm
         slug={slug}
         initial={{ required: Boolean(settings.required), providers: settings.providers ?? [] }}

@@ -10,14 +10,14 @@ import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 
 /*
- * Custom domains (Enterprise): a school uses School OS at its own address, e.g.
+ * Custom domains (Enterprise): a school uses Adalin SchoolHub at its own address, e.g.
  * portal.yourschool.edu.ng, and on that address the school's name and logo replace ours.
  * The domain is added to our Vercel project through Vercel's API; the school points DNS at
  * Vercel; we check until it works. Without a Vercel token, Adalin connects it by hand.
  */
 
 const HOSTNAME = /^(?=.{4,253}$)(?!-)([a-z0-9-]{1,63}\.)+[a-z]{2,63}$/;
-const RESERVED = [/\.vercel\.app$/, /(^|\.)schoolos\.ng$/, /(^|\.)adalin\./, /^localhost/];
+const RESERVED = [/\.vercel\.app$/, /(^|\.)adalinschoolhub\.(ng|com)$/, /(^|\.)adalin\./, /^localhost/];
 
 export function normalizeDomain(raw: string) {
   const d = raw

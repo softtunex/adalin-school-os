@@ -10,7 +10,7 @@ export const RETENTION = [
   { what: "In-app notifications", keep: "1 year" },
   { what: "Webhook delivery records", keep: "90 days" },
   { what: "Unfinished online payments", keep: "90 days" },
-  { what: "School records (students, results, fees and the rest)", keep: "While the school uses School OS; deleted within 90 days of the account closing, after the school has had the chance to download everything" },
+  { what: "School records (students, results, fees and the rest)", keep: "While the school uses Adalin SchoolHub; deleted within 90 days of the account closing, after the school has had the chance to download everything" },
 ] as const;
 
 export const PROCESSORS = [

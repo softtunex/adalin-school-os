@@ -24,7 +24,7 @@ const C = {
   line: "#E4DED6",
 };
 
-/** Kola the hornbill, the School OS mascot (draft). */
+/** Kola the hornbill, the Adalin SchoolHub mascot (draft). */
 export function Kola({ wave = false, ...props }: SVGProps<SVGSVGElement> & { wave?: boolean }) {
   return (
     <svg viewBox="0 0 220 240" fill="none" aria-hidden {...props}>

@@ -23,7 +23,7 @@ export default async function AdminBills({ searchParams }: { searchParams: Promi
   const overdue = open.filter((r) => r.bill.dueOn < today);
   return (
     <>
-      <Topbar title="Bills" context="School OS bills to schools" />
+      <Topbar title="Bills" context="Adalin SchoolHub bills to schools" />
       <PageBody>
         <StatGrid>
           <StatCard label="Waiting" value={formatNaira(sum((r) => r.bill.status === "open"))} icon="clock" tone="warning" caption={`${open.length} ${open.length === 1 ? "bill" : "bills"}`} />

@@ -91,7 +91,7 @@ export function ReportCards({ data }: { data: ReportCardData }) {
         const attended = st.attendance.present + st.attendance.late;
         return (
           <Page key={st.admissionNo} size="A4" style={s.page}>
-            {data.watermark ? <Text style={s.watermark} fixed>School OS · Free plan</Text> : null}
+            {data.watermark ? <Text style={s.watermark} fixed>Adalin SchoolHub · Free plan</Text> : null}
             <View style={[s.header, data.school.accent ? { borderBottomColor: data.school.accent } : {}]}>
               {/* react-pdf images have no alt attribute; the school name sits beside the logo. */}
               {/* eslint-disable-next-line jsx-a11y/alt-text */}
@@ -206,7 +206,7 @@ export function ReportCards({ data }: { data: ReportCardData }) {
 
             <View style={s.footer} fixed>
               <Text>{data.school.name} · {data.term.name}, {data.term.session}</Text>
-              <Text>Generated with School OS</Text>
+              <Text>Generated with Adalin SchoolHub</Text>
             </View>
           </Page>
         );

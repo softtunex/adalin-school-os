@@ -10,7 +10,7 @@ test("the storekeeper adds an asset, signs it out to a teacher, and takes it bac
 
   const keeper = await (await browser.newContext()).newPage();
   await keeper.goto("/login");
-  await keeper.getByLabel("Email").fill("storekeeper7@demo.schoolos.ng");
+  await keeper.getByLabel("Email").fill("storekeeper7@demo.adalinschoolhub.ng");
   await keeper.getByLabel("Password").fill("Demo2026!");
   await keeper.getByRole("button", { name: "Log in" }).click();
   await expect(keeper).toHaveURL(/\/s\//, { timeout: 60_000 });
@@ -35,7 +35,7 @@ test("the storekeeper adds an asset, signs it out to a teacher, and takes it bac
 
   const teacher = await (await browser.newContext()).newPage();
   await teacher.goto("/login");
-  await teacher.getByLabel("Email").fill("obi4@demo.schoolos.ng");
+  await teacher.getByLabel("Email").fill("obi4@demo.adalinschoolhub.ng");
   await teacher.getByLabel("Password").fill("Demo2026!");
   await teacher.getByRole("button", { name: "Log in" }).click();
   await expect(teacher).toHaveURL(/\/s\//, { timeout: 60_000 });

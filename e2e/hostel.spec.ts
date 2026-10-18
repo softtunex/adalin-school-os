@@ -7,7 +7,7 @@ test("the warden approves a parent's exeat request and the parent sees it", asyn
 
   const warden = await (await browser.newContext()).newPage();
   await warden.goto("/login");
-  await warden.getByLabel("Email").fill("warden10@demo.schoolos.ng");
+  await warden.getByLabel("Email").fill("warden10@demo.adalinschoolhub.ng");
   await warden.getByLabel("Password").fill("Demo2026!");
   await warden.getByRole("button", { name: "Log in" }).click();
   await expect(warden).toHaveURL(/\/s\//, { timeout: 60_000 });

@@ -5,10 +5,10 @@ import type { Access } from "@/lib/services/access";
 import { dnsFor } from "@/lib/services/domains";
 import { DomainForm } from "./domain-client";
 
-/** Web address: use School OS at the school's own domain, with its name and logo instead of ours. */
+/** Web address: use Adalin SchoolHub at the school's own domain, with its name and logo instead of ours. */
 export function DomainTab({ slug, access }: { slug: string; access: Access }) {
   if (!hasFeature(access.plan, "custom_domain")) {
-    return <UpgradeCard slug={slug} feature="custom_domain" text="Put School OS on your own address, like portal.yourschool.edu.ng, with your school's name and logo on the login page." />;
+    return <UpgradeCard slug={slug} feature="custom_domain" text="Put Adalin SchoolHub on your own address, like portal.yourschool.edu.ng, with your school's name and logo on the login page." />;
   }
   const domain = access.school.customDomain;
   const live = Boolean(access.school.domainVerifiedAt);
@@ -18,7 +18,7 @@ export function DomainTab({ slug, access }: { slug: string; access: Access }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="fs-16 font-semibold text-ink">Your own web address</h2>
-            <p className="mt-1 fs-14.5 text-body">Staff, parents and students can log in at your school&apos;s address. There, the login page and browser tabs show your school&apos;s name, logo and colour instead of School OS.</p>
+            <p className="mt-1 fs-14.5 text-body">Staff, parents and students can log in at your school&apos;s address. There, the login page and browser tabs show your school&apos;s name, logo and colour instead of Adalin SchoolHub.</p>
           </div>
           {domain ? (
             live ? (
@@ -56,7 +56,7 @@ export function DomainTab({ slug, access }: { slug: string; access: Access }) {
               ))}
             </tbody>
           </Table>
-          <p className="fs-13.5 text-muted">It can take from a few minutes to a few hours to work. Then press Check now. Your usual School OS address keeps working either way.</p>
+          <p className="fs-13.5 text-muted">It can take from a few minutes to a few hours to work. Then press Check now. Your usual Adalin SchoolHub address keeps working either way.</p>
         </Card>
       ) : null}
     </div>

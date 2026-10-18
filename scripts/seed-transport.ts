@@ -1,5 +1,5 @@
 /*
- * The demo school's buses: a transport officer (Mr Tunde Bakare, transport9@demo.schoolos.ng,
+ * The demo school's buses: a transport officer (Mr Tunde Bakare, transport9@demo.adalinschoolhub.ng,
  * password Demo2026!), three buses on three Lagos routes, students on each, and this morning's
  * bus register. Oluwaseun Lawal rides the Lekki bus from Jakande. Run with the dev server stopped.
  */
@@ -57,7 +57,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const director = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const director = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: transportRoutes.id }).from(transportRoutes).limit(1));
@@ -66,12 +66,12 @@ async function main() {
     await database.close();
     return;
   }
-  let officerUser = await findUserByEmail(db, "transport9@demo.schoolos.ng");
+  let officerUser = await findUserByEmail(db, "transport9@demo.adalinschoolhub.ng");
   if (!officerUser) {
     const [role] = await withTenant(db, owner.school.id, (tx) => tx.select().from(roles).where(eq(roles.key, "transport_officer")));
-    const { token } = await inviteStaff(db, owner, { name: "Mr Tunde Bakare", email: "transport9@demo.schoolos.ng", roleIds: [role.id] });
+    const { token } = await inviteStaff(db, owner, { name: "Mr Tunde Bakare", email: "transport9@demo.adalinschoolhub.ng", roleIds: [role.id] });
     await acceptInvitation(db, token, { name: "Mr Tunde Bakare", password: "Demo2026!" });
-    officerUser = await findUserByEmail(db, "transport9@demo.schoolos.ng");
+    officerUser = await findUserByEmail(db, "transport9@demo.adalinschoolhub.ng");
   }
   const officer = (await loadAccess(db, officerUser!.id, "adalin-college"))!;
   const buses = [];
@@ -107,7 +107,7 @@ async function main() {
     const riders = (await listRiders(db, officer, { routeId: routes[ri].id })).filter((r) => r.r.direction !== "afternoon");
     await saveTrip(db, officer, tripSchema.parse({ routeId: routes[ri].id, direction: "morning", boarded: riders.filter((r, i) => r.r.studentId === seun?.id || i % 6 !== 4).map((r) => r.r.studentId) }));
   }
-  console.log(`Transport demo: ${buses.length} buses, ${routes.length} routes. Transport officer: transport9@demo.schoolos.ng / Demo2026!`);
+  console.log(`Transport demo: ${buses.length} buses, ${routes.length} routes. Transport officer: transport9@demo.adalinschoolhub.ng / Demo2026!`);
   await database.close();
 }
 

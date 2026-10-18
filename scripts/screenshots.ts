@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 
 const BASE = process.env.BASE_URL ?? "http://localhost:3005";
 const OUT = process.env.OUT_DIR ?? ".data/shots";
-const EMAIL = "director@demo.schoolos.ng";
+const EMAIL = "director@demo.adalinschoolhub.ng";
 const PASSWORD = "Demo2026!";
 
 async function main() {

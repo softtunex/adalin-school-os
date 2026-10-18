@@ -4,7 +4,7 @@ test("the proprietor sees the term's bill, pays it, and chooses a cheaper plan f
   test.skip(isMobile, "desktop journey");
   test.setTimeout(process.env.CI ? 240_000 : 480_000);
   await page.goto("/login");
-  await page.getByLabel("Email").fill("director@demo.schoolos.ng");
+  await page.getByLabel("Email").fill("director@demo.adalinschoolhub.ng");
   await page.getByLabel("Password").fill("Demo2026!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });

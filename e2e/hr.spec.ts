@@ -27,7 +27,7 @@ test("a teacher asks for leave and the proprietor approves it", async ({ browser
   test.setTimeout(process.env.CI ? 180_000 : 420_000);
   const { start, end } = futureWeek();
 
-  const teacher = await signIn(browser, "bello5@demo.schoolos.ng");
+  const teacher = await signIn(browser, "bello5@demo.adalinschoolhub.ng");
   await teacher.goto(`/s/${SLUG}/hr`);
   await teacher.getByRole("button", { name: "Request leave" }).click();
   const form = teacher.getByRole("dialog");
@@ -38,7 +38,7 @@ test("a teacher asks for leave and the proprietor approves it", async ({ browser
   await form.getByRole("button", { name: "Send request" }).click();
   await expect(form.getByText(/Sent: 2 working days/)).toBeVisible({ timeout: 30_000 });
 
-  const director = await signIn(browser, "director@demo.schoolos.ng");
+  const director = await signIn(browser, "director@demo.adalinschoolhub.ng");
   await director.goto(`/s/${SLUG}/hr?tab=leave`);
   const row = director.getByRole("row", { name: /Postgraduate diploma exams/ });
   await row.getByRole("button", { name: "Approve" }).click();

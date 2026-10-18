@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { requireAdmin } from "./guard";
 import { AdminNav } from "./nav";
 
-export const metadata: Metadata = { title: { default: "Admin", template: "%s · School OS admin" }, robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: { default: "Admin", template: "%s · Adalin SchoolHub admin" }, robots: { index: false, follow: false } };
 
 /** Adalin's console: its own shell, outside any school. */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           <Link href="/admin" className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center rounded-chunk bg-ink fs-14 font-bold text-canvas">OS</span>
             <span className="fs-16 font-bold text-ink">
-              School OS <span className="font-medium text-muted">admin</span>
+              Adalin SchoolHub <span className="font-medium text-muted">admin</span>
             </span>
           </Link>
           <span className="ml-auto fs-13.5 text-muted">

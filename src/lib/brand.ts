@@ -10,7 +10,7 @@ export const DEFAULT_BRAND = "#FE6007";
 
 /** Colours Nigerian schools commonly wear, offered as one-tap choices. */
 export const BRAND_PRESETS: [string, string][] = [
-  ["School OS orange", "#FE6007"],
+  ["Adalin SchoolHub orange", "#FE6007"],
   ["Royal blue", "#1E4FBF"],
   ["Navy", "#1B2A5C"],
   ["Maroon", "#7A1C2E"],

@@ -25,7 +25,7 @@ test("the bursar prepares payroll, the proprietor approves, staff get payslips",
   test.setTimeout(process.env.CI ? 240_000 : 480_000);
   const month = nextMonth();
 
-  const bursar = await signIn(browser, "musa2@demo.schoolos.ng");
+  const bursar = await signIn(browser, "musa2@demo.adalinschoolhub.ng");
   await bursar.goto(`/s/${SLUG}/payroll`);
   await bursar.locator("input[name=month]").fill(month);
   await bursar.getByRole("button", { name: "Prepare payroll" }).click();
@@ -33,7 +33,7 @@ test("the bursar prepares payroll, the proprietor approves, staff get payslips",
   const runUrl = bursar.url();
   await expect(bursar.getByText("Waiting for the proprietor to approve")).toBeVisible();
 
-  const owner = await signIn(browser, "director@demo.schoolos.ng");
+  const owner = await signIn(browser, "director@demo.adalinschoolhub.ng");
   await owner.goto(runUrl);
   await owner.getByRole("button", { name: "Approve" }).click();
   await owner.getByRole("dialog").getByRole("button", { name: "Approve" }).click();
@@ -46,7 +46,7 @@ test("the bursar prepares payroll, the proprietor approves, staff get payslips",
   const bank = await bursar.request.get(`${runUrl}/export?kind=bank`);
   expect(await bank.text()).toContain("Account number");
 
-  const teacher = await signIn(browser, "obi4@demo.schoolos.ng");
+  const teacher = await signIn(browser, "obi4@demo.adalinschoolhub.ng");
   await teacher.goto(`/s/${SLUG}/hr?tab=pay`);
   const link = teacher.getByRole("link", { name: "Payslip", exact: true }).first();
   await expect(link).toBeVisible({ timeout: 30_000 });

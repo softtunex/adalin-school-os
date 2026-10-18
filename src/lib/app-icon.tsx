@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-/** The app icon: "os" in white on Adalin orange. Maskable icons keep the mark in the safe centre. */
+/** The app icon: "sh" (SchoolHub) in white on Adalin orange. Maskable icons keep the mark in the safe centre. */
 export function appIcon(size: number, opts: { maskable?: boolean; radius?: boolean } = {}) {
   const inset = opts.maskable ? 0.2 : 0.12;
   return new ImageResponse(
@@ -27,7 +27,7 @@ export function appIcon(size: number, opts: { maskable?: boolean; radius?: boole
             marginTop: -size * 0.04,
           }}
         >
-          os
+          sh
         </div>
       </div>
     ),

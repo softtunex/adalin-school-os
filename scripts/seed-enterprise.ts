@@ -13,7 +13,7 @@ import { getAcademicOverview, setupAcademics } from "../src/lib/services/academi
 import { addNewCampus, createGroup } from "../src/lib/services/groups";
 import { createStudent, studentInputSchema } from "../src/lib/services/students";
 
-const OWNER = { name: "Mrs Ronke Adeleke", email: "enterprise@demo.schoolos.ng", password: "Demo2026!" };
+const OWNER = { name: "Mrs Ronke Adeleke", email: "enterprise@demo.adalinschoolhub.ng", password: "Demo2026!" };
 
 const FIRST = {
   female: ["Adaeze", "Temitope", "Aisha", "Chiamaka", "Ngozi", "Halima", "Ifeoma", "Kemi", "Amina", "Nneka"],

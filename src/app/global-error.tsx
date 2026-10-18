@@ -14,7 +14,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <div style={{ maxWidth: 420, textAlign: "center" }}>
           <h1 style={{ fontSize: 24, margin: "0 0 8px" }}>Something went wrong</h1>
           <p style={{ color: "#4a4a4f", margin: "0 0 16px" }}>
-            School OS couldn&apos;t load. Try again, and if it keeps happening, contact support{error.digest ? ` with code ${error.digest}` : ""}.
+            Adalin SchoolHub couldn&apos;t load. Try again, and if it keeps happening, contact support{error.digest ? ` with code ${error.digest}` : ""}.
           </p>
           <button onClick={reset} style={{ background: "#b84300", color: "#fff", border: 0, borderRadius: 12, padding: "12px 20px", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>
             Try again

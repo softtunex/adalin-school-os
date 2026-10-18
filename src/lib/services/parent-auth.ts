@@ -125,5 +125,5 @@ async function signIn(db: DB, d: Destination) {
 }
 
 export function loginCodeMessage(code: string) {
-  return `Your School OS code is ${code}. It expires in ${CODE_TTL_MINUTES} minutes. Don't share it with anyone.`;
+  return `Your Adalin SchoolHub code is ${code}. It expires in ${CODE_TTL_MINUTES} minutes. Don't share it with anyone.`;
 }

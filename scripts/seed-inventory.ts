@@ -1,5 +1,5 @@
 /*
- * The demo school's store: a storekeeper (Mr Sunday Eze, storekeeper7@demo.schoolos.ng,
+ * The demo school's store: a storekeeper (Mr Sunday Eze, storekeeper7@demo.adalinschoolhub.ng,
  * password Demo2026!), consumables and assets, a delivery or two, chalk issued to teachers,
  * projectors and chairs signed out, and two items running low. Run with the dev server stopped.
  */
@@ -35,7 +35,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const director = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const director = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: inventoryItems.id }).from(inventoryItems).limit(1));
@@ -44,12 +44,12 @@ async function main() {
     await database.close();
     return;
   }
-  let keeperUser = await findUserByEmail(db, "storekeeper7@demo.schoolos.ng");
+  let keeperUser = await findUserByEmail(db, "storekeeper7@demo.adalinschoolhub.ng");
   if (!keeperUser) {
     const [role] = await withTenant(db, owner.school.id, (tx) => tx.select().from(roles).where(eq(roles.key, "storekeeper")));
-    const { token } = await inviteStaff(db, owner, { name: "Mr Sunday Eze", email: "storekeeper7@demo.schoolos.ng", roleIds: [role.id] });
+    const { token } = await inviteStaff(db, owner, { name: "Mr Sunday Eze", email: "storekeeper7@demo.adalinschoolhub.ng", roleIds: [role.id] });
     await acceptInvitation(db, token, { name: "Mr Sunday Eze", password: "Demo2026!" });
-    keeperUser = await findUserByEmail(db, "storekeeper7@demo.schoolos.ng");
+    keeperUser = await findUserByEmail(db, "storekeeper7@demo.adalinschoolhub.ng");
   }
   const keeper = (await loadAccess(db, keeperUser!.id, "adalin-college"))!;
   const member = async (email: string) => {
@@ -65,10 +65,10 @@ async function main() {
   }
   await stockIn(db, keeper, stockInSchema.parse({ itemId: ids["White chalk (box of 12)"], quantity: 40, unitCostKobo: 650_00, supplier: "CSS Bookshops, Broad Street", recordExpense: true, expenseCategory: "Teaching materials" }));
   await stockIn(db, keeper, stockInSchema.parse({ itemId: ids["40-leaf exercise books"], quantity: 10, unitCostKobo: 14_500_00, supplier: "Tonia Stationery" }));
-  const obi = await member("obi4@demo.schoolos.ng");
-  const adeyemi = await member("adeyemi3@demo.schoolos.ng");
-  const bello = await member("bello5@demo.schoolos.ng");
-  const principal = await member("ogunleye0@demo.schoolos.ng");
+  const obi = await member("obi4@demo.adalinschoolhub.ng");
+  const adeyemi = await member("adeyemi3@demo.adalinschoolhub.ng");
+  const bello = await member("bello5@demo.adalinschoolhub.ng");
+  const principal = await member("ogunleye0@demo.adalinschoolhub.ng");
   const out = (itemId: string, quantity: number, to: { membershipId?: string | null; location?: string }, note?: string) =>
     giveOut(db, keeper, giveOutSchema.parse({ itemId, quantity, membershipId: to.membershipId ?? null, location: to.location, note }));
   for (const t of [obi, adeyemi, bello]) if (t) await out(ids["White chalk (box of 12)"], 6, { membershipId: t }, "For the term");
@@ -83,7 +83,7 @@ async function main() {
   await out(ids["Student microscope"], 6, { location: "Science lab" });
   if (adeyemi) await out(ids["Football"], 2, { membershipId: adeyemi }, "Inter-house sports practice");
   await adjustStock(db, keeper, countSchema.parse({ itemId: ids["Toilet roll (pack of 12)"], counted: 12, note: "Two packs found opened in the store" }));
-  console.log(`Inventory demo: ${ITEMS.length} items. Storekeeper: storekeeper7@demo.schoolos.ng / Demo2026!`);
+  console.log(`Inventory demo: ${ITEMS.length} items. Storekeeper: storekeeper7@demo.adalinschoolhub.ng / Demo2026!`);
   await database.close();
 }
 

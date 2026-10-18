@@ -16,7 +16,7 @@ export async function DataTab({ slug, access }: { slug: string; access: Access }
         <Card className="flex flex-col gap-3 p-5">
           <h2 className="fs-16 font-semibold text-ink">Download all your data</h2>
           <p className="fs-14.5 text-body">
-            Everything your school has in School OS: students, parents, staff, classes, scores, results, attendance, fees and payments, and every other record, as spreadsheet files in one ZIP. It&apos;s yours to keep, move to
+            Everything your school has in Adalin SchoolHub: students, parents, staff, classes, scores, results, attendance, fees and payments, and every other record, as spreadsheet files in one ZIP. It&apos;s yours to keep, move to
             another system, or hand to an auditor.
           </p>
           <p className="fs-13.5 text-muted">Passwords, PINs and payment links are left out. The download is recorded in your activity log.</p>

@@ -7,7 +7,7 @@ test("the transport officer takes the bus register and the parent sees their chi
 
   const officer = await (await browser.newContext()).newPage();
   await officer.goto("/login");
-  await officer.getByLabel("Email").fill("transport9@demo.schoolos.ng");
+  await officer.getByLabel("Email").fill("transport9@demo.adalinschoolhub.ng");
   await officer.getByLabel("Password").fill("Demo2026!");
   await officer.getByRole("button", { name: "Log in" }).click();
   await expect(officer).toHaveURL(/\/s\//, { timeout: 60_000 });

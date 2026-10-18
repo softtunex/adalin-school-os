@@ -6,7 +6,7 @@ test("the office issues a certificate, its QR page says genuine, and revoking it
 
   const page = await (await browser.newContext()).newPage();
   await page.goto("/login");
-  await page.getByLabel("Email").fill("nwosu1@demo.schoolos.ng");
+  await page.getByLabel("Email").fill("nwosu1@demo.adalinschoolhub.ng");
   await page.getByLabel("Password").fill("Demo2026!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });

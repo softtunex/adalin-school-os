@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 // Runs against the demo school (pnpm db:seed, db:seed-results, db:seed-fees, db:seed-comms).
-const STAFF = { email: "director@demo.schoolos.ng", password: "Demo2026!" };
+const STAFF = { email: "director@demo.adalinschoolhub.ng", password: "Demo2026!" };
 // Mrs Blessing Lawal, linked by db:seed-comms. Email keeps this clear of the per-number code limit used by manual checks.
 const PARENT_LOGIN = "parent8@example.com";
 const SCHOOL = "/s/adalin-college";

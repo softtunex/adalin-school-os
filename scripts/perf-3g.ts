@@ -74,10 +74,10 @@ async function main() {
   };
 
   await run("Login", "/login", (p) => p.getByRole("button", { name: "Log in" }).waitFor());
-  await run("Teacher dashboard", `/s/${SLUG}`, (p) => p.getByRole("heading", { level: 1 }).waitFor(), staff("adeyemi3@demo.schoolos.ng"));
-  await run("Attendance list", `/s/${SLUG}/attendance`, (p) => p.getByRole("link", { name: /Take register|View or edit register/ }).first().waitFor(), staff("adeyemi3@demo.schoolos.ng"));
-  await run("Results", `/s/${SLUG}/results`, (p) => p.getByRole("heading", { level: 1 }).waitFor(), staff("obi4@demo.schoolos.ng"));
-  await run("Fees (bursar)", `/s/${SLUG}/fees`, (p) => p.getByRole("heading", { level: 1 }).waitFor(), staff("musa2@demo.schoolos.ng"));
+  await run("Teacher dashboard", `/s/${SLUG}`, (p) => p.getByRole("heading", { level: 1 }).waitFor(), staff("adeyemi3@demo.adalinschoolhub.ng"));
+  await run("Attendance list", `/s/${SLUG}/attendance`, (p) => p.getByRole("link", { name: /Take register|View or edit register/ }).first().waitFor(), staff("adeyemi3@demo.adalinschoolhub.ng"));
+  await run("Results", `/s/${SLUG}/results`, (p) => p.getByRole("heading", { level: 1 }).waitFor(), staff("obi4@demo.adalinschoolhub.ng"));
+  await run("Fees (bursar)", `/s/${SLUG}/fees`, (p) => p.getByRole("heading", { level: 1 }).waitFor(), staff("musa2@demo.adalinschoolhub.ng"));
   await run("Parent sign-in", "/parent", (p) => p.getByRole("button").first().waitFor());
   await browser.close();
 

@@ -48,7 +48,7 @@ export default async function ResultCheckPage({ params, searchParams }: { params
         </form>
 
         <div className="mt-10 flex items-center justify-center gap-2 fs-13 text-muted">
-          <Kola className="h-7 w-6" /> Powered by School OS
+          <Kola className="h-7 w-6" /> Powered by Adalin SchoolHub
         </div>
       </div>
     </div>

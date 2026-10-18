@@ -8,7 +8,7 @@ import { plans, type schools } from "../db/schema";
 import { readLocalUpload } from "../storage";
 import type { SchoolHeader } from "./documents";
 
-/** The school's colour for its documents: its own on plans with school colours, School OS orange otherwise. */
+/** The school's colour for its documents: its own on plans with school colours, Adalin SchoolHub orange otherwise. */
 export async function schoolAccent(school: typeof schools.$inferSelect) {
   if (!school.brandColor) return undefined;
   const [plan] = await getDb().select({ features: plans.features }).from(plans).where(eq(plans.key, school.planKey));

@@ -79,7 +79,7 @@ async function tellOwners(db: DB, school: { id: string; slug: string; name: stri
       await enqueue(
         tx,
         school.id,
-        people.filter((p) => p.email && !sent.has(`${n.ref}:${p.userId}`)).map((p) => ({ channel: "email" as const, to: p.email!, subject: `School OS: ${n.title}`, body: `Dear ${p.name},\n\n${n.email}\n\nSchool OS, by Adalin Technologies`, kind: "billing", ref: `${n.ref}:${p.userId}` })),
+        people.filter((p) => p.email && !sent.has(`${n.ref}:${p.userId}`)).map((p) => ({ channel: "email" as const, to: p.email!, subject: `Adalin SchoolHub: ${n.title}`, body: `Dear ${p.name},\n\n${n.email}\n\nAdalin SchoolHub, by Adalin Technologies`, kind: "billing", ref: `${n.ref}:${p.userId}` })),
       );
     }
   });
@@ -125,12 +125,12 @@ export async function billingOverview(db: DB, access: Access) {
 export async function billingNotice(db: DB, schoolId: string) {
   const [school] = await db.select().from(schools).where(eq(schools.id, schoolId));
   if (!school) return null;
-  if (school.status === "read_only") return { tone: "danger" as const, text: "Your school is read-only until the overdue School OS bill is paid. Everyone can still view everything." };
+  if (school.status === "read_only") return { tone: "danger" as const, text: "Your school is read-only until the overdue Adalin SchoolHub bill is paid. Everyone can still view everything." };
   const today = lagosToday();
   const [overdue] = await withTenant(db, schoolId, (tx) => tx.select({ dueOn: platformInvoices.dueOn }).from(platformInvoices).where(and(eq(platformInvoices.status, "open"), sql`${platformInvoices.dueOn} < ${today}`)).orderBy(asc(platformInvoices.dueOn)).limit(1));
   if (overdue) {
     const lockOn = addDays(overdue.dueOn, GRACE_DAYS);
-    return { tone: "warning" as const, text: `A School OS bill is overdue. Pay by ${new Date(`${lockOn}T12:00:00Z`).toLocaleDateString("en-NG", { day: "numeric", month: "long", timeZone: "UTC" })} to avoid read-only mode.` };
+    return { tone: "warning" as const, text: `A Adalin SchoolHub bill is overdue. Pay by ${new Date(`${lockOn}T12:00:00Z`).toLocaleDateString("en-NG", { day: "numeric", month: "long", timeZone: "UTC" })} to avoid read-only mode.` };
   }
   if (school.trialEndsAt) {
     const days = Math.ceil((school.trialEndsAt.getTime() - Date.now()) / 86_400_000);
@@ -366,7 +366,7 @@ export async function runBilling(db: DB, now = new Date()) {
         title: "Your free trial has ended",
         body: `You're back on ${plan.name}. Choose a plan any time to get the features back.`,
         ref: `trial-ended:${school.id}`,
-        email: `Your free trial of School OS has ended and ${school.name} is back on the ${plan.name} plan. Nothing has been deleted. Choose a plan under Settings, Plan & billing, to get the features back.`,
+        email: `Your free trial of Adalin SchoolHub has ended and ${school.name} is back on the ${plan.name} plan. Nothing has been deleted. Choose a plan under Settings, Plan & billing, to get the features back.`,
       });
       report.trialsEnded++;
       continue;
@@ -376,7 +376,7 @@ export async function runBilling(db: DB, now = new Date()) {
         title: "Your free trial ends in 3 days",
         body: "Choose a plan to keep the features you've been using.",
         ref: `trial-ending:${school.id}`,
-        email: `Your free trial of School OS for ${school.name} ends in 3 days. Choose a plan under Settings, Plan & billing, to keep the features you've been using.`,
+        email: `Your free trial of Adalin SchoolHub for ${school.name} ends in 3 days. Choose a plan under Settings, Plan & billing, to keep the features you've been using.`,
       });
       report.trialWarnings++;
     }
@@ -384,10 +384,10 @@ export async function runBilling(db: DB, now = new Date()) {
     if (bill) {
       report.billsIssued++;
       await tellOwners(db, school, {
-        title: `School OS bill for ${bill.period}`,
+        title: `Adalin SchoolHub bill for ${bill.period}`,
         body: `${formatNaira(bill.totalKobo)} for ${pupils(bill.studentCount)}, due ${bill.dueOn}.`,
         ref: `bill:${bill.id}`,
-        email: `Your School OS bill ${bill.number} for ${bill.period} is ready: ${formatNaira(bill.totalKobo)} for ${pupils(bill.studentCount)} on roll. It's due by ${bill.dueOn}. Pay it under Settings, Plan & billing.`,
+        email: `Your Adalin SchoolHub bill ${bill.number} for ${bill.period} is ready: ${formatNaira(bill.totalKobo)} for ${pupils(bill.studentCount)} on roll. It's due by ${bill.dueOn}. Pay it under Settings, Plan & billing.`,
       });
     }
     const open = await db.select().from(platformInvoices).where(and(eq(platformInvoices.schoolId, school.id), eq(platformInvoices.status, "open")));
@@ -397,10 +397,10 @@ export async function runBilling(db: DB, now = new Date()) {
       const remind = [-7, 0, 3].includes(late) && b.lastReminderOn !== today;
       if (remind) {
         await tellOwners(db, school, {
-          title: late < 0 ? `School OS bill due in 7 days` : late === 0 ? "School OS bill due today" : "School OS bill overdue",
+          title: late < 0 ? `Adalin SchoolHub bill due in 7 days` : late === 0 ? "Adalin SchoolHub bill due today" : "Adalin SchoolHub bill overdue",
           body: `${b.number}: ${formatNaira(b.totalKobo)}.${late > 0 ? ` Pay within ${GRACE_DAYS - late} days to avoid read-only mode.` : ""}`,
           ref: `bill-reminder:${b.id}:${late}`,
-          email: `A reminder about School OS bill ${b.number} for ${b.period}: ${formatNaira(b.totalKobo)}, due ${b.dueOn}.${late > 0 ? ` It's overdue. If it isn't paid within ${GRACE_DAYS - late} days, ${school.name} will become read-only until it is: everyone can still view everything, but changes are paused.` : ""}`,
+          email: `A reminder about Adalin SchoolHub bill ${b.number} for ${b.period}: ${formatNaira(b.totalKobo)}, due ${b.dueOn}.${late > 0 ? ` It's overdue. If it isn't paid within ${GRACE_DAYS - late} days, ${school.name} will become read-only until it is: everyone can still view everything, but changes are paused.` : ""}`,
         });
         await db.update(platformInvoices).set({ remindersSent: b.remindersSent + 1, lastReminderOn: today }).where(eq(platformInvoices.id, b.id));
         report.reminders++;
@@ -412,7 +412,7 @@ export async function runBilling(db: DB, now = new Date()) {
           title: "Your school is now read-only",
           body: `Bill ${b.number} is more than ${GRACE_DAYS} days overdue. Pay it to carry on as normal.`,
           ref: `read-only:${b.id}`,
-          email: `School OS bill ${b.number} for ${b.period} is more than ${GRACE_DAYS} days overdue, so ${school.name} is now read-only. Staff can still view everything and parents can still pay fees, but changes are paused until the bill is paid. Nothing has been deleted.`,
+          email: `Adalin SchoolHub bill ${b.number} for ${b.period} is more than ${GRACE_DAYS} days overdue, so ${school.name} is now read-only. Staff can still view everything and parents can still pay fees, but changes are paused until the bill is paid. Nothing has been deleted.`,
         });
         report.readOnly++;
       }

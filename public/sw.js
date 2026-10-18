@@ -1,5 +1,5 @@
 /*
- * School OS service worker: opens the pages teachers need without a connection.
+ * Adalin SchoolHub service worker: opens the pages teachers need without a connection.
  *
  * - App code and styles (/_next/static) are cached the first time they load.
  * - The dashboard, registers and score sheets are saved each time they're opened online, and

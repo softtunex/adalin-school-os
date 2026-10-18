@@ -1,6 +1,6 @@
 # Data breach procedure
 
-What Adalin does if personal data in School OS is, or may have been, exposed, lost, changed or accessed without permission. It meets the Nigeria Data Protection Act 2023 (NDPA) and our data processing agreement: schools hear from us within **24 hours**, so they (the controllers) can notify the Nigeria Data Protection Commission (NDPC) within **72 hours**.
+What Adalin does if personal data in Adalin SchoolHub is, or may have been, exposed, lost, changed or accessed without permission. It meets the Nigeria Data Protection Act 2023 (NDPA) and our data processing agreement: schools hear from us within **24 hours**, so they (the controllers) can notify the Nigeria Data Protection Commission (NDPC) within **72 hours**.
 
 ## 1. Spot and report (immediately)
 

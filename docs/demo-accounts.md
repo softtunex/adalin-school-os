@@ -10,18 +10,18 @@ Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
 
 | Person | Role | Email | What to try |
 | --- | --- | --- | --- |
-| Olatunji Buari | Proprietor (owner) | `director@demo.schoolos.ng` | Everything. Lesson notes → For approval has a note waiting. Also an Adalin platform admin: open the school switcher (top of the sidebar) → **Adalin admin**, or go to `/admin`. |
-| Dr Adebayo Ogunleye | Principal | `ogunleye0@demo.schoolos.ng` | Results approval, lesson-note approval |
-| Mrs Chioma Nwosu | School admin | `nwosu1@demo.schoolos.ng` | Students, classes, timetable, Documents (ID cards, testimonials, certificates, transcripts, letters) |
-| Mr Ibrahim Musa | Bursar | `musa2@demo.schoolos.ng` | Fees, payments, expenses |
-| Mrs Funmilayo Adeyemi | Class teacher, JSS 1 Gold | `adeyemi3@demo.schoolos.ng` | Attendance, report-card comments |
-| Mr Emeka Obi | Maths teacher, JSS 1 | `obi4@demo.schoolos.ng` | Assignments, CBT exams, lesson notes, score entry |
-| Miss Zainab Bello | English teacher, JSS 1 | `bello5@demo.schoolos.ng` | Score entry |
-| Mrs Grace Okafor | Librarian | `librarian6@demo.schoolos.ng` | Library: catalogue, lending, returns, fines (one loan overdue, one fine owed) |
-| Mr Sunday Eze | Storekeeper | `storekeeper7@demo.schoolos.ng` | Inventory: stock in, issue, sign out and take back assets, stock counts (A4 paper and diesel running low) |
-| Nurse Kemi Adebayo | School nurse | `nurse8@demo.schoolos.ng` | Sick bay: one student resting now, three weeks of visits, health records with allergies (try giving Ibuprofen to someone allergic) |
-| Mr Tunde Bakare | Transport officer | `transport9@demo.schoolos.ng` | Transport: three Lagos routes, the bus register (Bus register tab), riders, buses. The Director can add bus fees to invoices. |
-| Mrs Esther Okoro | Hostel warden | `warden10@demo.schoolos.ng` | Hostel: two hostels, rooms and beds, exeats (Folake Lawal's parent has one waiting for approval; one student is out now) |
+| Olatunji Buari | Proprietor (owner) | `director@demo.adalinschoolhub.ng` | Everything. Lesson notes → For approval has a note waiting. Also an Adalin platform admin: open the school switcher (top of the sidebar) → **Adalin admin**, or go to `/admin`. |
+| Dr Adebayo Ogunleye | Principal | `ogunleye0@demo.adalinschoolhub.ng` | Results approval, lesson-note approval |
+| Mrs Chioma Nwosu | School admin | `nwosu1@demo.adalinschoolhub.ng` | Students, classes, timetable, Documents (ID cards, testimonials, certificates, transcripts, letters) |
+| Mr Ibrahim Musa | Bursar | `musa2@demo.adalinschoolhub.ng` | Fees, payments, expenses |
+| Mrs Funmilayo Adeyemi | Class teacher, JSS 1 Gold | `adeyemi3@demo.adalinschoolhub.ng` | Attendance, report-card comments |
+| Mr Emeka Obi | Maths teacher, JSS 1 | `obi4@demo.adalinschoolhub.ng` | Assignments, CBT exams, lesson notes, score entry |
+| Miss Zainab Bello | English teacher, JSS 1 | `bello5@demo.adalinschoolhub.ng` | Score entry |
+| Mrs Grace Okafor | Librarian | `librarian6@demo.adalinschoolhub.ng` | Library: catalogue, lending, returns, fines (one loan overdue, one fine owed) |
+| Mr Sunday Eze | Storekeeper | `storekeeper7@demo.adalinschoolhub.ng` | Inventory: stock in, issue, sign out and take back assets, stock counts (A4 paper and diesel running low) |
+| Nurse Kemi Adebayo | School nurse | `nurse8@demo.adalinschoolhub.ng` | Sick bay: one student resting now, three weeks of visits, health records with allergies (try giving Ibuprofen to someone allergic) |
+| Mr Tunde Bakare | Transport officer | `transport9@demo.adalinschoolhub.ng` | Transport: three Lagos routes, the bus register (Bus register tab), riders, buses. The Director can add bus fees to invoices. |
+| Mrs Esther Okoro | Hostel warden | `warden10@demo.adalinschoolhub.ng` | Hostel: two hostels, rooms and beds, exeats (Folake Lawal's parent has one waiting for approval; one student is out now) |
 
 ## Enterprise school
 
@@ -29,7 +29,7 @@ A second demo, **Adalin Heights Schools** (`pnpm db:seed-enterprise`), on the En
 
 | Person | Role | Email | Password | What to try |
 | --- | --- | --- | --- | --- |
-| Mrs Ronke Adeleke | Proprietor of both campuses | `enterprise@demo.schoolos.ng` | **`Demo2026!`** | School picker → **Adalin Heights Schools** group dashboard; Settings → API &amp; webhooks (make a key, call `/api/v1/students`), Staff sign-in, Campuses, Web address, Data &amp; privacy |
+| Mrs Ronke Adeleke | Proprietor of both campuses | `enterprise@demo.adalinschoolhub.ng` | **`Demo2026!`** | School picker → **Adalin Heights Schools** group dashboard; Settings → API &amp; webhooks (make a key, call `/api/v1/students`), Staff sign-in, Campuses, Web address, Data &amp; privacy |
 
 ## Parent
 

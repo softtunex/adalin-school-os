@@ -52,7 +52,7 @@ export default async function ApplyPage({ params }: { params: Promise<{ slug: st
             <ApplyForm slug={slug} levels={page.levels} feeLabel={page.feeKobo && page.payOnline ? formatNaira(page.feeKobo) : null} />
           </>
         )}
-        <p className="text-center fs-12.5 text-muted">Powered by School OS</p>
+        <p className="text-center fs-12.5 text-muted">Powered by Adalin SchoolHub</p>
       </div>
     </div>
   );

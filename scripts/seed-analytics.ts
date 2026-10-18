@@ -23,7 +23,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const director = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const director = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const exists = await withTenant(db, owner.school.id, (tx) => tx.select().from(academicSessions).where(eq(academicSessions.name, PAST)));

@@ -313,7 +313,7 @@ export async function commitImport(db: DB, access: Access, rows: ImportRow[], ip
 /** The downloadable template, with the school's real class names on a second sheet. */
 export async function buildTemplate(classNames: string[]) {
   const wb = new ExcelJS.Workbook();
-  wb.creator = "School OS";
+  wb.creator = "Adalin SchoolHub";
   const sheet = wb.addWorksheet("Students");
   sheet.columns = IMPORT_COLUMNS.map((c) => ({ header: c.header, key: c.key, width: Math.max(14, c.header.length + 4) }));
   sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };

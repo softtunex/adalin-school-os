@@ -29,7 +29,7 @@ export function SettlementForm({
     <Card className="flex flex-col gap-5 p-5 sm:p-6">
       <div>
         <h2 className="fs-16 font-semibold">Where fees are paid into</h2>
-        <p className="mt-0.5 fs-14 text-muted">Printed on invoices for bank transfers. Online payments settle straight into this account; School OS never holds your money.</p>
+        <p className="mt-0.5 fs-14 text-muted">Printed on invoices for bank transfers. Online payments settle straight into this account; Adalin SchoolHub never holds your money.</p>
       </div>
       {current ? (
         <div className="rounded-chunk border border-line bg-paper px-4 py-3">

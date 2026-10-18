@@ -129,7 +129,7 @@ export default async function PayPage({ params, searchParams }: { params: Promis
         </div>
         {school.note ? <p className="mt-4 text-center fs-13 text-muted">{school.note}</p> : null}
         <div className="mt-10 flex items-center justify-center gap-2 fs-13 text-muted">
-          <Kola className="h-7 w-6" /> Powered by School OS
+          <Kola className="h-7 w-6" /> Powered by Adalin SchoolHub
         </div>
       </div>
     </div>

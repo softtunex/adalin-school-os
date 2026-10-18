@@ -193,7 +193,7 @@ export const sessions = pgTable(
   (t) => [index("sessions_user_idx").on(t.userId)],
 );
 
-/** A Google or Microsoft account connected to a School OS login. */
+/** A Google or Microsoft account connected to a Adalin SchoolHub login. */
 export const ssoIdentities = pgTable(
   "sso_identities",
   {
@@ -278,7 +278,7 @@ export const schools = pgTable(
     state: text("state"),
     country: text("country").notNull().default("Nigeria"),
     logoUrl: text("logo_url"),
-    /** The school's own colour on documents and its pages (Premium). Null keeps School OS orange. */
+    /** The school's own colour on documents and its pages (Premium). Null keeps Adalin SchoolHub orange. */
     brandColor: text("brand_color"),
     // ---------- Our billing ----------
     /** The plan to return to when a free trial ends. Null when not on trial. */
@@ -319,7 +319,7 @@ export const schools = pgTable(
     termsAcceptedAt: timestamp("terms_accepted_at", { withTimezone: true }),
     termsVersion: text("terms_version"),
     termsAcceptedBy: uuid("terms_accepted_by").references((): AnyPgColumn => users.id, { onDelete: "set null" }),
-    /** The school's own web address for School OS, e.g. portal.yourschool.edu.ng (Enterprise). */
+    /** The school's own web address for Adalin SchoolHub, e.g. portal.yourschool.edu.ng (Enterprise). */
     customDomain: text("custom_domain"),
     /** When the custom domain was confirmed working. Until then it only shows setup steps. */
     domainVerifiedAt: timestamp("domain_verified_at", { withTimezone: true }),
@@ -2246,7 +2246,7 @@ export const webhooks = pgTable(
     schoolId: schoolId(),
     url: text("url").notNull(),
     events: jsonb("events").$type<string[]>().notNull().default([]),
-    /** Signs each delivery so the receiver knows it came from School OS. */
+    /** Signs each delivery so the receiver knows it came from Adalin SchoolHub. */
     signingSecret: text("signing_secret").notNull(),
     active: boolean("active").notNull().default(true),
     /** Deliveries that failed in a row; it switches off after too many. */

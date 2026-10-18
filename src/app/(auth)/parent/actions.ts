@@ -23,7 +23,7 @@ export async function requestCodeAction(_prev: FormState, formData: FormData): P
     const result = await requestLoginCode(getDb(), raw, ip, async (d, code) => {
       if (showCodeOnScreen(d)) shown.code = code;
       if (d.kind === "phone") await sendPlatformSms(d.value, loginCodeMessage(code));
-      else await sendEmail({ to: d.value, subject: `Your School OS code: ${code}`, text: loginCodeMessage(code) });
+      else await sendEmail({ to: d.value, subject: `Your Adalin SchoolHub code: ${code}`, text: loginCodeMessage(code) });
     });
     return {
       success: result.destination.kind === "phone" ? "If your child's school has this number, we've texted you a code." : "If your child's school has this email, we've sent you a code.",

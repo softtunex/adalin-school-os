@@ -1,4 +1,4 @@
-export const APP_NAME = "School OS";
+export const APP_NAME = "Adalin SchoolHub";
 export const APP_TAGLINE = "Run your whole school from one place.";
 export const SUPPORT_WHATSAPP = "+234 000 000 0000";
 

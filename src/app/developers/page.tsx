@@ -4,7 +4,7 @@ import { Logo } from "@/components/brand";
 import { API_SCOPES } from "@/lib/services/api-keys";
 import { WEBHOOK_EVENTS } from "@/lib/services/webhooks";
 
-export const metadata: Metadata = { title: "API documentation", description: "Read your school's data from School OS and get webhooks when things happen." };
+export const metadata: Metadata = { title: "API documentation", description: "Read your school's data from Adalin SchoolHub and get webhooks when things happen." };
 
 const ENDPOINTS: { path: string; scope: string | null; about: string; params?: string }[] = [
   { path: "/api/v1/school", scope: null, about: "Your school's name, code and contact details." },
@@ -39,7 +39,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
 const VERIFY = `import crypto from "node:crypto";
 
 // In your webhook handler, with the raw request body (before JSON parsing):
-function fromSchoolOS(rawBody, signatureHeader, secret) {
+function fromSchoolHub(rawBody, signatureHeader, secret) {
   const { t, v1 } = Object.fromEntries(signatureHeader.split(",").map((p) => p.split("=")));
   if (Math.abs(Date.now() / 1000 - Number(t)) > 300) return false; // older than 5 minutes
   const expected = crypto.createHmac("sha256", secret).update(\`\${t}.\${rawBody}\`).digest("hex");
@@ -57,7 +57,7 @@ export default function DevelopersPage() {
       </header>
       <main className="mx-auto flex max-w-[880px] flex-col gap-10 px-4 py-10 sm:px-8">
         <div className="flex flex-col gap-3">
-          <h1 className="fs-34 font-black tracking-[-0.03em] text-ink">The School OS API</h1>
+          <h1 className="fs-34 font-black tracking-[-0.03em] text-ink">The Adalin SchoolHub API</h1>
           <p className="max-w-[640px] fs-16 text-body">
             Read your school&apos;s students, classes, staff, fees and attendance from your own systems, and get told the moment a student joins or a payment comes in. Available on the Enterprise plan; the
             proprietor makes keys and webhooks under Settings, API &amp; webhooks.
@@ -118,9 +118,9 @@ export default function DevelopersPage() {
             ))}
           </ul>
           <Code>{`POST /your-address
-X-SchoolOS-Event: payment.received
-X-SchoolOS-Delivery: 5f0c…
-X-SchoolOS-Signature: t=1792160000,v1=9a3c…
+X-SchoolHub-Event: payment.received
+X-SchoolHub-Delivery: 5f0c…
+X-SchoolHub-Signature: t=1792160000,v1=9a3c…
 
 {
   "id": "5f0c…",
@@ -132,7 +132,7 @@ X-SchoolOS-Signature: t=1792160000,v1=9a3c…
             Answer with any 2xx status within 10 seconds. Anything else is retried after 1, 5 and 30 minutes, then 2 and 6 hours. After 15 failures in a row the webhook is switched off until you switch it back on. The
             same delivery can arrive twice, so use its id to ignore repeats.
           </p>
-          <p className="fs-15 text-body">Check every delivery is really from School OS with the signing secret you were shown when you added the webhook:</p>
+          <p className="fs-15 text-body">Check every delivery is really from Adalin SchoolHub with the signing secret you were shown when you added the webhook:</p>
           <Code>{VERIFY}</Code>
         </Section>
       </main>

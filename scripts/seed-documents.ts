@@ -1,7 +1,7 @@
 /*
  * The demo school's documents: signed by the principal, JSS 1 Gold's ID cards, a testimonial
  * for a leaver and two award certificates, so the register and the QR check have something
- * in them. Uses the school admin (nwosu1@demo.schoolos.ng). Run with the dev server stopped.
+ * in them. Uses the school admin (nwosu1@demo.adalinschoolhub.ng). Run with the dev server stopped.
  */
 import { asc, eq } from "drizzle-orm";
 import { createDatabaseFromEnv } from "../src/lib/db/client";
@@ -25,7 +25,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const user = await findUserByEmail(db, "nwosu1@demo.schoolos.ng");
+  const user = await findUserByEmail(db, "nwosu1@demo.adalinschoolhub.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
   let admin = (await loadAccess(db, user.id, "adalin-college"))!;
   const existing = await withTenant(db, admin.school.id, (tx) => tx.select({ id: issuedDocuments.id }).from(issuedDocuments).limit(1));

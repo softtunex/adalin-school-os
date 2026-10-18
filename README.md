@@ -1,4 +1,4 @@
-# School OS
+# Adalin SchoolHub
 
 Multi-school management SaaS by Adalin Technologies. One codebase serves proprietors, principals, admin staff, bursars, teachers, parents and students, each with their own view, with features unlocked by plan.
 

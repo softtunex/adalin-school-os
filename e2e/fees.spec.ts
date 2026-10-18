@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 // Runs against the demo school (pnpm db:seed && pnpm db:seed-fees), which is on the Premium plan.
-const DEMO = { email: "director@demo.schoolos.ng", password: "Demo2026!", slug: "adalin-college" };
+const DEMO = { email: "director@demo.adalinschoolhub.ng", password: "Demo2026!", slug: "adalin-college" };
 
 async function login(page: Page) {
   await page.goto("/login");

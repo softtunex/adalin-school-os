@@ -67,7 +67,7 @@ const loadSchoolAccess = cache(async (slug: string) => {
   return access;
 });
 
-export const READ_ONLY_MESSAGE = "Your school is read-only until the overdue School OS bill is paid. A proprietor can pay it under Settings, Plan & billing.";
+export const READ_ONLY_MESSAGE = "Your school is read-only until the overdue Adalin SchoolHub bill is paid. A proprietor can pay it under Settings, Plan & billing.";
 
 /**
  * The signed-in user's access to a school. 404s for non-members so school slugs can't be probed.

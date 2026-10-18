@@ -38,7 +38,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       <PageBody>
         <StatGrid>
           <StatCard label="Students" value={t.students.toLocaleString("en-NG")} icon="users" tone="brand" caption="Active, across every campus" />
-          <StatCard label="Staff" value={t.staff} icon="user" tone="violet" caption="With a School OS login" />
+          <StatCard label="Staff" value={t.staff} icon="user" tone="violet" caption="With a Adalin SchoolHub login" />
           <StatCard label="In school today" value={pct(t.marked ? t.present / t.marked : null)} icon="calendar" tone="blue" caption={t.marked ? `${t.present} of ${t.marked} marked present or late` : "No register taken yet today"} />
           <StatCard
             label="Fees collected"
@@ -96,7 +96,7 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
             </tbody>
           </Table>
         </TableCard>
-        <p className="fs-13.5 text-muted">Each campus keeps its own records, staff and School OS bill. Add or remove campuses from any campus&apos;s Settings, Campuses.</p>
+        <p className="fs-13.5 text-muted">Each campus keeps its own records, staff and Adalin SchoolHub bill. Add or remove campuses from any campus&apos;s Settings, Campuses.</p>
       </PageBody>
     </div>
   );

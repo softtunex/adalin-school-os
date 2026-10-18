@@ -166,7 +166,7 @@ export function ExtendTrial({ schoolId }: { schoolId: string }) {
 const STATUS_COPY = {
   active: ["Make active", "Everything works as normal."],
   read_only: ["Make read-only", "Staff can see everything but can't change anything. Parents and students are unaffected."],
-  suspended: ["Suspend", "Nobody at the school can use School OS until it's made active again."],
+  suspended: ["Suspend", "Nobody at the school can use Adalin SchoolHub until it's made active again."],
 } as const;
 
 export function StatusControl({ schoolId, current }: { schoolId: string; current: string }) {

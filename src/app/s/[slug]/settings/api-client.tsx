@@ -133,7 +133,7 @@ export function NewWebhook({ slug, events }: { slug: string; events: Option[] })
       title="Add a webhook"
       submit="Add webhook"
       secretLabel="Signing secret"
-      secretHelp="Your receiver uses this to check each delivery really came from School OS. It's only shown now."
+      secretHelp="Your receiver uses this to check each delivery really came from Adalin SchoolHub. It's only shown now."
       onSubmit={() => createWebhookAction(slug, { url, events: chosen })}
       reset={() => {
         setUrl("");

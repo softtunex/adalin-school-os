@@ -35,10 +35,10 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const user = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const user = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!user) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, user.id, "adalin-college"))!;
-  const bursarUser = await findUserByEmail(db, "musa2@demo.schoolos.ng");
+  const bursarUser = await findUserByEmail(db, "musa2@demo.adalinschoolhub.ng");
   const bursar = bursarUser ? ((await loadAccess(db, bursarUser.id, "adalin-college")) ?? owner) : owner;
 
   const setup = await getFeeSetup(db, owner);

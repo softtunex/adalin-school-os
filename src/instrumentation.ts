@@ -8,7 +8,7 @@ export async function register() {
     const { productionEnvProblems } = await import("./lib/monitoring");
     const { fatal, warn } = productionEnvProblems();
     for (const w of warn) console.warn(`[env] ${w}`);
-    if (fatal.length) throw new Error(`School OS can't start safely:\n- ${fatal.join("\n- ")}`);
+    if (fatal.length) throw new Error(`Adalin SchoolHub can't start safely:\n- ${fatal.join("\n- ")}`);
   }
 
   // Applies pending migrations when the local development server starts, so schema changes

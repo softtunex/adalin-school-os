@@ -149,7 +149,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ slug: s
           </section>
         ) : null}
 
-        <p className="px-2 text-center fs-12.5 text-muted">This check reads the school&apos;s own register of documents, kept on School OS. It changes the moment the school cancels a document.</p>
+        <p className="px-2 text-center fs-12.5 text-muted">This check reads the school&apos;s own register of documents, kept on Adalin SchoolHub. It changes the moment the school cancels a document.</p>
       </main>
     </div>
   );

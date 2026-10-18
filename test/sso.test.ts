@@ -75,14 +75,14 @@ describe("matching a login", () => {
 
   it("refuses unverified emails, unknown people and unconnected Microsoft accounts", async () => {
     await expect(resolveSsoLogin(database.db, "google", google("g-2", "other@sso.test", false))).rejects.toThrow(/isn't verified/);
-    await expect(resolveSsoLogin(database.db, "google", google("g-3", "nobody@sso.test"))).rejects.toThrow(/No School OS login/);
+    await expect(resolveSsoLogin(database.db, "google", google("g-3", "nobody@sso.test"))).rejects.toThrow(/No Adalin SchoolHub login/);
     await expect(resolveSsoLogin(database.db, "microsoft", google("m-1", "other@sso.test"))).rejects.toThrow(/isn't connected/);
   });
 
   it("connects Microsoft from Your account, once, to one login", async () => {
     await linkSsoIdentity(database.db, otherUserId, "microsoft", google("m-1", "other@sso.test"));
     expect(await resolveSsoLogin(database.db, "microsoft", google("m-1", "other@sso.test"))).toBe(otherUserId);
-    await expect(linkSsoIdentity(database.db, owner.user.id, "microsoft", google("m-1", "x"))).rejects.toThrow(/another School OS login/);
+    await expect(linkSsoIdentity(database.db, owner.user.id, "microsoft", google("m-1", "x"))).rejects.toThrow(/another Adalin SchoolHub login/);
     const [identity] = (await listSsoIdentities(database.db, otherUserId)).filter((i) => i.provider === "microsoft");
     await unlinkSsoIdentity(database.db, otherUserId, identity.id);
     await expect(resolveSsoLogin(database.db, "microsoft", google("m-1", "other@sso.test"))).rejects.toThrow(/isn't connected/);

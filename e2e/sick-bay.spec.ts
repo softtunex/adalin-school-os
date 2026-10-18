@@ -10,7 +10,7 @@ test("the nurse records a visit, is warned about an allergy, and the parent sees
 
   const nurse = await (await browser.newContext()).newPage();
   await nurse.goto("/login");
-  await nurse.getByLabel("Email").fill("nurse8@demo.schoolos.ng");
+  await nurse.getByLabel("Email").fill("nurse8@demo.adalinschoolhub.ng");
   await nurse.getByLabel("Password").fill("Demo2026!");
   await nurse.getByRole("button", { name: "Log in" }).click();
   await expect(nurse).toHaveURL(/\/s\//, { timeout: 60_000 });

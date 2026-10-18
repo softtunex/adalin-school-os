@@ -1,5 +1,5 @@
 /*
- * The demo school's library: a librarian (Mrs Grace Okafor, librarian6@demo.schoolos.ng,
+ * The demo school's library: a librarian (Mrs Grace Okafor, librarian6@demo.adalinschoolhub.ng,
  * password Demo2026!), about twenty titles, and loans: some current, one overdue, one returned
  * late with a fine owed, and a book out to Oluwaseun Lawal. Run with the dev server stopped.
  */
@@ -45,7 +45,7 @@ async function main() {
   const database = createDatabaseFromEnv();
   await database.migrate();
   const db = database.db;
-  const director = await findUserByEmail(db, "director@demo.schoolos.ng");
+  const director = await findUserByEmail(db, "director@demo.adalinschoolhub.ng");
   if (!director) throw new Error("Run pnpm db:seed first.");
   const owner = (await loadAccess(db, director.id, "adalin-college"))!;
   const existing = await withTenant(db, owner.school.id, (tx) => tx.select({ id: libraryBooks.id }).from(libraryBooks).limit(1));
@@ -54,12 +54,12 @@ async function main() {
     await database.close();
     return;
   }
-  let librarian = await findUserByEmail(db, "librarian6@demo.schoolos.ng");
+  let librarian = await findUserByEmail(db, "librarian6@demo.adalinschoolhub.ng");
   if (!librarian) {
     const [role] = await withTenant(db, owner.school.id, (tx) => tx.select().from(roles).where(eq(roles.key, "librarian")));
-    const { token } = await inviteStaff(db, owner, { name: "Mrs Grace Okafor", email: "librarian6@demo.schoolos.ng", roleIds: [role.id] });
+    const { token } = await inviteStaff(db, owner, { name: "Mrs Grace Okafor", email: "librarian6@demo.adalinschoolhub.ng", roleIds: [role.id] });
     await acceptInvitation(db, token, { name: "Mrs Grace Okafor", password: "Demo2026!" });
-    librarian = await findUserByEmail(db, "librarian6@demo.schoolos.ng");
+    librarian = await findUserByEmail(db, "librarian6@demo.adalinschoolhub.ng");
   }
   const n = await withTenant(db, owner.school.id, async (tx) => {
     const [lib] = await tx.select().from(memberships).where(eq(memberships.userId, librarian!.id));
@@ -83,7 +83,7 @@ async function main() {
     await tx.insert(libraryLoans).values(loans);
     return { books: rows.length, loans: loans.length };
   });
-  console.log(`Library demo: ${n.books} titles, ${n.loans} loans. Librarian: librarian6@demo.schoolos.ng / Demo2026!`);
+  console.log(`Library demo: ${n.books} titles, ${n.loans} loans. Librarian: librarian6@demo.adalinschoolhub.ng / Demo2026!`);
   await database.close();
 }
 

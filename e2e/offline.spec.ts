@@ -4,7 +4,7 @@ test("a teacher reopens a register with no connection, and other pages say they'
   test.skip(isMobile, "desktop journey");
   test.setTimeout(process.env.CI ? 240_000 : 480_000);
   await page.goto("/login");
-  await page.getByLabel("Email").fill("adeyemi3@demo.schoolos.ng");
+  await page.getByLabel("Email").fill("adeyemi3@demo.adalinschoolhub.ng");
   await page.getByLabel("Password").fill("Demo2026!");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page).toHaveURL(/\/s\//, { timeout: 60_000 });

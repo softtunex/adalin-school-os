@@ -85,7 +85,7 @@ export function zipStream(files: AsyncIterable<File>): ReadableStream<Uint8Array
 }
 
 const README = (school: string, what: string) =>
-  `${what}\r\nFrom ${school}, exported from School OS on ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC.\r\n\r\nEach .csv file is one kind of record and opens in Excel or Google Sheets. Records link to each other by their id columns (for example student_id in scores.csv is the id in students.csv). Amounts ending in _kobo are in kobo: divide by 100 for naira. Times are in UTC.\r\n\r\nPasswords, PINs and payment links are never exported.\r\n\r\nKeep this file safe: it contains personal data protected by the Nigeria Data Protection Act.\r\n`;
+  `${what}\r\nFrom ${school}, exported from Adalin SchoolHub on ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC.\r\n\r\nEach .csv file is one kind of record and opens in Excel or Google Sheets. Records link to each other by their id columns (for example student_id in scores.csv is the id in students.csv). Amounts ending in _kobo are in kobo: divide by 100 for naira. Times are in UTC.\r\n\r\nPasswords, PINs and payment links are never exported.\r\n\r\nKeep this file safe: it contains personal data protected by the Nigeria Data Protection Act.\r\n`;
 
 /** Everything the school holds, one CSV per kind of record. Only the proprietor can take it. */
 export async function exportSchool(db: DB, access: Access, ip?: string | null) {

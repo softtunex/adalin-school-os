@@ -14,7 +14,7 @@ export default async function AdminOverview() {
   const today = lagosToday();
   return (
     <>
-      <Topbar title="Overview" context="Every school on School OS" />
+      <Topbar title="Overview" context="Every school on Adalin SchoolHub" />
       <PageBody>
         <StatGrid>
           <StatCard label="Schools" value={o.counts.total} icon="school" tone="brand" caption={`${o.counts.newThisMonth} new this month · ${o.counts.paidPlans} on paid plans`} />
