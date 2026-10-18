@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageBody, Topbar } from "@/components/topbar";
 import { UpgradeCard } from "@/components/upgrade-card";
 import { Alert, Badge, Card } from "@/components/ui/display";
-import { Tabs } from "@/components/ui/tabs";
+import { SettingsNav, type SettingsTab } from "@/components/settings-nav";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { formatNaira } from "@/lib/money";
@@ -64,36 +64,37 @@ export default async function SettingsPage({ params, searchParams }: { params: P
   const s = access.school;
   const base = `/s/${slug}/settings`;
 
+  const sections: SettingsTab[] = [
+    ...(canProfile ? [{ key: "profile", label: "School profile", href: base }] : []),
+    ...(can(access, "academics:view") ? [{ key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` }] : []),
+    ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
+    ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
+    ...(canAdmissions ? [{ key: "admissions", label: "Admissions", href: `${base}?tab=admissions` }] : []),
+    ...(canHr ? [{ key: "hr", label: "Staff & HR", href: `${base}?tab=hr` }] : []),
+    ...(canPayroll ? [{ key: "payroll", label: "Payroll", href: `${base}?tab=payroll` }] : []),
+    ...(canDiscipline ? [{ key: "behaviour", label: "Behaviour", href: `${base}?tab=behaviour` }] : []),
+    ...(canLibrary ? [{ key: "library", label: "Library", href: `${base}?tab=library` }] : []),
+    ...(canInventory ? [{ key: "inventory", label: "Inventory", href: `${base}?tab=inventory` }] : []),
+    ...(canHealth ? [{ key: "health", label: "Sick bay", href: `${base}?tab=health` }] : []),
+    ...(canTransport ? [{ key: "transport", label: "Transport", href: `${base}?tab=transport` }] : []),
+    ...(canHostel ? [{ key: "hostel", label: "Boarding", href: `${base}?tab=hostel` }] : []),
+    ...(canDocuments ? [{ key: "documents", label: "Documents", href: `${base}?tab=documents` }] : []),
+    ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
+    ...(can(access, "school:billing") ? [{ key: "addons", label: "Add-ons", href: `${base}?tab=addons` }] : []),
+    ...(can(access, "school:billing") && can(access, "school:update") ? [{ key: "domain", label: "Web address", href: `${base}?tab=domain` }] : []),
+    ...(can(access, "school:billing") ? [{ key: "campuses", label: "Campuses", href: `${base}?tab=campuses` }] : []),
+    ...(can(access, "school:sso") ? [{ key: "signin", label: "Staff sign-in", href: `${base}?tab=signin` }] : []),
+    ...(can(access, "school:api") ? [{ key: "api", label: "API & webhooks", href: `${base}?tab=api` }] : []),
+    ...(can(access, "school:export") ? [{ key: "data", label: "Data & privacy", href: `${base}?tab=data` }] : []),
+  ];
+
   return (
     <>
       <Topbar title="Settings" context={access.school.name} />
       <PageBody>
-        <Tabs
-          current={tab}
-          tabs={[
-            ...(canProfile ? [{ key: "profile", label: "School profile", href: base }] : []),
-            ...(can(access, "academics:view") ? [{ key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` }] : []),
-            ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
-            ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
-            ...(canAdmissions ? [{ key: "admissions", label: "Admissions", href: `${base}?tab=admissions` }] : []),
-            ...(canHr ? [{ key: "hr", label: "Staff & HR", href: `${base}?tab=hr` }] : []),
-            ...(canPayroll ? [{ key: "payroll", label: "Payroll", href: `${base}?tab=payroll` }] : []),
-            ...(canDiscipline ? [{ key: "behaviour", label: "Behaviour", href: `${base}?tab=behaviour` }] : []),
-            ...(canLibrary ? [{ key: "library", label: "Library", href: `${base}?tab=library` }] : []),
-            ...(canInventory ? [{ key: "inventory", label: "Inventory", href: `${base}?tab=inventory` }] : []),
-            ...(canHealth ? [{ key: "health", label: "Sick bay", href: `${base}?tab=health` }] : []),
-            ...(canTransport ? [{ key: "transport", label: "Transport", href: `${base}?tab=transport` }] : []),
-            ...(canHostel ? [{ key: "hostel", label: "Boarding", href: `${base}?tab=hostel` }] : []),
-            ...(canDocuments ? [{ key: "documents", label: "Documents", href: `${base}?tab=documents` }] : []),
-            ...(canProfile ? [{ key: "plan", label: "Plan & billing", href: `${base}?tab=plan` }] : []),
-            ...(can(access, "school:billing") ? [{ key: "addons", label: "Add-ons", href: `${base}?tab=addons` }] : []),
-            ...(can(access, "school:billing") && can(access, "school:update") ? [{ key: "domain", label: "Web address", href: `${base}?tab=domain` }] : []),
-            ...(can(access, "school:billing") ? [{ key: "campuses", label: "Campuses", href: `${base}?tab=campuses` }] : []),
-            ...(can(access, "school:sso") ? [{ key: "signin", label: "Staff sign-in", href: `${base}?tab=signin` }] : []),
-            ...(can(access, "school:api") ? [{ key: "api", label: "API & webhooks", href: `${base}?tab=api` }] : []),
-            ...(can(access, "school:export") ? [{ key: "data", label: "Data & privacy", href: `${base}?tab=data` }] : []),
-          ]}
-        />
+        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <SettingsNav current={tab} tabs={sections} />
+          <div className="flex min-w-0 flex-col gap-6">
 
         {tab === "documents" && canDocuments ? (
           <DocumentSettingsForm slug={slug} settings={documentSettings(s.documentSettings)} editable />
@@ -139,7 +140,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
         ) : !canProfile ? null : tab === "plan" ? (
           <PlanTab slug={slug} access={access} canBill={can(access, "school:billing")} paid={sp.paid} failed={sp.failed} />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="grid gap-6 2xl:grid-cols-[280px_minmax(0,1fr)]">
             <div>
               <h2 className="fs-16 font-semibold">School profile</h2>
               <p className="mt-1 fs-14 text-muted">Shown on report cards, receipts and the parent app. Complete it to tick off the first setup step.</p>
@@ -169,6 +170,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
             </div>
           </div>
         )}
+          </div>
+        </div>
       </PageBody>
     </>
   );
@@ -180,7 +183,7 @@ async function PaymentsTab({ slug, access }: { slug: string; access: Access }) {
   const fs = access.school.feeSettings;
   const online = hasFeature(access.plan, "fees_online");
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid gap-6 2xl:grid-cols-[280px_minmax(0,1fr)]">
       <div className="flex flex-col gap-3">
         <h2 className="fs-16 font-semibold">Payments</h2>
         <p className="fs-14 text-muted">Your school&apos;s bank account and how fee collection works.</p>
@@ -214,7 +217,7 @@ async function MessagingTab({ slug, access, bought, failed }: { slug: string; ac
   const failedN = data?.byChannel.filter((r) => r.status === "failed").reduce((n, r) => n + r.n, 0) ?? 0;
   const used = data?.byChannel.reduce((n, r) => n + (r.credits ?? 0), 0) ?? 0;
   return (
-    <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid gap-6 2xl:grid-cols-[280px_minmax(0,1fr)]">
       <div>
         <h2 className="fs-16 font-semibold">Messaging</h2>
         <p className="mt-1 fs-14 text-muted">SMS credits, automatic alerts to parents, and when parents can message staff.</p>
