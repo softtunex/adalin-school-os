@@ -15,7 +15,7 @@ The demo videos are scripted: they're recorded and edited by code, so they can b
 
 - **Demo clock.** The demo server runs on 08:30 Lagos time on the next school day (set another with `DEMO_NOW=2026-10-19T08:30:00+01:00`). The seeds, the server, the database's `now()` and the recording browser all use the same shift, so registers are open, greetings say "Good morning" and dates line up, whatever day you record.
 - **Fresh data.** Restart the server before a final take; scenes change data (registers, payments, approvals). `--keep` restarts without reseeding, for redoing one scene.
-- **No demo traces.** In the recording, test-mode notices are hidden, the server's address shows as `https://adalinschoolhub.com`, the test checkout is cut, and Google and Microsoft sign-in use placeholder apps so the options show (nothing signs in through them).
+- **No demo traces.** In the recording, test-mode notices are hidden, the server's address shows as the live one, `https://schoolhub.adalintech.com`, the test checkout is cut, and Google and Microsoft sign-in use placeholder apps so the options show (nothing signs in through them).
 - `DEMO_PACE` stretches every hold (default 1.5).
 - The Adalin admin console is never recorded: it's for Adalin staff, not schools.
 - Never point the scripts at the live site.

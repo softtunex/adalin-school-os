@@ -17,7 +17,7 @@ import { recordAudit } from "./audit";
  */
 
 const HOSTNAME = /^(?=.{4,253}$)(?!-)([a-z0-9-]{1,63}\.)+[a-z]{2,63}$/;
-const RESERVED = [/\.vercel\.app$/, /(^|\.)adalinschoolhub\.(ng|com)$/, /(^|\.)adalin\./, /^localhost/];
+const RESERVED = [/\.vercel\.app$/, /(^|\.)adalinschoolhub\.(ng|com)$/, /(^|\.)adalintech(nologies)?\.com$/, /(^|\.)adalin\./, /^localhost/];
 
 export function normalizeDomain(raw: string) {
   const d = raw

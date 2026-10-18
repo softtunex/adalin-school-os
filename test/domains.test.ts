@@ -39,6 +39,11 @@ describe("addresses", () => {
     expect(normalizeDomain(" https://Portal.Example-School.edu.ng/login ")).toBe("portal.example-school.edu.ng");
     expect(() => normalizeDomain("not a domain")).toThrow(/web address/);
     expect(() => normalizeDomain("myschool.vercel.app")).toThrow(/can't be used/);
+    // Adalin's own addresses, including the live site, can't be claimed by a school.
+    for (const ours of ["schoolhub.adalintech.com", "portal.adalintech.com", "adalintechnologies.com", "app.adalinschoolhub.com"]) {
+      expect(() => normalizeDomain(ours)).toThrow(/can't be used/);
+    }
+    expect(normalizeDomain("portal.adalintechcollege.edu.ng")).toBe("portal.adalintechcollege.edu.ng");
   });
 
   it("get the right DNS record", () => {

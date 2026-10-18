@@ -82,7 +82,7 @@
 
   // Addresses on screen (invite links, the result-checker link) show the product's own address,
   // not the demo server's. Links keep working: only what's displayed changes.
-  var SHOWN = "https://adalinschoolhub.com";
+  var SHOWN = "https://schoolhub.adalintech.com";
   function rewriteHost() {
     var origin = location.origin;
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
