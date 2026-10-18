@@ -35,6 +35,7 @@
     "db:seed-enterprise": "tsx scripts/seed-enterprise.ts",
     "demo:server": "tsx scripts/demo-server.ts",
     "demo:record": "tsx scripts/demo-video/overview.ts",
+    "demo:record-full": "tsx scripts/demo-video/full.ts",
     "demo:edit": "tsx scripts/demo-video/edit.ts"
   },
   "dependencies": {
