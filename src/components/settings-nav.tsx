@@ -30,9 +30,13 @@ export function SettingsNav({ tabs, current }: { tabs: SettingsTab[]; current: s
   const active = tabs.find((t) => t.key === current);
   return (
     <>
-      <label className="flex flex-col gap-1.5 lg:hidden">
-        <span className="fs-13.5 font-medium text-muted">Settings section</span>
+      <div className="flex flex-col gap-1.5 lg:hidden">
+        {/* A separate label, so the options' names aren't read as part of it. */}
+        <label htmlFor="settings-section" className="fs-13.5 font-medium text-muted">
+          Settings section
+        </label>
         <select
+          id="settings-section"
           className="h-11 rounded-chunk border border-line-strong bg-canvas px-3 fs-15 font-semibold text-ink"
           value={active?.href ?? ""}
           onChange={(e) => router.push(e.target.value)}
@@ -47,7 +51,7 @@ export function SettingsNav({ tabs, current }: { tabs: SettingsTab[]; current: s
             </optgroup>
           ))}
         </select>
-      </label>
+      </div>
       <nav aria-label="Settings sections" className="hidden lg:block">
         <div className="sticky top-24 flex flex-col gap-6">
           {groups.map((g) => (
