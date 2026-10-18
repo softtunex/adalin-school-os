@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { buttonClass } from "@/components/ui/button-styles";
 import { Alert, Avatar, Badge, Card, type Tone } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
-import { Tabs } from "@/components/ui/tabs";
 import { requireUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
 import { AppError } from "@/lib/errors";
@@ -55,7 +54,7 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
   const health = await getChildHealth(getDb(), user.id, id);
   const bus = await getChildBus(getDb(), user.id, id);
   const boarding = await getChildBoarding(getDb(), user.id, id);
-  const tab = ["attendance", "timetable", "homework", "conduct", "health", "bus", "hostel", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "attendance";
+  const tab = ["attendance", "timetable", "homework", "conduct", "health", "bus", "hostel", "results", "fees", "news"].includes(rawTab ?? "") ? rawTab! : "home";
   const name = [d.link.firstName, d.link.middleName, d.link.lastName].filter(Boolean).join(" ");
   const base = `/p/children/${id}`;
   const att = d.attendance && d.attendance.days ? Math.round((d.attendance.present / d.attendance.days) * 100) : null;
@@ -63,9 +62,11 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/p" className="inline-flex items-center gap-1.5 self-start fs-14 font-semibold text-muted hover:text-ink">
-        <Icon name="chevronLeft" size={16} /> Home
-      </Link>
+      {tab === "home" ? (
+        <Link href="/p" className="inline-flex items-center gap-1.5 self-start fs-14 font-semibold text-muted hover:text-ink">
+          <Icon name="chevronLeft" size={16} /> Home
+        </Link>
+      ) : null}
       <Card className="flex flex-wrap items-center gap-4 p-5">
         <Avatar name={`${d.link.firstName} ${d.link.lastName}`} size={64} />
         <div className="min-w-0 flex-1 basis-48">
@@ -82,21 +83,39 @@ export default async function ChildPage({ params, searchParams }: { params: Prom
         ) : null}
       </Card>
 
-      <Tabs
-        current={tab}
-        tabs={[
-          { key: "attendance", label: "Attendance", href: base },
-          ...(d.timetable ? [{ key: "timetable", label: "Timetable", href: `${base}?tab=timetable` }] : []),
-          ...(homework ? [{ key: "homework", label: "Homework", href: `${base}?tab=homework`, count: homework.filter((h) => h.status === "to_do" || h.status === "overdue").length || undefined }] : []),
-          ...(conduct ? [{ key: "conduct", label: "Conduct", href: `${base}?tab=conduct` }] : []),
-          ...(health ? [{ key: "health", label: "Health", href: `${base}?tab=health` }] : []),
-          ...(bus ? [{ key: "bus", label: "Bus", href: `${base}?tab=bus` }] : []),
-          ...(boarding ? [{ key: "hostel", label: "Hostel", href: `${base}?tab=hostel` }] : []),
-          { key: "results", label: "Results", href: `${base}?tab=results`, count: d.results.length },
-          { key: "fees", label: "Fees", href: `${base}?tab=fees` },
-          { key: "news", label: "News", href: `${base}?tab=news` },
-        ]}
-      />
+      {tab === "home" ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {[
+            { key: "attendance", label: "Attendance", icon: "calendar" as const, value: att === null ? "—" : `${att}%`, sub: d.attendance?.days ? `${d.attendance.absent} absent · ${d.attendance.late} late` : "No register yet", alert: att !== null && att < 75 },
+            { key: "fees", label: "Fees", icon: "banknote" as const, value: d.owing > 0 ? formatNaira(d.owing) : "Paid up", sub: d.owing > 0 ? "to pay" : d.invoices.length ? "Nothing owed" : "No invoices yet", alert: d.owing > 0 },
+            { key: "results", label: "Results", icon: "results" as const, value: d.results.length ? String(d.results.length) : "—", sub: d.results.length ? `term${d.results.length === 1 ? "" : "s"} published` : "None published yet" },
+            ...(homework ? [{ key: "homework", label: "Homework", icon: "clipboard" as const, value: String(homework ? homework.filter((h) => h.status === "to_do" || h.status === "overdue").length : 0), sub: "to do", alert: homework.some((h) => h.status === "overdue") }] : []),
+            ...(d.timetable ? [{ key: "timetable", label: "Timetable", icon: "clock" as const, value: "This week", sub: "Lessons by day" }] : []),
+            ...(conduct ? [{ key: "conduct", label: "Conduct", icon: "star" as const, value: `${conduct.points > 0 ? "+" : ""}${conduct.points} pts`, sub: `${conduct.merits} merit${conduct.merits === 1 ? "" : "s"} this term` }] : []),
+            ...(health ? [{ key: "health", label: "Health", icon: "health" as const, value: String(health.visits.length), sub: health.visits.length === 1 ? "sick bay visit" : "sick bay visits" }] : []),
+            ...(bus ? [{ key: "bus", label: "Bus", icon: "bus" as const, value: bus.route.name, sub: bus.stop ? `Stop: ${bus.stop.name}` : "Bus route" }] : []),
+            ...(boarding ? [{ key: "hostel", label: "Hostel", icon: "bed" as const, value: boarding.hostel, sub: /^room/i.test(boarding.room) ? boarding.room : `Room ${boarding.room}` }] : []),
+            { key: "news", label: "News", icon: "bell" as const, value: String(d.news.length), sub: d.news.length === 1 ? "update" : "updates" },
+          ].map((t) => (
+            <Link key={t.key} href={`${base}?tab=${t.key}`} className="group">
+              <Card className={`flex h-full flex-col gap-2 p-4 transition-colors group-hover:border-brand ${"alert" in t && t.alert ? "border-danger" : ""}`}>
+                <span className="flex items-center justify-between gap-2">
+                  <span className="fs-14 font-semibold text-ink">{t.label}</span>
+                  <Icon name={t.icon} size={20} className="text-muted group-hover:text-brand" />
+                </span>
+                <span className={`tabular font-bold leading-tight ${t.value.length > 9 ? "fs-17" : "fs-22"} ${"alert" in t && t.alert ? "text-danger" : "text-ink"}`}>{t.value}</span>
+                <span className="fs-13 text-muted">{t.sub}</span>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Link href={base} className="inline-flex items-center gap-1 fs-14 font-semibold text-muted hover:text-ink">
+            <Icon name="chevronLeft" size={16} /> All about {d.link.firstName}
+          </Link>
+        </div>
+      )}
 
       {tab === "attendance" ? (
         <div className="flex flex-col gap-4">
