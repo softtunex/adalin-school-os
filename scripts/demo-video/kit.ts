@@ -146,6 +146,15 @@ export class Recorder {
     await this.page.waitForTimeout(settle);
   }
 
+  /** Press something whose result happens off camera (e.g. a test checkout): the cut starts as it's pressed. */
+  async clickIntoCut(target: Locator) {
+    await this.point(target);
+    await this.page.mouse.down();
+    await this.page.waitForTimeout(90);
+    this.cutStart();
+    await this.page.mouse.up();
+  }
+
   async type(target: Locator, text: string) {
     await this.click(target, 200);
     await target.fill("");

@@ -344,7 +344,7 @@ const SCENES: Scene[] = [
       await r.offCamera(() => expect(p.getByRole("heading", { name: "Application sent!" })).toBeVisible({ timeout: 60_000 }));
       r.caption("And pay the form fee online");
       await r.wait(1400);
-      await r.click(p.getByRole("button", { name: /^Pay/ }).first(), 300);
+      await r.clickIntoCut(p.getByRole("button", { name: /^Pay/ }).first());
       await r.offCamera(async () => {
         await p.waitForURL(/test-checkout/, { timeout: 60_000 });
         await p.getByRole("button", { name: /^Pay/ }).first().click();

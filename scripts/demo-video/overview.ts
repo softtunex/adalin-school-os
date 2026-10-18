@@ -202,7 +202,7 @@ export async function payOnline(r: import("./kit").Recorder) {
   await r.wait(800);
   const email = p.getByLabel("Your email");
   if ((await email.isVisible().catch(() => false)) && !(await email.inputValue())) await r.type(email, "blessing.lawal@example.com");
-  await r.click(p.getByRole("button", { name: /Pay now/ }), 300);
+  await r.clickIntoCut(p.getByRole("button", { name: /Pay now/ }));
   await r.offCamera(async () => {
     await p.getByRole("button", { name: /Pay ₦/ }).click({ timeout: 30_000 });
     await expect(p.getByText("Payment received, thank you")).toBeVisible({ timeout: 30_000 });
