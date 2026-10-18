@@ -9,10 +9,10 @@ import { expect, test, type Page } from "@playwright/test";
 const SLUG = "adalin-college";
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
-// PENDING the Director's brand decision (Phase 8 report): white text on Adalin orange (#FE6007) is
-// 3.0:1, under AA's 4.5:1. Only that exact pair is set aside; every other contrast failure still fails.
+// Accepted brand exception (Director, 18 Oct 2026; docs/accessibility.md): white text on Adalin orange
+// (#FE6007) is 3.0:1, under AA's 4.5:1. Only that exact pair is set aside; every other contrast failure still fails.
 const BRAND_ORANGE = "#fe6007";
-const pendingBrandPair = (n: { any: { id: string; data?: { fgColor?: string; bgColor?: string } }[] }) =>
+const brandPair = (n: { any: { id: string; data?: { fgColor?: string; bgColor?: string } }[] }) =>
   n.any.some((c) => c.id === "color-contrast" && (c.data?.bgColor === BRAND_ORANGE || c.data?.fgColor === BRAND_ORANGE));
 
 async function scan(page: Page, path: string) {
@@ -20,7 +20,7 @@ async function scan(page: Page, path: string) {
   await page.waitForLoadState("networkidle");
   const { violations } = await new AxeBuilder({ page }).withTags(TAGS).analyze();
   return violations
-    .map((v) => ({ ...v, nodes: v.id === "color-contrast" ? v.nodes.filter((n) => !pendingBrandPair(n)) : v.nodes }))
+    .map((v) => ({ ...v, nodes: v.id === "color-contrast" ? v.nodes.filter((n) => !brandPair(n)) : v.nodes }))
     .filter((v) => v.nodes.length)
     .map((v) => `${path}: [${v.impact}] ${v.id} (${v.nodes.length}) ${v.help} e.g. ${v.nodes[0]?.target.join(" ")}`);
 }

@@ -10,9 +10,11 @@ Target: **WCAG 2.2 AA**. Checked automatically by `e2e/accessibility.spec.ts` (a
 - Every progress bar has an accessible name ("Collected", "Handed in", the stat it belongs to).
 - Code examples on `/developers` can be scrolled from the keyboard.
 
-## Pending: Adalin orange behind white text
+## Brand decision: Adalin orange behind white text
 
-White text on the brand orange `#FE6007` is 3.0:1. AA asks 4.5:1 for normal text (3:1 for large, bold text of 19px and up). This affects primary buttons, the brand badges and the step dots. It's a brand decision for the Director, with options in the Phase 8 report. Until it's made, the accessibility test sets aside exactly that colour pair and still fails on anything else.
+White text on the brand orange `#FE6007` is 3.0:1. AA asks 4.5:1 for normal text (3:1 for large, bold text of 19px and up). This affects primary buttons, the brand badges and the step dots. On 18 Oct 2026 the Director decided to keep `#FE6007` as the default brand colour, so this is a known, accepted exception. The accessibility test sets aside exactly that colour pair and still fails on anything else.
+
+Mitigations already in place: button text is bold, orange text on light backgrounds uses the deeper `#b84300`, and schools can set their own colour in Settings.
 
 ## Checking by hand
 
