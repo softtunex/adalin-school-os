@@ -2,6 +2,8 @@
 
 For the Director to generate. Each file drops into `public/illustrations/` under the exact filename given; the app picks it up automatically, no code change needed.
 
+**Mascot reference (keep this design, Director, 19 Oct 2026):** Kola as drawn in the app: `docs/brand/kola.png` (standing) and `docs/brand/kola-wave.png` (waving), with SVG versions beside them. New artwork must match this Kola: round orange body, cream belly, yellow beak, big white eyes, black graduation cap with a blue tassel.
+
 ## Style (applies to every image)
 
 - **Look:** Duolingo-style flat 2D illustration. Chunky rounded geometric shapes, soft flat shading (one shadow tone per colour, no gradients), friendly exaggerated proportions, big expressive eyes. Playful, never childish or clip-art.
