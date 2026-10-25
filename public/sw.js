@@ -8,7 +8,9 @@
  * - Anything else offline shows the offline page.
  * Signing out (reaching the login page) deletes the saved pages, so a shared phone keeps nothing.
  */
-const VERSION = "v1";
+// One cache per build (the page registers /sw.js?build=<stamp>): activating a new build deletes the
+// old build's app code, so a redeploy that reuses file names never serves stale code.
+const VERSION = new URL(self.location.href).searchParams.get("build") || "v2"; // v2: browsers still on the first worker drop its cache on update
 const STATIC = `sos-static-${VERSION}`;
 const PAGES = "sos-pages";
 const OFFLINE = "/offline";
