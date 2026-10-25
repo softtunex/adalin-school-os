@@ -32,7 +32,7 @@ export async function storeImage(folder: string, bytes: Uint8Array, maxBytes: nu
   const cloudinary = cloudinaryConfig();
   if (cloudinary) {
     const timestamp = Math.floor(Date.now() / 1000).toString();
-    const publicId = `school-os/${folder}/${name.replace(/\.\w+$/, "")}`;
+    const publicId = `schoolhub/${folder}/${name.replace(/\.\w+$/, "")}`;
     const toSign = `public_id=${publicId}&timestamp=${timestamp}${cloudinary.secret}`;
     const body = new FormData();
     body.set("file", new Blob([new Uint8Array(bytes)], { type: IMAGE_TYPES[ext] }), name);
