@@ -99,11 +99,12 @@ export function Banner({ icon = "sparkle", title, children, action }: { icon?: I
         <span className="grid size-14 shrink-0 place-items-center rounded-full bg-brand/20 text-[#ff9a5c]">
           <Icon name={icon} size={26} />
         </span>
-        <div className="min-w-0 flex-1">
+        {/* At least 12rem for the words: on a phone the button drops to its own full-width row instead of squeezing them. */}
+        <div className="min-w-0 flex-1 basis-[12rem]">
           <p className="fs-16 font-semibold text-white">{title}</p>
           {children ? <div className="mt-0.5 fs-14.5 text-white/75">{children}</div> : null}
         </div>
-        {action}
+        {action ? <div className="w-full sm:ml-auto sm:w-auto max-sm:[&>*]:w-full">{action}</div> : null}
       </div>
     </div>
   );
