@@ -9,7 +9,7 @@ How Adalin SchoolHub is watched, backed up and recovered once it's live. Pair wi
 | Errors | Every unexpected server error (`src/instrumentation.ts`) and browser error (`/api/report-error`) goes to the log and, with `SENTRY_DSN` set, to Sentry. No cookies, form data or query strings are sent. | A new error type appears, or one error spikes. |
 | Uptime | An uptime service polls `GET /api/health` every minute. It returns 200 when the app and database answer, 503 when the database doesn't. | Two failures in a row. Also shown on the public status page. |
 | Slow requests | Any school transaction over 1 second is logged as `[slow] school <id> transaction took N ms` (threshold: `SLOW_QUERY_MS`). Neon's query insights show which queries. | Daily review; index or rework repeat offenders. |
-| Background jobs | Vercel Cron runs `/api/cron/outbox` every 10 minutes and `/api/cron/billing` daily at 06:00. Each returns a JSON report. | A run fails (Vercel shows failed cron invocations). |
+| Background jobs | Vercel Cron runs `/api/cron/billing` daily at 06:00 (UTC), `/api/cron/fee-reminders` on weekdays at 07:00 and `/api/cron/outbox` daily at 07:30 (the free plan allows daily jobs only; messages go out straight after each action, so the outbox job only retries stragglers). On a paid host, run the outbox job every 10 minutes. Each returns a JSON report. | A run fails (Vercel shows failed cron invocations). |
 | Safe settings | On the live site (`VERCEL_ENV=production`) the app refuses to start if `DATABASE_URL`, `APP_URL`, `CRON_SECRET` or `SESSION_SECRET` is missing, if `APP_URL` isn't https, or if a test switch (`ALLOW_TEST_LOGIN_CODES`, `PAYMENTS_TEST_MODE`, `ALLOW_LOCAL_DB`) is on. | The deployment fails, so a bad config never goes live. |
 
 ## Backups
