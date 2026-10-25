@@ -4,6 +4,8 @@ import { Card, EmptyState } from "@/components/ui/display";
 import type { IconName } from "@/components/ui/icons";
 import { getDb } from "@/lib/db/client";
 import { withTenant } from "@/lib/db/tenant";
+import type { FeatureKey } from "@/lib/plans/catalog";
+import { hasFeature } from "@/lib/plans/entitlements";
 import type { Access } from "@/lib/services/access";
 import { getCurrentTerm } from "@/lib/services/academics";
 
@@ -11,7 +13,9 @@ import { getCurrentTerm } from "@/lib/services/academics";
  * Pages that work term by term (fees, lesson notes, analytics) can't show anything before a school
  * has a current term. This returns the page to show instead (how to start), or null once there is one.
  */
-export async function termGate(access: Access, page: { title: string; icon: IconName; what: string }) {
+export async function termGate(access: Access, page: { title: string; icon: IconName; what: string; feature?: FeatureKey }) {
+  // Not on this plan: the page's own upgrade message comes first.
+  if (page.feature && !hasFeature(access.plan, page.feature)) return null;
   const current = await withTenant(getDb(), access.school.id, (tx) => getCurrentTerm(tx));
   if (current) return null;
   return (

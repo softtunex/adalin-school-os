@@ -22,7 +22,7 @@ export default async function FeesOverviewPage({ params, searchParams }: { param
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
-  const gate = await termGate(access, { title: "Fees", icon: "banknote", what: "Fees and invoices" });
+  const gate = await termGate(access, { title: "Fees", icon: "banknote", what: "Fees and invoices", feature: "fees_basic" });
   if (gate) return gate;
   const db = getDb();
   const result = await gated(slug, "fees_basic", () => Promise.all([getFeesOverview(db, access, sp.term), listClassOptions(db, access)]));

@@ -18,7 +18,7 @@ export default async function DiscountsPage({ params, searchParams }: { params: 
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
-  const gate = await termGate(access, { title: "Discounts", icon: "percent", what: "Discounts" });
+  const gate = await termGate(access, { title: "Discounts", icon: "percent", what: "Discounts", feature: "debtors" });
   if (gate) return gate;
   const db = getDb();
   const result = await gated(slug, "debtors", async () => {

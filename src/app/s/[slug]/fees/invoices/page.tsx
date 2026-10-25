@@ -26,7 +26,7 @@ export default async function InvoicesPage({
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
-  const gate = await termGate(access, { title: "Invoices", icon: "receipt", what: "Invoices" });
+  const gate = await termGate(access, { title: "Invoices", icon: "receipt", what: "Invoices", feature: "fees_basic" });
   if (gate) return gate;
   const db = getDb();
   const page = Number(sp.page) || 1;

@@ -14,7 +14,7 @@ export default async function FeeStructurePage({ params, searchParams }: { param
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
-  const gate = await termGate(access, { title: "Fee structure", icon: "banknote", what: "Fee structures" });
+  const gate = await termGate(access, { title: "Fee structure", icon: "banknote", what: "Fee structures", feature: "fees_basic" });
   if (gate) return gate;
   const result = await gated(slug, "fees_basic", () => getFeeSetup(getDb(), access, sp.term));
   if ("locked" in result) {

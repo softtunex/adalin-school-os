@@ -25,7 +25,7 @@ export default async function DebtorsPage({
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
-  const gate = await termGate(access, { title: "Debtors", icon: "wallet", what: "Debtors lists" });
+  const gate = await termGate(access, { title: "Debtors", icon: "wallet", what: "Debtors lists", feature: "debtors" });
   if (gate) return gate;
   const db = getDb();
   const page = Number(sp.page) || 1;
