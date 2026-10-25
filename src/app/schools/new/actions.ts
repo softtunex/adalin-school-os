@@ -17,7 +17,8 @@ export async function addSchoolAction(_prev: FormState, formData: FormData): Pro
   let slug: string;
   try {
     const user = await requireUser();
-    slug = (await addSchool(getDb(), user, parsed.data)).slug;
+    const trialPlan = formData.get("trialPlan") === "premium" ? "premium" : "standard";
+    slug = (await addSchool(getDb(), user, parsed.data, trialPlan)).slug;
   } catch (error) {
     return { error: userMessage(error), values };
   }

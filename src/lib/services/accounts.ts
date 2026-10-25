@@ -6,6 +6,8 @@ import type { DB, Tx } from "../db/client";
 import { loginAttempts, membershipRoles, memberships, passwordResets, schools, sessions, users } from "../db/schema";
 import { AppError } from "../errors";
 import { recordAudit } from "./audit";
+import { TRIAL_DAYS } from "./billing";
+import { EXTRA_SCHOOL_AFTER_TRIAL, limitMessage, newSchoolTerms } from "./school-limits";
 import { provisionSystemRoles, uniqueSlug } from "./schools";
 
 export type RegisterInput = { name: string; email: string; password: string; schoolName: string };
@@ -55,8 +57,24 @@ export async function createSchoolForUser(tx: Tx, user: { id: string; name: stri
   return school;
 }
 
-export async function addSchool(db: DB, user: { id: string; name: string }, schoolName: string) {
-  return db.transaction((tx) => createSchoolForUser(tx, user, schoolName));
+/**
+ * Another school for a proprietor (see school-limits). Their first free school stays the only free
+ * one: any other starts on a free trial of `trialPlan`, ending onto Basic unless they choose a plan.
+ */
+export async function addSchool(db: DB, user: { id: string; name: string }, schoolName: string, trialPlan: "standard" | "premium" = "standard") {
+  const terms = await newSchoolTerms(db, user.id);
+  if (terms.atLimit) throw new AppError(limitMessage(), "limit");
+  return db.transaction(async (tx) => {
+    const school = await createSchoolForUser(tx, user, schoolName);
+    if (!terms.freeSchool) return school;
+    const trialEndsAt = new Date(Date.now() + TRIAL_DAYS * 86_400_000);
+    const [onTrial] = await tx
+      .update(schools)
+      .set({ planKey: trialPlan, trialReturnPlanKey: EXTRA_SCHOOL_AFTER_TRIAL, trialEndsAt, trialUsed: true })
+      .where(eq(schools.id, school.id))
+      .returning();
+    return onTrial;
+  });
 }
 
 const MAX_FAILURES_PER_ACCOUNT = 5;

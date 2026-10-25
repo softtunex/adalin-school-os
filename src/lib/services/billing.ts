@@ -14,6 +14,7 @@ import { enqueue } from "./outbox";
 import { paystack, paystackMode } from "./paystack";
 import { activateAddonsForBill, syncExtraFeatures, termAddonLines } from "./addons";
 import { addDays, charge, dayDiff, nextBillNumber, termFraction } from "./billing-core";
+import { assertFreeAllowed } from "./school-limits";
 
 export { charge, termFraction };
 
@@ -160,6 +161,8 @@ export async function startTrial(db: DB, access: Access, planKey: string, ip?: s
 export async function changePlan(db: DB, access: Access, planKey: string, ip?: string | null) {
   requirePermission(access, "school:billing");
   if (!SELF_SERVE.includes(planKey)) throw new AppError("Talk to us about Enterprise. We'll set it up with you.", "invalid");
+  // One free school per proprietor (school-limits).
+  if (planKey === "free") await assertFreeAllowed(db, access.school.id);
   // Reads, then updates, then the bill: never a query outside an open transaction, which on a
   // single-connection database waits on itself.
   const school = (await db.select().from(schools).where(eq(schools.id, access.school.id)))[0];
