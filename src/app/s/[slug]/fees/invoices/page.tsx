@@ -12,6 +12,7 @@ import { listClassOptions } from "@/lib/services/academics";
 import { INVOICE_PAGE_SIZE, listInvoices } from "@/lib/services/invoices";
 import { GenerateInvoicesButton } from "../fees-client";
 import { FeesTabs, formatDate, gated, InvoiceStatusBadge, TermFilter } from "../shared";
+import { termGate } from "@/components/term-gate";
 
 export const metadata: Metadata = { title: "Invoices" };
 
@@ -25,6 +26,8 @@ export default async function InvoicesPage({
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
+  const gate = await termGate(access, { title: "Invoices", icon: "receipt", what: "Invoices" });
+  if (gate) return gate;
   const db = getDb();
   const page = Number(sp.page) || 1;
   const result = await gated(slug, "fees_basic", () => Promise.all([listInvoices(db, access, { termId: sp.term, q: sp.q, classId: sp.class, status: sp.status, page }), listClassOptions(db, access)]));

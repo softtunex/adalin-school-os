@@ -7,9 +7,12 @@ import { FilterSelect } from "@/components/ui/data";
 import { Badge, Card, EmptyState, StatCard, StatGrid, Table, TableCard, Td, Th, type Tone } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { Tabs } from "@/components/ui/tabs";
+import { ButtonLink } from "@/components/ui/button";
 import { requirePageAccess } from "@/lib/auth/session";
 import { cn } from "@/lib/cn";
 import { getDb } from "@/lib/db/client";
+import { withTenant } from "@/lib/db/tenant";
+import { getCurrentTerm } from "@/lib/services/academics";
 import { formatNaira, formatNairaCompact } from "@/lib/money";
 import { hasFeature } from "@/lib/plans/entitlements";
 import type { Access } from "@/lib/services/access";
@@ -54,6 +57,23 @@ export default async function AnalyticsPage({ params, searchParams }: { params: 
         <Topbar title="Analytics" context={access.school.name} />
         <PageBody>
           <UpgradeCard slug={slug} feature="analytics" text="See results trends, weak subjects, students who need attention and how every teacher is keeping up, all in one place." />
+        </PageBody>
+      </>
+    );
+  }
+  // A new school has no term yet: nothing to analyse, so say how to start rather than fail.
+  const current = await withTenant(getDb(), access.school.id, (tx) => getCurrentTerm(tx));
+  if (!current && !sp.term) {
+    return (
+      <>
+        <Topbar title="Overview" context={`Analytics · ${access.school.name}`} />
+        <PageBody>
+          <OverviewSwitch slug={slug} access={access} current="analytics" />
+          <Card>
+            <EmptyState icon="trending" title="Analytics start with your first term" action={<ButtonLink href={`/s/${slug}/academics`}>Set up classes and terms</ButtonLink>}>
+              Set up your classes and the current term, then add scores and attendance. Trends, weak subjects and students who need attention appear here as the term goes on.
+            </EmptyState>
+          </Card>
         </PageBody>
       </>
     );

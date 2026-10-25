@@ -11,6 +11,7 @@ import { DEBTOR_PAGE_SIZE, listDebtors } from "@/lib/services/invoices";
 import { SendRemindersButton } from "../fees-client";
 import { FeesTabs, formatDate, gated, TermFilter } from "../shared";
 import { DebtorsTable } from "./debtors-table";
+import { termGate } from "@/components/term-gate";
 
 export const metadata: Metadata = { title: "Debtors" };
 
@@ -24,6 +25,8 @@ export default async function DebtorsPage({
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
+  const gate = await termGate(access, { title: "Debtors", icon: "wallet", what: "Debtors lists" });
+  if (gate) return gate;
   const db = getDb();
   const page = Number(sp.page) || 1;
   const result = await gated(slug, "debtors", () =>

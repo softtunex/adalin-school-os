@@ -42,7 +42,7 @@ export default async function OverviewPage({ params, searchParams }: { params: P
   const base = `/s/${slug}`;
 
   const steps: Step[] = [
-    { icon: "building", title: "Complete your school profile", cta: "Complete profile", text: "Address, contacts and motto appear on report cards and receipts.", href: `${base}/settings`, done: !!onboarding.profile, show: can(access, "school:update") },
+    { icon: "building", title: "Complete your school profile", cta: "Complete profile", text: "Address, contacts and motto appear on report cards and receipts.", href: `${base}/settings?tab=profile`, done: !!onboarding.profile, show: can(access, "school:update") },
     { icon: "bookOpen", title: "Set up classes and subjects", cta: "Set up classes", text: "One click from the Nigerian or British template. Edit anything after.", href: `${base}/academics`, done: data.classes > 0, show: can(access, "academics:manage") },
     { icon: "userPlus", title: "Invite your staff", cta: "Invite staff", text: "Teachers get a simple view of just their classes.", href: `${base}/staff`, done: data.staff > 1 || !!onboarding.staff, show: can(access, "staff:invite") },
     { icon: "graduation", title: "Add your students", cta: "Add students", text: "Type them in or import your Excel sheet in one go.", href: `${base}/students`, done: data.students > 0, show: can(access, "students:create") },

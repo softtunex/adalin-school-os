@@ -14,6 +14,7 @@ import { METHOD_LABEL } from "@/lib/services/payments";
 import { CollectionsChart } from "./collections-chart";
 import { GenerateInvoicesButton } from "./fees-client";
 import { FeesTabs, formatDate, gated, TermFilter } from "./shared";
+import { termGate } from "@/components/term-gate";
 
 export const metadata: Metadata = { title: "Fees" };
 
@@ -21,6 +22,8 @@ export default async function FeesOverviewPage({ params, searchParams }: { param
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
+  const gate = await termGate(access, { title: "Fees", icon: "banknote", what: "Fees and invoices" });
+  if (gate) return gate;
   const db = getDb();
   const result = await gated(slug, "fees_basic", () => Promise.all([getFeesOverview(db, access, sp.term), listClassOptions(db, access)]));
 

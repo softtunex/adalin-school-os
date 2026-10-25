@@ -1,8 +1,14 @@
 import { ImageResponse } from "next/og";
+import { KOLA_SVG } from "./kola-svg";
 
-/** The app icon: "sh" (SchoolHub) in white on Adalin orange. Maskable icons keep the mark in the safe centre. */
+const KOLA = `data:image/svg+xml;base64,${Buffer.from(KOLA_SVG).toString("base64")}`;
+
+/**
+ * The app icon: Kola on a soft cream tile (an orange tile would swallow the orange bird).
+ * Maskable icons keep Kola inside the safe centre, since phones crop them into circles.
+ */
 export function appIcon(size: number, opts: { maskable?: boolean; radius?: boolean } = {}) {
-  const inset = opts.maskable ? 0.2 : 0.12;
+  const art = Math.round(size * (opts.maskable ? 0.62 : 0.82));
   return new ImageResponse(
     (
       <div
@@ -12,23 +18,12 @@ export function appIcon(size: number, opts: { maskable?: boolean; radius?: boole
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#FE6007",
+          background: "#fff0e6",
           borderRadius: opts.radius ? size * 0.22 : 0,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            color: "#ffffff",
-            fontSize: size * (1 - inset * 2) * 0.62,
-            fontWeight: 800,
-            letterSpacing: -size * 0.02,
-            lineHeight: 1,
-            marginTop: -size * 0.04,
-          }}
-        >
-          sh
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={KOLA} width={art} height={art} alt="" />
       </div>
     ),
     { width: size, height: size },

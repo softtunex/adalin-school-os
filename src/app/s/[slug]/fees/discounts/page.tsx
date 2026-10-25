@@ -10,6 +10,7 @@ import { can } from "@/lib/services/access";
 import { describeScheme, getFeeSetup, listSchemeStudents } from "@/lib/services/fees";
 import { FeesTabs, gated } from "../shared";
 import { NewSchemeButton, SchemeActions } from "./discounts-client";
+import { termGate } from "@/components/term-gate";
 
 export const metadata: Metadata = { title: "Discounts" };
 
@@ -17,6 +18,8 @@ export default async function DiscountsPage({ params, searchParams }: { params: 
   const { slug } = await params;
   const sp = await searchParams;
   const access = await requirePageAccess(slug, ["fees:view"]);
+  const gate = await termGate(access, { title: "Discounts", icon: "percent", what: "Discounts" });
+  if (gate) return gate;
   const db = getDb();
   const result = await gated(slug, "debtors", async () => {
     requireFeature(access.plan, "debtors");

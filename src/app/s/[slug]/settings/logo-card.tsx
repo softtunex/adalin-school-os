@@ -20,12 +20,12 @@ export function LogoCard({ slug, name, logoUrl }: { slug: string; name: string; 
       ) : (
         <span className="grid size-20 place-items-center rounded-full bg-brand fs-26 font-bold text-white shadow-[0_3px_0_var(--brand-deep)]">{initials(name)}</span>
       )}
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-[12rem]">
         <p className="font-semibold text-ink">School logo</p>
         <p className="fs-13.5 text-muted">Square PNG, JPG or WebP, up to 1 MB. Shown in the app, on report cards and receipts.</p>
         {state.error ? <Alert tone="danger" className="mt-3">{state.error}</Alert> : null}
       </div>
-      <div className="flex gap-2">
+      <div className="flex w-full gap-2 sm:w-auto max-sm:[&>*]:flex-1">
         <input
           ref={input}
           type="file"

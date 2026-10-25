@@ -26,7 +26,7 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
   const slug = new URL(page.url()).pathname.split("/")[2];
 
   // Validation errors are shown inline, not as a crash.
-  await page.goto(`/s/${slug}/settings`);
+  await page.goto(`/s/${slug}/settings?tab=profile`);
   await page.getByLabel("School email").fill("not-an-email");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.getByText("Enter a valid email address.")).toBeVisible();

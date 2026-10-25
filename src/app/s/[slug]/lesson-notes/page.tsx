@@ -15,6 +15,7 @@ import { can, type Access } from "@/lib/services/access";
 import { getScheme, listLessonNotes, NOTE_PAGE_SIZE } from "@/lib/services/lesson-notes";
 import { SchemeEditor } from "./notes-client";
 import { NOTE_STATUS } from "./status";
+import { termGate } from "@/components/term-gate";
 
 export const metadata: Metadata = { title: "Lesson notes" };
 
@@ -46,6 +47,8 @@ export default async function LessonNotesPage({ params, searchParams }: { params
       </>
     );
   }
+  const gate = await termGate(access, { title: "Lesson notes", icon: "bookOpen", what: "Lesson notes and schemes of work" });
+  if (gate) return gate;
   const writer = can(access, "teaching:lessons");
   const reviewer = can(access, "teaching:review");
   // Reviewers land on their queue; teachers on their own notes.

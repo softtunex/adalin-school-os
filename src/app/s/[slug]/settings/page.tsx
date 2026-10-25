@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { PageBody, Topbar } from "@/components/topbar";
 import { UpgradeCard } from "@/components/upgrade-card";
 import { Alert, Badge, Card } from "@/components/ui/display";
+import { cn } from "@/lib/cn";
 import { SettingsNav, type SettingsTab } from "@/components/settings-nav";
 import { requirePageAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
@@ -65,7 +66,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
   const base = `/s/${slug}/settings`;
 
   const sections: SettingsTab[] = [
-    ...(canProfile ? [{ key: "profile", label: "School profile", href: base }] : []),
+    ...(canProfile ? [{ key: "profile", label: "School profile", href: `${base}?tab=profile` }] : []),
     ...(can(access, "academics:view") ? [{ key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` }] : []),
     ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
     ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
@@ -93,8 +94,9 @@ export default async function SettingsPage({ params, searchParams }: { params: P
       <Topbar title="Settings" context={access.school.name} />
       <PageBody>
         <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-          <SettingsNav current={tab} tabs={sections} />
-          <div className="flex min-w-0 flex-col gap-6">
+          <SettingsNav current={tab} tabs={sections} picked={!!sp.tab} home={base} />
+          {/* On a phone, the bare Settings address shows only the list of sections. */}
+          <div className={cn("flex min-w-0 flex-col gap-6", !sp.tab && "max-lg:hidden")}>
 
         {tab === "documents" && canDocuments ? (
           <DocumentSettingsForm slug={slug} settings={documentSettings(s.documentSettings)} editable />
