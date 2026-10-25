@@ -94,6 +94,13 @@ export type LibrarySettings = {
   finePerDayKobo?: number;
 };
 
+/** AI helpers (exam questions, report comments, Kola). On by default where the plan includes them. */
+export type AiSettings = {
+  enabled?: boolean;
+  /** Let parents chat with Kola, not just staff. */
+  kolaForFamilies?: boolean;
+};
+
 export type Signatory = { name: string; title: string; signatureUrl?: string | null };
 
 export type DocumentSettings = {
@@ -328,6 +335,7 @@ export const schools = pgTable(
     /** Single sign-on rules for staff (Enterprise). */
     ssoSettings: jsonb("sso_settings").$type<{ required?: boolean; providers?: ("google" | "microsoft")[] }>().notNull().default({}),
     documentSettings: jsonb("document_settings").$type<DocumentSettings>().notNull().default({}),
+    aiSettings: jsonb("ai_settings").$type<AiSettings>().notNull().default({}),
     nextApplicantSeq: integer("next_applicant_seq").notNull().default(1),
     createdAt: createdAt(),
   },
@@ -1229,6 +1237,25 @@ export const creditLedger = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index("credit_ledger_school_idx").on(t.schoolId, t.createdAt), uniqueIndex("credit_ledger_reference_uq").on(t.schoolId, t.reference)],
+);
+
+// ---------- AI ----------
+
+/** One AI request, for the school's daily allowance and Adalin's cost tracking. Never stores the text. */
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    id: id(),
+    schoolId: schoolId(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    feature: text("feature").notNull(),
+    model: text("model").notNull(),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    ok: boolean("ok").notNull().default(true),
+    createdAt: createdAt(),
+  },
+  (t) => [index("ai_usage_school_idx").on(t.schoolId, t.createdAt)],
 );
 
 // ---------- Files ----------
@@ -2326,6 +2353,7 @@ export const TENANT_TABLES = [
   "notifications",
   "outbound_messages",
   "credit_ledger",
+  "ai_usage",
   "files",
   "bell_schedules",
   "bell_periods",

@@ -37,6 +37,7 @@ export const FEATURES = {
   custom_domain: "Custom domain and white-label",
   api_access: "API access",
   sso: "Single sign-on",
+  ai: "AI helpers and Kola",
 } as const;
 
 export type FeatureKey = keyof typeof FEATURES;
@@ -82,6 +83,7 @@ const STANDARD: FeatureKey[] = [
   "admissions",
   "staff_attendance",
   "audit_log",
+  "ai",
 ];
 const PREMIUM: FeatureKey[] = [
   ...STANDARD,

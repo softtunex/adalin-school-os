@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm";
 import { RowMenu } from "@/components/ui/data";
@@ -10,15 +10,15 @@ import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/cn";
-import { deleteQuestionAction, importQuestionsAction, saveQuestionAction } from "./actions";
+import { deleteQuestionAction, draftQuestionsAction, importQuestionsAction, questionsFromPhotoAction, saveQuestionAction } from "./actions";
 
 export type Opt = { id: string; name: string };
 export type BankQuestion = { id: string; subjectId: string; levelId: string | null; topic: string | null; kind: "objective" | "theory"; body: string; options: string[]; answer: number | null; marks: number };
 
 const LETTERS = "ABCDEF";
 
-export function BankButtons({ slug, subjects, levels }: { slug: string; subjects: Opt[]; levels: Opt[] }) {
-  const [open, setOpen] = useState<null | "add" | "import">(null);
+export function BankButtons({ slug, subjects, levels, ai }: { slug: string; subjects: Opt[]; levels: Opt[]; ai: boolean }) {
+  const [open, setOpen] = useState<null | "add" | "import" | "ai">(null);
   const [key, setKey] = useState(0);
   const close = () => {
     setOpen(null);
@@ -26,6 +26,11 @@ export function BankButtons({ slug, subjects, levels }: { slug: string; subjects
   };
   return (
     <div className="flex flex-wrap gap-2">
+      {ai ? (
+        <Button variant="secondary" onClick={() => setOpen("ai")} disabled={!subjects.length}>
+          <Icon name="wand" size={17} /> Write with AI
+        </Button>
+      ) : null}
       <Button variant="secondary" onClick={() => setOpen("import")} disabled={!subjects.length}>
         <Icon name="upload" size={17} /> Paste questions
       </Button>
@@ -35,8 +40,8 @@ export function BankButtons({ slug, subjects, levels }: { slug: string; subjects
       <Modal open={open === "add"} onClose={close} title="Add a question">
         <QuestionForm key={`a${key}`} slug={slug} subjects={subjects} levels={levels} onDone={close} />
       </Modal>
-      <Modal open={open === "import"} onClose={close} title="Paste questions">
-        <ImportForm key={`i${key}`} slug={slug} subjects={subjects} levels={levels} onDone={close} />
+      <Modal open={open === "import" || open === "ai"} onClose={close} title={open === "ai" ? "Write questions with AI" : "Paste questions"} size="lg">
+        <ImportForm key={`i${key}${open === "ai" ? "ai" : ""}`} slug={slug} subjects={subjects} levels={levels} onDone={close} ai={ai} startWithAi={open === "ai"} />
       </Modal>
     </div>
   );
@@ -224,20 +229,78 @@ C. 6/8
 
 3. Explain how to add 1/2 and 1/3. [4 marks]`;
 
-function ImportForm({ slug, subjects, levels, onDone }: { slug: string; subjects: Opt[]; levels: Opt[]; onDone: () => void }) {
+/** Shrinks a phone photo before it's sent: big enough to read, small enough to upload quickly. */
+async function photoDataUrl(file: File, maxSide = 1600) {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.85);
+}
+
+function ImportForm({ slug, subjects, levels, onDone, ai, startWithAi }: { slug: string; subjects: Opt[]; levels: Opt[]; onDone: () => void; ai: boolean; startWithAi: boolean }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? "");
   const [levelId, setLevelId] = useState("");
   const [topic, setTopic] = useState("");
   const [text, setText] = useState("");
-  const [msg, setMsg] = useState<{ tone: "success" | "danger"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ tone: "success" | "danger" | "blue"; text: string } | null>(null);
+  const [writing, setWriting] = useState(startWithAi);
+  const [count, setCount] = useState(10);
+  const [kind, setKind] = useState<"objective" | "theory" | "mixed">("objective");
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
+  const [thinking, think] = useTransition();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const took = (r: { text?: string; count?: number; problems?: number; error?: string }, from: string) => {
+    if (r.error || !r.text) return setMsg({ tone: "danger", text: r.error ?? "AI didn't come back with anything. Please try again." });
+    setText((t) => (t.trim() ? `${t.trim()}\n\n${r.text}` : r.text!));
+    setWriting(false);
+    setMsg({ tone: "blue", text: `${from} ${r.count} question${r.count === 1 ? "" : "s"}${r.problems ? ` (${r.problems} need fixing)` : ""}. Check every question and answer below, then add them.` });
+  };
+  const write = () =>
+    think(async () => {
+      setMsg(null);
+      const subject = subjects.find((s) => s.id === subjectId)?.name ?? "";
+      const level = levels.find((l) => l.id === levelId)?.name ?? "";
+      took(await draftQuestionsAction(slug, { subject, level, topic, count, kind, difficulty }), "AI wrote");
+    });
+  const fromPhoto = (file: File | undefined) => {
+    if (!file) return;
+    think(async () => {
+      setMsg(null);
+      let url: string;
+      try {
+        url = await photoDataUrl(file);
+      } catch {
+        return setMsg({ tone: "danger", text: "That file couldn't be opened as a photo." });
+      }
+      took(await questionsFromPhotoAction(slug, url), "AI copied");
+    });
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <p className="fs-14 text-muted">
         Copy questions from Word or WhatsApp and paste them here. Leave a blank line between questions, start options with A. B. C., and put <strong className="text-ink">*</strong> after the correct one. A question
         without options is theory; add <strong className="text-ink">[4 marks]</strong> to set its marks.
       </p>
+      {ai ? (
+        <div className="flex flex-wrap gap-2">
+          <Button variant={writing ? "primary" : "secondary"} size="sm" onClick={() => setWriting((w) => !w)} disabled={thinking}>
+            <Icon name="wand" size={16} /> Write with AI
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={thinking}>
+            <Icon name="camera" size={16} /> From a photo
+          </Button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" aria-label="Photo of questions" onChange={(e) => fromPhoto(e.target.files?.[0])} />
+        </div>
+      ) : null}
       {msg ? <Alert tone={msg.tone}>{msg.text}</Alert> : null}
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Subject" htmlFor="im-subject">
@@ -260,9 +323,39 @@ function ImportForm({ slug, subjects, levels, onDone }: { slug: string; subjects
           </Select>
         </Field>
         <Field label="Topic" htmlFor="im-topic">
-          <Input id="im-topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Optional" />
+          <Input id="im-topic" value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={writing ? "e.g. Adding fractions" : "Optional"} />
         </Field>
       </div>
+      {writing ? (
+        <div className="flex flex-col gap-4 rounded-chunk border border-brand/30 bg-brand-wash p-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="How many" htmlFor="ai-count">
+              <Input id="ai-count" type="number" min={1} max={30} value={count} onChange={(e) => setCount(Math.max(1, Math.min(30, Number(e.target.value) || 1)))} />
+            </Field>
+            <Field label="Type" htmlFor="ai-kind">
+              <Select id="ai-kind" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+                <option value="objective">Objective</option>
+                <option value="theory">Theory</option>
+                <option value="mixed">Mixed</option>
+              </Select>
+            </Field>
+            <Field label="Difficulty" htmlFor="ai-level">
+              <Select id="ai-level" value={difficulty} onChange={(e) => setDifficulty(e.target.value as typeof difficulty)}>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </Select>
+            </Field>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="fs-13.5 text-muted">Type the topic above. AI drafts the questions here for you to check.</p>
+            <Button onClick={write} disabled={thinking || topic.trim().length < 2}>
+              {thinking ? "Writing…" : "Write questions"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      {thinking && !writing ? <Alert tone="blue">Reading the photo…</Alert> : null}
       <Field label="Questions" htmlFor="im-text">
         <Textarea id="im-text" rows={12} value={text} onChange={(e) => setText(e.target.value)} placeholder={SAMPLE} className="font-mono fs-13.5" />
       </Field>

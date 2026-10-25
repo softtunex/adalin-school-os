@@ -21,6 +21,7 @@ import {
   setExamStatus,
   theoryMarksSchema,
 } from "@/lib/services/cbt";
+import { draftQuestions, draftSchema, readQuestionsFromPhoto } from "@/lib/services/ai-questions";
 import { fieldErrors } from "@/lib/validation";
 
 async function ctx(slug: string) {
@@ -152,6 +153,26 @@ export async function examToCAAction(slug: string, id: string): Promise<FormStat
     const r = await sendExamToCA(getDb(), access, id);
     revalidatePath(`/s/${slug}/results`, "layout");
     return { success: `${r.saved} score${r.saved === 1 ? "" : "s"} written to ${r.column} (out of ${r.max}).` };
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function draftQuestionsAction(slug: string, input: unknown): Promise<{ text?: string; count?: number; problems?: number; error?: string }> {
+  const parsed = draftSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the details." };
+  try {
+    const { access } = await ctx(slug);
+    return await draftQuestions(getDb(), access, parsed.data);
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function questionsFromPhotoAction(slug: string, imageDataUrl: string): Promise<{ text?: string; count?: number; problems?: number; error?: string }> {
+  try {
+    const { access } = await ctx(slug);
+    return await readQuestionsFromPhoto(getDb(), access, imageDataUrl);
   } catch (error) {
     return { error: userMessage(error) };
   }

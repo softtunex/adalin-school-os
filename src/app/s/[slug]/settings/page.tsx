@@ -43,6 +43,7 @@ import { ApiTab } from "./api-tab";
 import { SsoTab } from "./sso-tab";
 import { CampusTab } from "./campus-tab";
 import { DomainTab } from "./domain-tab";
+import { AiTab } from "./ai-tab";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -67,6 +68,7 @@ export default async function SettingsPage({ params, searchParams }: { params: P
 
   const sections: SettingsTab[] = [
     ...(canProfile ? [{ key: "profile", label: "School profile", href: `${base}?tab=profile` }] : []),
+    ...(canProfile ? [{ key: "ai", label: "AI & Kola", href: `${base}?tab=ai` }] : []),
     ...(can(access, "academics:view") ? [{ key: "grading", label: "Grading & assessment", href: `/s/${slug}/academics?tab=assessment` }] : []),
     ...(can(access, "fees:manage") || can(access, "school:billing") ? [{ key: "payments", label: "Payments", href: `${base}?tab=payments` }] : []),
     ...(can(access, "comms:announce") ? [{ key: "messaging", label: "Messaging", href: `${base}?tab=messaging` }] : []),
@@ -127,6 +129,8 @@ export default async function SettingsPage({ params, searchParams }: { params: P
           <MessagingTab slug={slug} access={access} bought={sp.bought} failed={!!sp.failed} />
         ) : tab === "payments" && (can(access, "fees:manage") || can(access, "school:billing")) ? (
           <PaymentsTab slug={slug} access={access} />
+        ) : tab === "ai" && canProfile ? (
+          <AiTab slug={slug} access={access} />
         ) : tab === "domain" && can(access, "school:billing") && can(access, "school:update") ? (
           <DomainTab slug={slug} access={access} />
         ) : tab === "campuses" && can(access, "school:billing") ? (

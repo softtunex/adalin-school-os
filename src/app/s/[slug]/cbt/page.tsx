@@ -13,6 +13,7 @@ import { formatDue } from "@/lib/dates";
 import { hasFeature } from "@/lib/plans/entitlements";
 import type { Access } from "@/lib/services/access";
 import { EXAM_PAGE_SIZE, listExams, listQuestions, QUESTION_PAGE_SIZE } from "@/lib/services/cbt";
+import { aiAvailability } from "@/lib/services/ai";
 import { BankButtons, QuestionActions } from "./bank-client";
 import { EXAM_STATE } from "./shared";
 
@@ -174,7 +175,7 @@ async function Bank({ slug, access, sp }: { slug: string; access: Access; sp: SP
                 { value: "theory", label: "Theory" },
               ]}
             />
-            <BankButtons slug={slug} subjects={list.subjects} levels={list.levels} />
+            <BankButtons slug={slug} subjects={list.subjects} levels={list.levels} ai={aiAvailability(access).ok} />
           </>
         }
         footer={<Pagination page={page} pageSize={QUESTION_PAGE_SIZE} total={list.total} noun="questions" />}

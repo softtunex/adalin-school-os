@@ -6,7 +6,7 @@ export type SettingsTab = { key: string; label: string; href: string };
 
 // Settings grouped the way people look for them. A tab not listed here lands under "More".
 const GROUPS: { label: string; keys: string[] }[] = [
-  { label: "School", keys: ["profile", "grading", "domain"] },
+  { label: "School", keys: ["profile", "grading", "ai", "domain"] },
   { label: "Money", keys: ["payments", "plan", "addons"] },
   { label: "People & messages", keys: ["messaging", "admissions", "hr", "payroll", "signin"] },
   { label: "Operations", keys: ["behaviour", "library", "inventory", "health", "transport", "hostel", "documents"] },
@@ -20,6 +20,7 @@ const ICONS: Record<string, IconName> = {
   payments: "creditCard",
   plan: "receipt",
   addons: "sparkle",
+  ai: "wand",
   messaging: "chat",
   admissions: "userPlus",
   hr: "users",

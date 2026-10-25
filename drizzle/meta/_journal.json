@@ -183,6 +183,13 @@
       "when": 1792265525279,
       "tag": "0025_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792970624318,
+      "tag": "0026_ai",
+      "breakpoints": true
     }
   ]
 }
