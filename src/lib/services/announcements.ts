@@ -8,7 +8,7 @@ import { requireFeature } from "../plans/entitlements";
 import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 import { guardianContacts, notifyUsers } from "./notify";
-import { enqueue, smsCredits, type Outgoing } from "./outbox";
+import { enqueue, smsCredits, smsSafe, type Outgoing } from "./outbox";
 
 const actor = (access: Access, ip?: string | null) => ({ userId: access.user.id, name: access.user.name, ip });
 
@@ -124,11 +124,12 @@ export async function createAnnouncement(db: DB, access: Access, input: z.infer<
 
 /** SMS copy of an announcement: title and as much of the body as fits two pages. */
 export function smsText(school: string, title: string, body: string) {
-  const head = `${school}: ${title}. `;
+  // Plain SMS characters throughout (see smsSafe), so the length and cost worked out here hold.
+  const head = smsSafe(`${school}: ${title}. `);
   const room = 300 - head.length;
-  const text = body.replace(/\s+/g, " ").trim();
-  const full = head + (text.length > room ? `${text.slice(0, room - 1).trimEnd()}…` : text);
-  return smsCredits(full) > 2 ? `${head}${text.slice(0, Math.max(0, 130 - head.length))}…` : full;
+  const text = smsSafe(body.replace(/\s+/g, " ").trim());
+  const full = head + (text.length > room ? `${text.slice(0, room - 3).trimEnd()}...` : text);
+  return smsCredits(full) > 2 ? `${head}${text.slice(0, Math.max(0, 130 - head.length))}...` : full;
 }
 
 export function describeAudience(audience: string, classes: number) {

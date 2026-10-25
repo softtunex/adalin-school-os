@@ -12,7 +12,7 @@ import { lagosToday, saveAttendance } from "@/lib/services/attendance";
 import { addCredits, buyCredits, getMessaging, saveCommsSettings } from "@/lib/services/credits";
 import { parentInbox, parentReply, parentStartConversation, parentThread, staffInbox, staffReply, staffThread, staffUnreadCount, withinHours } from "@/lib/services/messaging";
 import { schoolComms } from "@/lib/services/notify";
-import { creditBalance, drainOutbox, enqueue, smsCredits, type Transport } from "@/lib/services/outbox";
+import { creditBalance, drainOutbox, enqueue, smsCredits, smsSafe, type Transport } from "@/lib/services/outbox";
 import { requestLoginCode, verifyLoginCode } from "@/lib/services/parent-auth";
 import { getChildDetail, getParentHome, myChildren, requireChild } from "@/lib/services/parent-portal";
 import { acceptInvitation, inviteStaff } from "@/lib/services/staff";
@@ -101,6 +101,25 @@ describe("message credits and delivery", () => {
     expect(drained).toMatchObject({ sent: 1, failed: 1 });
     expect(await withTenant(database.db, owner.school.id, (tx) => creditBalance(tx))).toBe(10);
     expect(await drainOutbox(database.db, failing)).toEqual({ sent: 0, failed: 0 });
+  });
+
+  it("sends SMS in the plain alphabet, so a naira sign or curly quote doesn't triple the cost", async () => {
+    const receipt = "Adalin College: received ₦50,000 for Tolu’s fees — Receipt RCT-00125. Balance ₦215,500. Thanks… “Bursar”";
+    expect(smsSafe(receipt)).toBe('Adalin College: received N50,000 for Tolu\'s fees - Receipt RCT-00125. Balance N215,500. Thanks... "Bursar"');
+    expect(smsCredits(receipt)).toBe(2);
+    expect(smsCredits(smsSafe(receipt))).toBe(1);
+
+    await addCredits(database.db, owner.school.id, 5, "plain-topup", "Test top-up");
+    const r = await withTenant(database.db, owner.school.id, (tx) =>
+      enqueue(tx, owner.school.id, [
+        { channel: "sms", to: "+2348030000003", body: receipt, kind: "plain-sms" },
+        { channel: "whatsapp", to: "+2348030000003", body: receipt, kind: "plain-wa" },
+      ]),
+    );
+    expect(r.credits).toBe(1 + 2);
+    const rows = await outbox("plain-sms");
+    expect(rows[0].body).toContain("N50,000");
+    expect((await outbox("plain-wa"))[0].body).toContain("₦50,000");
   });
 });
 

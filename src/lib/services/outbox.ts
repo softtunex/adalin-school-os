@@ -12,6 +12,23 @@ export type Outgoing = { channel: OutboundChannel; to: string; subject?: string;
 
 const GSM = /^[\n\r -~£¥èéùìòÇØøÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ¡ÄÖÑÜ§¿äöñüà€]*$/;
 
+/**
+ * Swaps common characters outside the basic SMS alphabet for plain ones. One "₦" or curly
+ * quote would otherwise turn the whole text into a 70-character SMS and double or triple its cost.
+ */
+const PLAIN: [RegExp, string][] = [
+  [/₦/g, "N"],
+  [/[‘’‚′]/g, "'"],
+  [/[“”„″]/g, '"'],
+  [/[–—−]/g, "-"],
+  [/…/g, "..."],
+  [/[•·]/g, "-"],
+  [/[  ]/g, " "],
+];
+export function smsSafe(body: string) {
+  return PLAIN.reduce((text, [from, to]) => text.replace(from, to), body);
+}
+
 /** Credits an SMS costs: one per 160 plain characters (153 when split), or 70/67 with emoji or local script. */
 export function smsCredits(body: string) {
   const gsm = GSM.test(body);
@@ -42,8 +59,10 @@ export async function enqueue(tx: Tx, schoolId: string, items: Outgoing[]) {
   let balance = free ? Number.POSITIVE_INFINITY : await creditBalance(tx);
   let spent = 0;
   let unpaid = 0;
-  const rows = items.map((i) => {
-    if (i.channel === "email") return { schoolId, ...i, subject: i.subject ?? null, ref: i.ref ?? null, credits: 0, status: "queued" as const };
+  const rows = items.map((item) => {
+    if (item.channel === "email") return { schoolId, ...item, subject: item.subject ?? null, ref: item.ref ?? null, credits: 0, status: "queued" as const };
+    // SMS is charged and sent in the plain alphabet; WhatsApp keeps every character at no extra cost.
+    const i = item.channel === "sms" ? { ...item, body: smsSafe(item.body) } : item;
     const cost = smsCredits(i.body);
     if (cost > balance) {
       unpaid++;
@@ -134,5 +153,5 @@ export async function drainOutbox(db: DB, transport: Transport = defaultTranspor
 
 /** Platform-paid SMS (login codes). Never touches a school's credits. */
 export async function sendPlatformSms(to: string, body: string) {
-  return defaultTransport({ channel: "sms", to, subject: null, body, senderId: PLATFORM_SENDER });
+  return defaultTransport({ channel: "sms", to, subject: null, body: smsSafe(body), senderId: PLATFORM_SENDER });
 }
