@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/display";
 import { Field, Input } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
 import { acceptInviteAction } from "../../actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function AcceptInviteForm({ token, mode, email, name }: { token: string; mode: "new" | "existing"; email?: string; name?: string }) {
   const [state, action] = useActionState(acceptInviteAction, initialFormState);
@@ -23,7 +24,10 @@ export function AcceptInviteForm({ token, mode, email, name }: { token: string; 
             <Input id="name" name="name" autoComplete="name" defaultValue={state.values?.name ?? name} aria-invalid={!!fe.name} required />
           </Field>
           <Field label="Create a password" htmlFor="password" error={fe.password} hint="At least 8 characters, with a letter and a number.">
-            <Input id="password" name="password" type="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
+            <PasswordInput id="password" name="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
+          </Field>
+          <Field label="Confirm password" htmlFor="confirm" error={fe.confirm}>
+            <PasswordInput id="confirm" name="confirm" autoComplete="new-password" aria-invalid={!!fe.confirm} required />
           </Field>
         </>
       ) : null}

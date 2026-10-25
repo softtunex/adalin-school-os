@@ -7,6 +7,7 @@ import { Field, Input } from "@/components/ui/form";
 import { TermsConsent } from "@/components/terms-consent";
 import { initialFormState } from "@/lib/form-state";
 import { signupAction } from "../actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function SignupForm() {
   const [state, action] = useActionState(signupAction, initialFormState);
@@ -24,7 +25,10 @@ export function SignupForm() {
         <Input id="email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} aria-invalid={!!fe.email} required />
       </Field>
       <Field label="Password" htmlFor="password" error={fe.password} hint="At least 8 characters, with a letter and a number.">
-        <Input id="password" name="password" type="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
+        <PasswordInput id="password" name="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
+      </Field>
+      <Field label="Confirm password" htmlFor="confirm" error={fe.confirm}>
+        <PasswordInput id="confirm" name="confirm" autoComplete="new-password" aria-invalid={!!fe.confirm} required />
       </Field>
       <TermsConsent error={fe.terms} />
       <SubmitButton size="lg" pendingText="Creating your school…">

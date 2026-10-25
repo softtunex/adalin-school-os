@@ -13,7 +13,8 @@ test("an owner sets up classes, adds and imports students, and manages a profile
   await page.getByLabel("School name").fill(`Unity Model School ${run}`);
   await page.getByLabel("Your full name").fill("Mrs Bisi Akande");
   await page.getByLabel("Email").fill(`bisi${run}@e2e.test`);
-  await page.getByLabel("Password").fill("UnitySchool1");
+  await page.getByLabel("Password", { exact: true }).fill("UnitySchool1");
+  await page.getByLabel("Confirm password").fill("UnitySchool1");
   await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });

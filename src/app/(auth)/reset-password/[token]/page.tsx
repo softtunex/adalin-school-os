@@ -3,9 +3,10 @@
 import { use, useActionState } from "react";
 import { SubmitButton } from "@/components/ui/button";
 import { Alert } from "@/components/ui/display";
-import { Field, Input } from "@/components/ui/form";
+import { Field } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
 import { resetPasswordAction } from "../../actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function ResetPasswordPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = use(params);
@@ -19,10 +20,10 @@ export default function ResetPasswordPage({ params }: { params: Promise<{ token:
         <input type="hidden" name="token" value={token} />
         {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
         <Field label="New password" htmlFor="password" error={fe.password} hint="At least 8 characters, with a letter and a number.">
-          <Input id="password" name="password" type="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
+          <PasswordInput id="password" name="password" autoComplete="new-password" aria-invalid={!!fe.password} required />
         </Field>
         <Field label="Confirm new password" htmlFor="confirm" error={fe.confirm}>
-          <Input id="confirm" name="confirm" type="password" autoComplete="new-password" aria-invalid={!!fe.confirm} required />
+          <PasswordInput id="confirm" name="confirm" autoComplete="new-password" aria-invalid={!!fe.confirm} required />
         </Field>
         <SubmitButton size="lg" pendingText="Saving…">
           Save password

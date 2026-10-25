@@ -82,14 +82,14 @@ export async function enqueue(tx: Tx, schoolId: string, items: Outgoing[]) {
 
 // ---------- Delivery ----------
 
-export type Transport = (m: { channel: OutboundChannel; to: string; subject: string | null; body: string; senderId: string }) => Promise<{ ok: boolean; ref?: string; error?: string }>;
+export type Transport = (m: { channel: OutboundChannel; to: string; subject: string | null; body: string; senderId: string; schoolName?: string }) => Promise<{ ok: boolean; ref?: string; error?: string }>;
 
 /** Termii for SMS and WhatsApp, Resend for email. Without keys, logs instead (local development). */
 export const defaultTransport: Transport = async (m) => {
   if (m.channel === "email") {
     // Loaded on use: the mail module is server-only, and scripts that only queue messages never need it.
     const { sendEmail } = await import("../mail");
-    const ok = await sendEmail({ to: m.to, subject: m.subject ?? "A message from your school", text: m.body });
+    const ok = await sendEmail({ to: m.to, subject: m.subject ?? "A message from your school", text: m.body, fromName: m.schoolName });
     return { ok: ok || !process.env.RESEND_API_KEY };
   }
   const key = process.env.TERMII_API_KEY;
@@ -125,7 +125,7 @@ export const PLATFORM_SENDER = process.env.TERMII_SENDER_ID ?? "SchoolHub";
  */
 export async function drainOutbox(db: DB, transport: Transport = defaultTransport, limit = 200) {
   const batch = await db
-    .select({ m: outboundMessages, senderId: sql<string | null>`${schools.commsSettings}->>'senderId'` })
+    .select({ m: outboundMessages, schoolName: schools.name, senderId: sql<string | null>`${schools.commsSettings}->>'senderId'` })
     .from(outboundMessages)
     .innerJoin(schools, eq(schools.id, outboundMessages.schoolId))
     .where(eq(outboundMessages.status, "queued"))
@@ -137,8 +137,8 @@ export async function drainOutbox(db: DB, transport: Transport = defaultTranspor
   await db.update(outboundMessages).set({ status: "sent", sentAt: new Date() }).where(and(inArray(outboundMessages.id, ids), eq(outboundMessages.status, "queued")));
   let sent = 0;
   let failed = 0;
-  for (const { m, senderId } of batch) {
-    const r = await transport({ channel: m.channel, to: m.to, subject: m.subject, body: m.body, senderId: senderId || PLATFORM_SENDER });
+  for (const { m, senderId, schoolName } of batch) {
+    const r = await transport({ channel: m.channel, to: m.to, subject: m.subject, body: m.body, senderId: senderId || PLATFORM_SENDER, schoolName });
     if (r.ok) {
       sent++;
       if (r.ref) await db.update(outboundMessages).set({ providerRef: r.ref }).where(eq(outboundMessages.id, m.id));

@@ -544,7 +544,7 @@ export async function listDebtors(db: DB, access: Access, f: { termId?: string |
   });
 }
 
-export type Reminder = { to: string; subject: string; text: string };
+export type Reminder = { to: string; subject: string; text: string; action?: { label: string; url: string }; fromName?: string };
 
 export function reminderEmail(input: {
   schoolName: string;
@@ -561,10 +561,15 @@ export function reminderEmail(input: {
     `This is a friendly reminder that ${input.studentName}'s ${input.invoice.title.toLowerCase()} (${input.invoice.number}) has an outstanding balance of ${formatNaira(input.balanceKobo)}${input.invoice.dueOn ? `, due on ${input.invoice.dueOn}` : ""}.`,
     "",
   ];
-  if (input.payUrl) lines.push(`You can view the invoice and pay online here:`, input.payUrl, "");
+  if (input.payUrl) lines.push(`You can view the invoice and pay online here:`, "", input.payUrl, "");
   if (input.bank) lines.push(`Or pay by bank transfer to ${input.bank.accountName}, ${input.bank.name}, ${input.bank.accountNumber}, using ${input.invoice.number} as the reference.`, "");
   lines.push("If you have already paid, please ignore this message, and thank you.", "", input.schoolName);
-  return { subject: `Fees reminder: ${input.studentName}, ${formatNaira(input.balanceKobo)} outstanding`, text: lines.join("\n") };
+  return {
+    subject: `Fees reminder: ${input.studentName}, ${formatNaira(input.balanceKobo)} outstanding`,
+    text: lines.join("\n"),
+    action: input.payUrl ? { label: "View and pay", url: input.payUrl } : undefined,
+    fromName: input.schoolName,
+  };
 }
 
 /**

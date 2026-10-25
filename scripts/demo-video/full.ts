@@ -78,7 +78,8 @@ const SCENES: Scene[] = [
       await r.type(p.getByLabel("School name"), NEW_SCHOOL);
       await r.type(p.getByLabel("Your full name"), "Mrs Adaeze Okafor");
       await r.type(p.getByLabel("Email"), "adaeze@adalinmodelschool.ng");
-      await r.type(p.getByLabel("Password"), "ModelSchool2026");
+      await r.type(p.getByLabel("Password", { exact: true }), "ModelSchool2026");
+      await r.type(p.getByLabel("Confirm password"), "ModelSchool2026");
       await r.click(p.getByRole("checkbox", { name: /accepts the terms/ }), 400);
       r.caption("Free for up to 50 students. No card needed.");
       await r.click(p.getByRole("button", { name: "Create school" }), 500);
@@ -172,6 +173,7 @@ const SCENES: Scene[] = [
       await r.go(new URL(ctx.invite).pathname);
       r.caption("The teacher sets a password and joins");
       await r.type(p.getByLabel("Create a password"), "Teacher2026");
+      await r.type(p.getByLabel("Confirm password"), "Teacher2026");
       await r.click(p.getByRole("button", { name: "Accept and join" }), 500);
       await r.offCamera(() => p.waitForURL(/\/s\//, { timeout: 60_000 }));
       r.caption("Each person only sees what their role allows");

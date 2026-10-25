@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { APP_NAME, RESET_TTL_MINUTES } from "@/lib/config";
 import { appUrl, endSession, getCurrentUser, requestMeta, safeNext, startSession } from "@/lib/auth/session";
@@ -9,11 +10,31 @@ import { getDb } from "@/lib/db/client";
 import { schools } from "@/lib/db/schema";
 import { AppError, userMessage } from "@/lib/errors";
 import { formValues, type FormState } from "@/lib/form-state";
-import { sendEmail } from "@/lib/mail";
+import { sendEmail, type Email } from "@/lib/mail";
 import { authenticate, createPasswordReset, registerSchoolOwner, resetPassword } from "@/lib/services/accounts";
 import { acceptInvitation } from "@/lib/services/staff";
 import { emailSchema, fieldErrors, nameSchema, passwordSchema, schoolNameSchema } from "@/lib/validation";
 import { TERMS_REQUIRED } from "@/components/terms-consent";
+
+const PASSWORDS_DIFFER = "The passwords don't match.";
+
+/** The email a new proprietor gets: their school is ready, and the three first steps. */
+function welcomeEmail(input: { to: string; name: string; schoolName: string; dashboard: string }): Email {
+  const first = input.name.split(/\s+/).find((w) => !/^(mr|mrs|ms|miss|dr|prof|chief|alhaji|alhaja)\.?$/i.test(w)) ?? input.name;
+  return {
+    to: input.to,
+    subject: `Welcome to ${APP_NAME}, ${first}`,
+    text: [
+      `Hi ${first},`,
+      `Welcome to ${APP_NAME}. ${input.schoolName} is set up and ready.`,
+      "Three steps to get going:\n1. Set up your classes and subjects. It takes about a minute.\n2. Add your students, one at a time or all at once from Excel.\n3. Invite your staff, each with the right role.",
+      `${input.schoolName} starts on the Free plan: up to 50 students and 5 staff. You can try Standard or Premium free for 30 days from Settings, Plan & billing.`,
+      "Your school's dashboard:",
+      input.dashboard,
+    ].join("\n\n"),
+    action: { label: "Open your dashboard", url: input.dashboard },
+  };
+}
 
 const signupSchema = z.object({
   name: nameSchema,
@@ -26,14 +47,18 @@ export async function signupAction(_prev: FormState, formData: FormData): Promis
   const values = formValues(formData, ["name", "email", "schoolName"]);
   const parsed = signupSchema.safeParse({ ...values, password: formData.get("password") });
   const terms: Record<string, string> = formData.get("terms") === "on" ? {} : { terms: TERMS_REQUIRED };
-  if (!parsed.success) return { fieldErrors: { ...fieldErrors(parsed.error), ...terms }, values };
-  if (terms.terms) return { fieldErrors: terms, values };
+  const confirm: Record<string, string> = formData.get("password") === formData.get("confirm") ? {} : { confirm: PASSWORDS_DIFFER };
+  if (!parsed.success) return { fieldErrors: { ...fieldErrors(parsed.error), ...confirm, ...terms }, values };
+  if (confirm.confirm || terms.terms) return { fieldErrors: { ...confirm, ...terms }, values };
 
   let slug: string;
   try {
     const { user, school } = await registerSchoolOwner(getDb(), parsed.data);
     await startSession(user.id);
     slug = school.slug;
+    const dashboard = `${await appUrl()}/s/${school.slug}`;
+    // Sent once the page has responded, so a slow mail provider never holds up sign-up.
+    after(() => sendEmail(welcomeEmail({ to: parsed.data.email, name: user.name, schoolName: school.name, dashboard })));
   } catch (error) {
     return { error: userMessage(error), values };
   }
@@ -76,6 +101,7 @@ export async function forgotPasswordAction(_prev: FormState, formData: FormData)
       to: parsed.data,
       subject: `Reset your ${APP_NAME} password`,
       text: `Hi ${reset.user.name},\n\nUse this link to set a new password. It works once and expires in ${RESET_TTL_MINUTES} minutes:\n\n${link}\n\nIf you didn't ask for this, you can ignore this email.`,
+      action: { label: "Set a new password", url: link },
     });
     // Local development without email configured: surface the link so the flow can be tested.
     if (!sent && process.env.NODE_ENV !== "production") return { success, data: { devLink: link } };
@@ -89,7 +115,7 @@ export async function resetPasswordAction(_prev: FormState, formData: FormData):
   const token = String(formData.get("token") ?? "");
   const parsed = passwordSchema.safeParse(formData.get("password"));
   if (!parsed.success) return { fieldErrors: { password: parsed.error.issues[0].message } };
-  if (formData.get("password") !== formData.get("confirm")) return { fieldErrors: { confirm: "The passwords don't match." } };
+  if (formData.get("password") !== formData.get("confirm")) return { fieldErrors: { confirm: PASSWORDS_DIFFER } };
 
   try {
     const userId = await resetPassword(getDb(), token, parsed.data);
@@ -114,6 +140,7 @@ export async function acceptInviteAction(_prev: FormState, formData: FormData): 
       const values = formValues(formData, ["name"]);
       const parsed = acceptSchema.safeParse({ name: formData.get("name"), password: formData.get("password") });
       if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
+      if (formData.get("password") !== formData.get("confirm")) return { fieldErrors: { confirm: PASSWORDS_DIFFER }, values };
       const result = await acceptInvitation(db, token, parsed.data);
       schoolId = result.schoolId;
       await startSession(result.userId);

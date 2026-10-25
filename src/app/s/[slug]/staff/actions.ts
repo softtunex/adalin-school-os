@@ -31,7 +31,9 @@ export async function inviteAction(slug: string, _prev: FormState, formData: For
     const emailed = await sendEmail({
       to: parsed.data.email,
       subject: `${access.user.name} invited you to ${access.school.name} on ${APP_NAME}`,
-      text: `Hi ${parsed.data.name},\n\n${access.user.name} has invited you to join ${access.school.name} on ${APP_NAME}.\n\nAccept your invitation here (valid for ${INVITE_TTL_DAYS} days):\n${link}`,
+      text: `Hi ${parsed.data.name},\n\n${access.user.name} has invited you to join ${access.school.name} on ${APP_NAME}.\n\nAccept your invitation here (valid for ${INVITE_TTL_DAYS} days):\n\n${link}`,
+      action: { label: "Accept invitation", url: link },
+      fromName: access.school.name,
     });
     revalidatePath(`/s/${slug}/staff`);
     return {

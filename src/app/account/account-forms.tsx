@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/display";
 import { Field, Input } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
 import { changePasswordAction, disconnectSsoAction, signOutEverywhereAction, updateNameAction } from "./actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function NameForm({ name }: { name: string }) {
   const [state, action] = useActionState(updateNameAction, initialFormState);
@@ -30,10 +31,10 @@ export function PasswordForm() {
       {state.error ? <Alert tone="danger">{state.error}</Alert> : null}
       {state.success ? <Alert tone="success">{state.success}</Alert> : null}
       <Field label="Current password" htmlFor="current" error={fe.current}>
-        <Input id="current" name="current" type="password" autoComplete="current-password" aria-invalid={!!fe.current} />
+        <PasswordInput id="current" name="current" autoComplete="current-password" aria-invalid={!!fe.current} />
       </Field>
       <Field label="New password" htmlFor="next" error={fe.next} hint="At least 8 characters, with a letter and a number.">
-        <Input id="next" name="next" type="password" autoComplete="new-password" aria-invalid={!!fe.next} />
+        <PasswordInput id="next" name="next" autoComplete="new-password" aria-invalid={!!fe.next} />
       </Field>
       <div>
         <SubmitButton variant="secondary">Change password</SubmitButton>

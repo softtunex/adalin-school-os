@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/display";
 import { Field, Input } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
 import { studentLoginAction } from "./actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function StudentLoginForm({ school }: { school: string }) {
   const [state, action] = useActionState(studentLoginAction, initialFormState);
@@ -19,7 +20,7 @@ export function StudentLoginForm({ school }: { school: string }) {
         <Input id="admissionNo" name="admissionNo" required autoCapitalize="characters" autoCorrect="off" defaultValue={state.values?.admissionNo} placeholder="ADC/2026/0001" className="h-12 font-mono" />
       </Field>
       <Field label="Password" htmlFor="password">
-        <Input id="password" name="password" type="password" required autoComplete="current-password" className="h-12" />
+        <PasswordInput id="password" name="password" required autoComplete="current-password" className="h-12" />
       </Field>
       <SubmitButton size="lg" pendingText="Signing in…">
         Sign in

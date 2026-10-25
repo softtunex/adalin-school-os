@@ -13,7 +13,8 @@ test("attendance, score entry, publishing and PDF report cards", async ({ page, 
   await page.getByLabel("School name").fill(`Kings Court School ${run}`);
   await page.getByLabel("Your full name").fill("Mr Tunde Bakare");
   await page.getByLabel("Email").fill(`tunde${run}@e2e.test`);
-  await page.getByLabel("Password").fill("KingsCourt1");
+  await page.getByLabel("Password", { exact: true }).fill("KingsCourt1");
+  await page.getByLabel("Confirm password").fill("KingsCourt1");
   await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });

@@ -18,7 +18,8 @@ test("a new school on Free sees fees as an upgrade, not an error", async ({ page
   await page.getByLabel("School name").fill(`Little Steps ${run}`);
   await page.getByLabel("Your full name").fill("Mrs Kemi Ade");
   await page.getByLabel("Email").fill(`kemi${run}@e2e.test`);
-  await page.getByLabel("Password").fill("LittleSteps1");
+  await page.getByLabel("Password", { exact: true }).fill("LittleSteps1");
+  await page.getByLabel("Confirm password").fill("LittleSteps1");
   await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });

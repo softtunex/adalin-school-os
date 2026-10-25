@@ -16,7 +16,8 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
   await page.getByLabel("School name").fill(schoolName);
   await page.getByLabel("Your full name").fill("Mrs Funke Adebayo");
   await page.getByLabel("Email").fill(ownerEmail);
-  await page.getByLabel("Password").fill("Brightfuture1");
+  await page.getByLabel("Password", { exact: true }).fill("Brightfuture1");
+  await page.getByLabel("Confirm password").fill("Brightfuture1");
   await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/\/s\/bright-future-academy-[\w-]+\?welcome=1/, { timeout: 45_000 });
@@ -64,6 +65,7 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
   await teacher.goto(new URL(inviteLink).pathname);
   await expect(teacher.getByRole("heading", { name: `Join ${schoolName}` })).toBeVisible();
   await teacher.getByLabel("Create a password").fill("Teacher2026");
+  await teacher.getByLabel("Confirm password").fill("Teacher2026");
   await teacher.getByRole("button", { name: "Accept and join" }).click();
   await expect(teacher).toHaveURL(new RegExp(`/s/${slug}$`));
   await expect(teacher.getByRole("heading", { name: /Chidi/ })).toBeVisible();
@@ -105,7 +107,8 @@ test("a stranger can't open another school's pages", async ({ page }) => {
   await page.getByLabel("School name").fill(`Outsider School ${run}`);
   await page.getByLabel("Your full name").fill("Outsider Person");
   await page.getByLabel("Email").fill(`outsider${run}${Math.random().toString(36).slice(2, 6)}@e2e.test`);
-  await page.getByLabel("Password").fill("Outsider123");
+  await page.getByLabel("Password", { exact: true }).fill("Outsider123");
+  await page.getByLabel("Confirm password").fill("Outsider123");
   await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
@@ -124,7 +127,8 @@ test("no school page scrolls sideways on a phone", async ({ page, isMobile }) =>
   await page.getByLabel("School name").fill(`Narrow Screen School ${run}`);
   await page.getByLabel("Your full name").fill("Narrow Screen");
   await page.getByLabel("Email").fill(`narrow${run}@e2e.test`);
-  await page.getByLabel("Password").fill("Narrow1234");
+  await page.getByLabel("Password", { exact: true }).fill("Narrow1234");
+  await page.getByLabel("Confirm password").fill("Narrow1234");
   await page.getByRole("checkbox", { name: /accepts the terms/ }).check();
   await page.getByRole("button", { name: "Create school" }).click();
   await expect(page).toHaveURL(/welcome=1/, { timeout: 45_000 });
