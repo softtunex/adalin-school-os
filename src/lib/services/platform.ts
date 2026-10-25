@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from "../auth/platform-admin";
 import { and, asc, count, desc, eq, gt, ilike, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import { z } from "zod";
 import type { DB } from "../db/client";
@@ -22,10 +23,10 @@ import { addDays, nextBillNumber } from "./billing-core";
 export const SCHOOL_PAGE_SIZE = 30;
 export type Admin = { id: string; name: string };
 
-/** Only Adalin staff (users flagged as platform admins) get past this. */
+/** Only Adalin staff (see isPlatformAdmin) get past this. */
 export async function requirePlatformAdmin(db: DB, userId: string): Promise<Admin> {
-  const [u] = await db.select({ id: users.id, name: users.name, isPlatformAdmin: users.isPlatformAdmin }).from(users).where(eq(users.id, userId));
-  if (!u?.isPlatformAdmin) throw new AppError("That's for the Adalin team.", "forbidden");
+  const [u] = await db.select({ id: users.id, name: users.name, email: users.email, isPlatformAdmin: users.isPlatformAdmin }).from(users).where(eq(users.id, userId));
+  if (!u || !isPlatformAdmin(u)) throw new AppError("That's for the Adalin team.", "forbidden");
   return { id: u.id, name: u.name };
 }
 

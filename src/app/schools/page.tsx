@@ -1,3 +1,4 @@
+import { isPlatformAdmin } from "@/lib/auth/platform-admin";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -37,7 +38,7 @@ export default async function SchoolsPage({ searchParams }: { searchParams: Prom
       <p className="mt-1 fs-15.5 text-muted">Signed in as {user.email}</p>
 
       <div className="mt-8 flex flex-col gap-3">
-        {user.isPlatformAdmin ? (
+        {isPlatformAdmin(user) ? (
           <Link href="/admin" className="group">
             <Card className="flex items-center gap-4 bg-ink p-4 text-canvas transition-colors group-hover:border-brand">
               <span className="grid size-11 place-items-center rounded-full bg-canvas/10">
