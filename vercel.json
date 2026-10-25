@@ -1,7 +1,19 @@
 {
+  "regions": [
+    "fra1"
+  ],
   "crons": [
-    { "path": "/api/cron/fee-reminders", "schedule": "0 7 * * 1-5" },
-    { "path": "/api/cron/outbox", "schedule": "30 7 * * *" },
-    { "path": "/api/cron/billing", "schedule": "0 6 * * *" }
+    {
+      "path": "/api/cron/fee-reminders",
+      "schedule": "0 7 * * 1-5"
+    },
+    {
+      "path": "/api/cron/outbox",
+      "schedule": "30 7 * * *"
+    },
+    {
+      "path": "/api/cron/billing",
+      "schedule": "0 6 * * *"
+    }
   ]
 }
