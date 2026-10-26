@@ -22,20 +22,45 @@ export const kolaSchema = z.object({
   page: z.string().max(200).optional(),
 });
 
-/** What Kola is told about this person: their pages (with links) and what each one does. */
-export function kolaBrief(access: Access) {
+const STOP = new Set(["what", "when", "where", "which", "with", "that", "this", "have", "there", "their", "they", "from", "into", "about", "does", "doing", "should", "could", "would", "your", "page", "help", "please", "kola", "schoolhub"]);
+const words = (s: string) => s.toLowerCase().match(/[a-z]{4,}/g)?.filter((w) => !STOP.has(w)) ?? [];
+
+/**
+ * What Kola is told about this person: every page they can open (with links), and the full guide only
+ * for the page they're on and the few pages the question is about. Sending the whole guide every time
+ * would use several times the AI allowance for the same answer.
+ */
+export function kolaBrief(access: Access, focus: { page?: string; question?: string } = {}) {
   const slug = access.school.slug;
   const pages = flattenNav(resolveNav(slug, { permissions: access.permissions, features: new Set(access.plan.features), isStaff: access.isStaff }));
-  const lines = pages.map((p) => {
+  const asked = new Set(words(focus.question ?? ""));
+  const scored = pages.map((p) => {
     const key = p.href.slice(`/s/${slug}`.length);
-    const where = p.group ? `${p.group} → ${p.label}` : p.label;
-    return `- ${where} (link: ${p.href})${p.locked ? " [locked: needs a higher plan]" : ""}\n  ${KOLA_GUIDE[key] ?? ""}`;
+    const text = `${p.label} ${p.keywords ?? ""} ${KOLA_GUIDE[key] ?? ""}`;
+    // A word in the page's name or keywords counts more than one in its guide.
+    const name = new Set(words(`${p.label} ${p.keywords ?? ""}`));
+    const score = [...asked].reduce((n, w) => n + (name.has(w) ? 3 : 0) + (text.toLowerCase().includes(w) ? 1 : 0), 0);
+    const here = !!focus.page && (focus.page === p.href || focus.page.startsWith(`${p.href}/`) || focus.page.startsWith(`${p.href}?`)) && key !== "";
+    return { p, key, score: here ? score + 100 : score };
   });
-  return { pages: lines.join("\n"), roles: access.roles.map((r) => r.name).join(", ") || "member" };
+  const detailed = new Set(
+    scored
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 4)
+      .map((s) => s.key),
+  );
+  const lines = scored.map(({ p, key }) => {
+    const where = p.group ? `${p.group} → ${p.label}` : p.label;
+    const head = `- ${where} (link: ${p.href})${p.locked ? " [locked: needs a higher plan]" : ""}`;
+    return detailed.has(key) && KOLA_GUIDE[key] ? `${head}\n  ${KOLA_GUIDE[key]}` : head;
+  });
+  return { pages: lines.join("\n"), roles: access.roles.map((r) => r.name).join(", ") || "member", detailed: [...detailed] };
 }
 
 export async function askKola(db: DB, access: Access, input: z.infer<typeof kolaSchema>) {
-  const brief = kolaBrief(access);
+  const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const brief = kolaBrief(access, { page: input.page, question });
   const history = input.messages.slice(-8);
   const system = `[task:kola] You are Kola, the friendly helper inside Adalin SchoolHub, a school management app used by schools in Nigeria. You are talking to ${greetingName(access.user.name)}, whose role at ${access.school.name} is ${brief.roles}. The school is on the ${access.plan.name} plan.${input.page ? ` They are on the page ${input.page}.` : ""}
 
@@ -51,7 +76,7 @@ Answer questions about how to use SchoolHub, using only the guide below. Rules:
 
 ${KOLA_GENERAL}
 
-Pages this person can open:
+Pages this person can open (full guide given for the ones that matter to this question; ask them to open a page for more):
 ${brief.pages}`;
 
   return runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 });
@@ -74,7 +99,7 @@ export async function parentKola(db: DB, userId: string) {
     const kid = kids.find((k) => k.schoolId === schoolId)!;
     const [school] = await db.select({ id: schools.id, name: schools.name, aiSettings: schools.aiSettings, planKey: schools.planKey }).from(schools).where(eq(schools.id, schoolId));
     if (!school) continue;
-    const actor: AiActor = { user: { id: userId }, school, plan: { key: school.planKey, features: kid.school.features } };
+    const actor: AiActor = { user: { id: userId }, isStaff: false, school, plan: { key: school.planKey, features: kid.school.features } };
     if (aiAvailability(actor).ok && aiSettings(school.aiSettings).kolaForFamilies) {
       return { actor, schoolName: school.name, children: kids.map((k) => ({ id: k.studentId, firstName: k.firstName, school: k.school.name })) };
     }

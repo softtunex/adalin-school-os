@@ -16,7 +16,7 @@ export async function AiTab({ slug, access }: { slug: string; access: Access }) 
   return (
     <div className="flex max-w-[720px] flex-col gap-5">
       {!aiProvider() ? <Alert tone="warning">AI isn&apos;t set up on this server yet. Adalin is switching it on; you can choose your settings now.</Alert> : null}
-      <AiSettingsForm slug={slug} settings={aiSettings(access.school.aiSettings)} editable={can(access, "school:update")} used={usage.used} limit={usage.limit} />
+      <AiSettingsForm slug={slug} settings={aiSettings(access.school.aiSettings)} editable={can(access, "school:update")} used={usage.used} limit={usage.limit} perPerson={usage.perPerson} top={usage.top} />
     </div>
   );
 }

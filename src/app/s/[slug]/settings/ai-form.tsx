@@ -7,7 +7,23 @@ import { Checkbox } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
 import { saveAiSettingsAction } from "./ai-actions";
 
-export function AiSettingsForm({ slug, settings, editable, used, limit }: { slug: string; settings: { enabled: boolean; kolaForFamilies: boolean }; editable: boolean; used: number; limit: number }) {
+export function AiSettingsForm({
+  slug,
+  settings,
+  editable,
+  used,
+  limit,
+  perPerson,
+  top,
+}: {
+  slug: string;
+  settings: { enabled: boolean; kolaForFamilies: boolean };
+  editable: boolean;
+  used: number;
+  limit: number;
+  perPerson: { staff: number; family: number };
+  top: { name: string; n: number }[];
+}) {
   const [state, action] = useActionState(saveAiSettingsAction.bind(null, slug), initialFormState);
   const pct = Math.min(100, Math.round((used / limit) * 100));
   return (
@@ -39,7 +55,19 @@ export function AiSettingsForm({ slug, settings, editable, used, limit }: { slug
         <div className="h-2 overflow-hidden rounded-full bg-paper" role="progressbar" aria-label="AI requests used today" aria-valuenow={used} aria-valuemin={0} aria-valuemax={limit}>
           <div className="h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
         </div>
-        <p className="fs-13.5 text-muted">The allowance resets at midnight. We only send what each helper needs, never student phone numbers or addresses.</p>
+        {top.length ? (
+          <ul className="flex flex-col divide-y divide-line rounded-chunk border border-line" aria-label="Most AI use today">
+            {top.map((t) => (
+              <li key={t.name} className="flex items-center justify-between gap-3 px-3 py-2 fs-14">
+                <span className="truncate text-ink">{t.name}</span>
+                <span className="tabular-nums text-muted">{t.n}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="fs-13.5 text-muted">
+          Each staff member can make {perPerson.staff} requests a day and each parent {perPerson.family}, so no one uses up the school&apos;s allowance. It all resets at midnight. We only send what each helper needs, never student phone numbers or addresses.
+        </p>
       </div>
     </Card>
   );

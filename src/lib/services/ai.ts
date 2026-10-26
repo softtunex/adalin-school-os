@@ -1,7 +1,7 @@
-import { and, count, eq, gte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { DB } from "../db/client";
-import { aiUsage, schools, type AiSettings } from "../db/schema";
+import { aiUsage, schools, users, type AiSettings } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { aiProvider, AiUnavailable, complete, type AiMessage, type AiOptions, type AiTask } from "../ai/provider";
@@ -23,8 +23,11 @@ export function aiSettings(s: AiSettings | null | undefined): Required<AiSetting
 export const AI_DAILY: Record<string, number> = { standard: 100, premium: 300, enterprise: 1000 };
 const AI_DAILY_OTHER = 50;
 
+/** AI requests one person can make in a day, inside the school's allowance, so no one uses it all up. */
+export const AI_PER_PERSON = { staff: 30, family: 10 } as const;
+
 /** Who is asking: a staff member (their Access) or a parent, with the school whose allowance it uses. */
-export type AiActor = { user: { id: string }; school: { id: string; aiSettings: AiSettings | null }; plan: { key: string; features: string[] } };
+export type AiActor = { user: { id: string }; isStaff: boolean; school: { id: string; aiSettings: AiSettings | null }; plan: { key: string; features: string[] } };
 
 export type AiFeature = "questions" | "questions_photo" | "comment" | "kola" | "import";
 
@@ -34,9 +37,13 @@ export function aiDailyLimit(planKey: string) {
 
 const startOfLagosDay = sql`(date_trunc('day', now() at time zone 'Africa/Lagos') at time zone 'Africa/Lagos')`;
 
-export async function aiUsedToday(db: DB, schoolId: string) {
+/** Answered requests today, for the school or for one person in it. Failed ones don't count. */
+export async function aiUsedToday(db: DB, schoolId: string, userId?: string) {
   const [row] = await withTenant(db, schoolId, (tx) =>
-    tx.select({ n: count() }).from(aiUsage).where(and(eq(aiUsage.schoolId, schoolId), gte(aiUsage.createdAt, startOfLagosDay))),
+    tx
+      .select({ n: count() })
+      .from(aiUsage)
+      .where(and(eq(aiUsage.schoolId, schoolId), eq(aiUsage.ok, true), gte(aiUsage.createdAt, startOfLagosDay), userId ? eq(aiUsage.userId, userId) : undefined)),
   );
   return row?.n ?? 0;
 }
@@ -53,6 +60,10 @@ export function aiAvailability(access: AiActor): { ok: true } | { ok: false; rea
 export async function runAi(db: DB, access: AiActor, feature: AiFeature, task: AiTask, messages: AiMessage[], opts: AiOptions = {}) {
   const status = aiAvailability(access);
   if (!status.ok) throw new AppError(status.reason, status.upgrade ? "upgrade" : "forbidden");
+  const mine = access.isStaff ? AI_PER_PERSON.staff : AI_PER_PERSON.family;
+  if ((await aiUsedToday(db, access.school.id, access.user.id)) >= mine) {
+    throw new AppError(`You've used your ${mine} AI requests for today. They reset at midnight.`, "rate_limited");
+  }
   const limit = aiDailyLimit(access.plan.key);
   if ((await aiUsedToday(db, access.school.id)) >= limit) {
     throw new AppError(`Your school has used today's ${limit} AI requests. They reset at midnight.`, "rate_limited");
@@ -88,5 +99,15 @@ export async function saveAiSettings(db: DB, access: Access, input: z.infer<type
 
 /** Today's use, for the Settings tab. */
 export async function aiUsageSummary(db: DB, access: Access) {
-  return { used: await aiUsedToday(db, access.school.id), limit: aiDailyLimit(access.plan.key) };
+  const top = await withTenant(db, access.school.id, (tx) =>
+    tx
+      .select({ name: users.name, n: count() })
+      .from(aiUsage)
+      .innerJoin(users, eq(users.id, aiUsage.userId))
+      .where(and(eq(aiUsage.schoolId, access.school.id), eq(aiUsage.ok, true), gte(aiUsage.createdAt, startOfLagosDay)))
+      .groupBy(users.name)
+      .orderBy(desc(count()))
+      .limit(5),
+  );
+  return { used: await aiUsedToday(db, access.school.id), limit: aiDailyLimit(access.plan.key), perPerson: AI_PER_PERSON, top };
 }

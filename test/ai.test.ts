@@ -6,7 +6,7 @@ import { aiUsage, schools } from "@/lib/db/schema";
 import { withTenant } from "@/lib/db/tenant";
 import { loadAccess } from "@/lib/services/access";
 import { registerSchoolOwner } from "@/lib/services/accounts";
-import { AI_DAILY, aiAvailability, aiUsedToday, runAi, saveAiSettings } from "@/lib/services/ai";
+import { AI_DAILY, AI_PER_PERSON, aiAvailability, aiUsedToday, runAi, saveAiSettings } from "@/lib/services/ai";
 import { cleanQuestionText, draftQuestions } from "@/lib/services/ai-questions";
 import { parseQuestions } from "@/lib/services/cbt";
 import { askKola, greetingName, kolaBrief } from "@/lib/services/kola";
@@ -58,7 +58,8 @@ describe("AI helpers", () => {
   it("stops at the daily allowance", async () => {
     const a = await access();
     await withTenant(database.db, schoolId, (tx) =>
-      tx.insert(aiUsage).values(Array.from({ length: AI_DAILY.standard }, () => ({ schoolId, userId, feature: "kola", model: "test" }))),
+      // Other people's requests: the school total, not this person's own allowance.
+      tx.insert(aiUsage).values(Array.from({ length: AI_DAILY.standard }, () => ({ schoolId, userId: null, feature: "kola", model: "test" }))),
     );
     await expect(runAi(database.db, a, "kola", "fast", [{ role: "user", content: "Hi" }])).rejects.toThrow(/today's 100 AI requests/);
     await withTenant(database.db, schoolId, (tx) => tx.delete(aiUsage).where(eq(aiUsage.schoolId, schoolId)));
@@ -103,5 +104,33 @@ describe("Kola", () => {
   it("answers through the school's AI allowance", async () => {
     const reply = await askKola(database.db, await access(), { messages: [{ role: "user", content: "How do I add a student?" }] });
     expect(reply).toContain("How do I add a student?");
+  });
+});
+
+describe("allowances and Kola's brief", () => {
+  it("stops one person at their own daily allowance before the school's", async () => {
+    const a = await access();
+    await withTenant(database.db, schoolId, (tx) =>
+      tx.insert(aiUsage).values(Array.from({ length: AI_PER_PERSON.staff }, () => ({ schoolId, userId, feature: "kola", model: "test" }))),
+    );
+    await expect(runAi(database.db, a, "kola", "fast", [{ role: "user", content: "Hi" }])).rejects.toThrow(/your 30 AI requests/);
+    // Failed requests never count against anyone.
+    await withTenant(database.db, schoolId, (tx) => tx.update(aiUsage).set({ ok: false }).where(eq(aiUsage.schoolId, schoolId)));
+    expect(await aiUsedToday(database.db, schoolId, userId)).toBe(0);
+    await withTenant(database.db, schoolId, (tx) => tx.delete(aiUsage).where(eq(aiUsage.schoolId, schoolId)));
+  });
+
+  it("gives Kola the full guide only for the pages a question is about", async () => {
+    const a = await access();
+    const brief = kolaBrief(a, { question: "How do I invite a new teacher?" });
+    expect(brief.detailed).toContain("/staff");
+    expect(brief.detailed.length).toBeLessThanOrEqual(4);
+    const all = kolaBrief(a, { question: "staff fees results students timetable library" });
+    expect(brief.pages.length).toBeLessThan(kolaBrief(a, { question: "" }).pages.length + 2000);
+    // Every page the person can open is still listed, with its link.
+    expect(brief.pages).toContain(`/s/${slug}/fees`);
+    expect(all.detailed.length).toBe(4);
+    // The page they're on is always explained.
+    expect(kolaBrief(a, { page: `/s/${slug}/library`, question: "what now" }).detailed).toContain("/library");
   });
 });
