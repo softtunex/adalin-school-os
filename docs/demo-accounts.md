@@ -4,6 +4,8 @@ Logins for the demo school **Adalin College** (school code `adalin-college`) on 
 
 Local app: <http://localhost:3005>
 
+For testing, run `pnpm preview` instead of `pnpm dev`: it builds the app once (about 3 minutes) and then every page opens in under a second. Run it again after code changes. Stop `pnpm dev` first. It uses the local demo database and never the live keys.
+
 ## Staff
 
 Sign in at `/login`. Every staff account uses the password **`Demo2026!`**.
