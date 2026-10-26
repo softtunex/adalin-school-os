@@ -130,7 +130,7 @@ export async function PlanTab({ slug, access, canBill, paid, failed }: { slug: s
           Questions? WhatsApp us: <span className="select-all font-semibold text-ink">{SUPPORT_WHATSAPP}</span>
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(13.5rem,1fr))] gap-4">
         {b.plans.map((p, i) => {
           const current = p.key === b.plan.key;
           const previous = b.plans[i - 1];
