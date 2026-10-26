@@ -93,6 +93,8 @@ export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, abov
         )}
       >
         <span className="grid size-10 place-items-center rounded-full bg-brand-wash">
+          {/* A tiny inline drawing: nothing for next/image to optimise. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={KOLA_IMG} alt="" className="size-9" />
         </span>
         <span className="fs-14.5 font-semibold text-ink">{open ? "Close" : "Ask Kola"}</span>
@@ -105,6 +107,8 @@ export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, abov
           className="fixed z-50 flex flex-col overflow-hidden border border-line bg-canvas shadow-2xl max-sm:inset-x-0 max-sm:bottom-0 max-sm:h-[85dvh] max-sm:rounded-t-[20px] sm:bottom-24 sm:right-6 sm:h-[min(600px,calc(100dvh-8rem))] sm:w-[400px] sm:rounded-[20px]"
         >
           <header className="flex items-center gap-3 border-b border-line bg-brand-wash px-4 py-3">
+            {/* A tiny inline drawing: nothing for next/image to optimise. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={KOLA_IMG} alt="" className="size-10" />
             <div className="min-w-0 flex-1">
               <h2 className="fs-15.5 font-semibold text-ink">Kola</h2>
