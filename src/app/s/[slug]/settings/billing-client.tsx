@@ -20,7 +20,7 @@ export function PlanButton({
   slug: string;
   planKey: string;
   planName: string;
-  mode: "trial" | "upgrade" | "downgrade" | "switch";
+  mode: "trial" | "upgrade" | "downgrade" | "switch" | "keep";
   /** What it costs now, already worked out on the server. */
   quote: string;
 }) {
@@ -28,7 +28,7 @@ export function PlanButton({
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<Msg>(null);
-  const label = { trial: "Start free trial", upgrade: `Upgrade to ${planName}`, downgrade: `Move to ${planName}`, switch: `Choose ${planName}` }[mode];
+  const label = { trial: "Start free trial", upgrade: `Upgrade to ${planName}`, downgrade: `Move to ${planName}`, switch: `Choose ${planName}`, keep: `Stay on ${planName}` }[mode];
   return (
     <>
       <Button variant={mode === "downgrade" ? "secondary" : "primary"} size="sm" onClick={() => setOpen(true)} className="w-full">

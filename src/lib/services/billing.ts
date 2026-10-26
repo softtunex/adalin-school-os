@@ -183,7 +183,10 @@ export async function changePlan(db: DB, access: Access, planKey: string, ip?: s
   const fromPrice = from.pricePerStudentKobo ?? 0;
   const toPrice = to.pricePerStudentKobo ?? 0;
   if (!onTrial && planKey === school.planKey) {
-    if (school.pendingPlanKey) await db.update(schools).set({ pendingPlanKey: null }).where(eq(schools.id, school.id));
+    if (school.pendingPlanKey) {
+      await db.update(schools).set({ pendingPlanKey: null }).where(eq(schools.id, school.id));
+      await withTenant(db, school.id, (tx) => recordAudit(tx, school.id, actor(access, ip), { action: "billing.downgrade_cancelled", summary: `Staying on ${to.name}; the move to a cheaper plan is cancelled` }));
+    }
     return { change: "kept" as const, plan: to.name, bill: null };
   }
   // Cheaper plan: from next term (a trial simply ends onto it).

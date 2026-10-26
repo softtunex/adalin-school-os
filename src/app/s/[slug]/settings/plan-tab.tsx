@@ -138,7 +138,11 @@ export async function PlanTab({ slug, access, canBill, paid, failed }: { slug: s
           const price = p.pricePerStudentKobo ?? 0;
           const enterprise = p.pricePerStudentKobo === null;
           const tooMany = !current && typeof p.limits.students === "number" && b.onRoll > p.limits.students;
-          let action: { mode: "trial" | "upgrade" | "downgrade" | "switch"; quote: string } | null = null;
+          let action: { mode: "trial" | "upgrade" | "downgrade" | "switch" | "keep"; quote: string } | null = null;
+          // A move to a cheaper plan is waiting: let the school change its mind.
+          if (current && b.pending && !b.trial) {
+            action = { mode: "keep", quote: `Cancel the move to ${b.pending.name}. You'll stay on ${p.name} next term, billed as usual.` };
+          }
           if (!current && !enterprise) {
             if (b.trialAvailable && TRIAL_PLANS.includes(p.key) && price > currentPrice) {
               action = { mode: "trial", quote: `Use everything in ${p.name} free for ${TRIAL_DAYS} days. No card needed. When the trial ends you go back to ${b.plan.name} unless you choose a plan.` };

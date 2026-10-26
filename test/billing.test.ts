@@ -92,6 +92,15 @@ describe("billing", () => {
     expect(o.owed).toBe(o.bills.reduce((n, b) => n + b.totalKobo, 0));
   });
 
+  it("lets a school change its mind about a cheaper plan before next term", async () => {
+    await refresh();
+    expect((await changePlan(database.db, owner, "premium")).change).toBe("kept");
+    expect((await billingOverview(database.db, owner)).pending).toBeNull();
+    // Back to the waiting move, as the rest of this file expects.
+    await changePlan(database.db, owner, "basic");
+    await refresh();
+  });
+
   it("puts the school in read-only a week after the due date, and payment lifts it", async () => {
     await withTenant(database.db, owner.school.id, (tx) => tx.update(platformInvoices).set({ dueOn: shift(-8) }));
     const r = await runBilling(database.db);
