@@ -13,7 +13,7 @@ export const KOLA_GUIDE: Record<string, string> = {
   "/attendance":
     "Attendance: Today's register for each class: mark In school, Absent or Late, then save. Monthly shows the month for a class. Class teachers see their own classes; school-wide roles see all.",
   "/results":
-    "Results: Subject sheets: teachers open their sheet (Enter scores) and submit it. Class results: the class teacher sees the Broadsheet and writes Report comments (Class teacher's comment, Principal's comment). The principal approves and publishes; parents then see report cards. PIN batches makes result checker PINs (How many PINs, Checks allowed per PIN). Score parts (CA, exam) and grade bands are set in Classes & subjects → Assessment & grading.",
+    "Results: Subject sheets: teachers open their sheet (Enter scores) and submit it. Class results: the class teacher sees the Broadsheet and writes Report comments (Class teacher's comment, Principal's comment); Suggest with AI under each comment drafts one from the student's scores for the teacher to edit. The principal approves and publishes; parents then see report cards. PIN batches makes result checker PINs (How many PINs, Checks allowed per PIN). Score parts (CA, exam) and grade bands are set in Classes & subjects → Assessment & grading.",
   "/timetable":
     "Timetable: build each class's week. Set the Bell schedule (periods and breaks) first, then place subjects and teachers in periods. SchoolHub warns when a teacher or room clashes.",
   "/academics":
@@ -43,6 +43,14 @@ export const KOLA_GUIDE: Record<string, string> = {
   "/audit": "Audit log: who did what and when, for the school's records.",
   "/settings":
     "Settings: School profile (name, logo, motto, contacts, admission number prefix), AI & Kola (switch AI helpers on or off, let parents ask Kola), Payments (bank account for online fees, fee rules), Messaging (SMS sender and credits), Admissions, Staff & HR, Payroll, Behaviour, Library, Inventory, Sick bay, Transport, Boarding, Documents, Plan & billing (change plan, pay for SchoolHub), Add-ons, Web address, Campuses, Staff sign-in, API & webhooks, Data & privacy (export all the school's data).",
+};
+
+/** Where AI helps, by page. Kola lists only the ones this person can open. */
+export const KOLA_AI: Record<string, string> = {
+  "/cbt": "Write questions with AI from a topic, or From a photo of a test paper (CBT exams → Question bank → Write with AI or Paste questions).",
+  "/results": "Suggest with AI drafts report card comments from a student's scores (Results → a class → Report cards → open a student).",
+  "/students": "Import from Excel matches your own column headings with AI when you upload the school's own list (Students → Import).",
+  "/settings": "Switch AI helpers on or off, let parents ask Kola, and see today's AI use (Settings → AI & Kola).",
 };
 
 export const KOLA_GENERAL = `General: SchoolHub works on phones and computers; on a phone the menu is behind the button at the top left. Plans are Free, Basic, Standard, Premium and Enterprise; a page with a lock needs a higher plan (Settings → Plan & billing). Parents sign in at /parent with their phone number or email and a code; students sign in at /student with the school code, admission number and password. Forgot password: use "Forgot password?" on the login page. A new school's first steps: complete the School profile, set up Classes & subjects (classes, subjects, the current session and term), add students (Import from Excel is fastest), invite staff, then set fees.`;

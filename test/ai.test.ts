@@ -133,4 +133,17 @@ describe("allowances and Kola's brief", () => {
     // The page they're on is always explained.
     expect(kolaBrief(a, { page: `/s/${slug}/library`, question: "what now" }).detailed).toContain("/library");
   });
+
+  it("always tells Kola where AI can be used, so \"where can I use AI?\" has an answer", async () => {
+    const brief = kolaBrief(await access(), { question: "Where are the places where I can use AI on this platform" });
+    expect(brief.aiHelpers).toMatch(/Write questions with AI/);
+    expect(brief.aiHelpers).toMatch(/Suggest with AI/);
+    expect(brief.aiHelpers).toMatch(/AI & Kola/);
+    expect(brief.aiHelpers).toMatch(/Ask Kola/);
+    // A subject teacher only hears about what their role can do.
+    const teacher = { ...(await access()), permissions: new Set(["teaching:cbt", "students:view", "results:enter"]) } as unknown as Awaited<ReturnType<typeof access>>;
+    const t = kolaBrief(teacher, { question: "where can I use AI" }).aiHelpers;
+    expect(t).toMatch(/Write questions with AI/);
+    expect(t).not.toMatch(/Import from Excel|Suggest with AI|AI & Kola/);
+  });
 });

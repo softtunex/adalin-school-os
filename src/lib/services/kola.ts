@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
-import { KOLA_GENERAL, KOLA_GUIDE, KOLA_PARENT_GUIDE } from "../ai/kola-guide";
+import { KOLA_AI, KOLA_GENERAL, KOLA_GUIDE, KOLA_PARENT_GUIDE } from "../ai/kola-guide";
 import type { DB } from "../db/client";
 import { schools } from "../db/schema";
 import { AppError } from "../errors";
 import { flattenNav, resolveNav } from "../navigation";
-import type { Access } from "./access";
+import { can, type Access } from "./access";
+import type { Permission } from "../rbac/permissions";
 import { aiAvailability, aiSettings, runAi, type AiActor } from "./ai";
 import { myChildren } from "./parent-portal";
 
@@ -23,7 +24,8 @@ export const kolaSchema = z.object({
 });
 
 const STOP = new Set(["what", "when", "where", "which", "with", "that", "this", "have", "there", "their", "they", "from", "into", "about", "does", "doing", "should", "could", "would", "your", "page", "help", "please", "kola", "schoolhub"]);
-const words = (s: string) => s.toLowerCase().match(/[a-z]{4,}/g)?.filter((w) => !STOP.has(w)) ?? [];
+// Short words are mostly noise, but "AI" is exactly what some people ask about.
+const words = (s: string) => s.toLowerCase().match(/\bai\b|[a-z]{4,}/g)?.filter((w) => !STOP.has(w)) ?? [];
 
 /**
  * What Kola is told about this person: every page they can open (with links), and the full guide only
@@ -55,7 +57,14 @@ export function kolaBrief(access: Access, focus: { page?: string; question?: str
     const head = `- ${where} (link: ${p.href})${p.locked ? " [locked: needs a higher plan]" : ""}`;
     return detailed.has(key) && KOLA_GUIDE[key] ? `${head}\n  ${KOLA_GUIDE[key]}` : head;
   });
-  return { pages: lines.join("\n"), roles: access.roles.map((r) => r.name).join(", ") || "member", detailed: [...detailed] };
+  // Always: the AI helpers on pages they can open, and Kola itself, so "where can I use AI?" has an answer.
+  // Opening a page isn't enough: a subject teacher sees Students and Results but can't import or write report comments.
+  const allowed: Record<string, Permission[]> = { "/students": ["students:import"], "/results": ["results:comment", "results:approve"], "/settings": ["school:update"], "/cbt": ["teaching:cbt"] };
+  const ai = scored
+    .filter(({ p, key }) => KOLA_AI[key] && !p.locked && (allowed[key] ?? []).some((perm) => can(access, perm)))
+    .map(({ p, key }) => `- ${KOLA_AI[key]} (link: ${p.href})`);
+  const aiHelpers = [...ai, "- Kola (you): the Ask Kola button at the bottom right of every page answers how-to questions."].join("\n");
+  return { pages: lines.join("\n"), aiHelpers, roles: access.roles.map((r) => r.name).join(", ") || "member", detailed: [...detailed] };
 }
 
 export async function askKola(db: DB, access: Access, input: z.infer<typeof kolaSchema>) {
@@ -75,6 +84,9 @@ Answer questions about how to use SchoolHub, using only the guide below. Rules:
 - Stay on SchoolHub and school work. Politely decline anything else.
 
 ${KOLA_GENERAL}
+
+AI helpers this person can use:
+${brief.aiHelpers}
 
 Pages this person can open (full guide given for the ones that matter to this question; ask them to open a page for more):
 ${brief.pages}`;
