@@ -139,13 +139,14 @@ export function TimetableGrid({
                         onDragStart={() => setDragFrom({ day, periodId: p.id })}
                         onDragEnd={() => setDragFrom(null)}
                         onClick={() => canEdit && setEditing({ day, period: p })}
-                        aria-label={`${DAY[day]} period ${p.label}: ${s?.subjectName ?? s?.note ?? "free"}`}
                         className={cn(
                           "flex h-full w-full flex-col items-start justify-center overflow-hidden rounded-[10px] px-2 py-1 text-left transition-colors",
                           filled ? tint(s?.subjectId ?? null) : "border border-dashed border-line-strong",
                           canEdit ? (filled ? "cursor-grab hover:ring-2 hover:ring-blue/40 active:cursor-grabbing" : "text-muted hover:border-blue hover:text-blue") : "cursor-default",
                         )}
                       >
+                        {/* Said before the visible text, so the button's name includes what people see on it (voice control users say those words). */}
+                        <span className="sr-only">{`${DAY[day]} period ${p.label}: ${filled ? (s?.subjectName ?? s?.note ?? "") : "free"}. `}</span>
                         {filled ? (
                           <>
                             <span className="block w-full truncate font-semibold text-ink" title={s?.subjectName ?? s?.note ?? ""}>
