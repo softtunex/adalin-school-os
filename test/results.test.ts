@@ -8,6 +8,7 @@ import { registerSchoolOwner } from "@/lib/services/accounts";
 import { assignSubjectTeacher, getAcademicOverview, setupAcademics, updateClass } from "@/lib/services/academics";
 import { getAssessmentConfig, saveComponents } from "@/lib/services/assessment";
 import { getAttendanceSheet, lagosToday, listAttendanceClasses, saveAttendance } from "@/lib/services/attendance";
+import { suggestComment } from "@/lib/services/ai-comments";
 import { getClassResults, getScoreSheet, listMySheets, saveScores, saveTermReport, setClassResultStatus, setSheetStatus } from "@/lib/services/results";
 import { acceptInvitation, inviteStaff } from "@/lib/services/staff";
 import { createStudent, studentInputSchema } from "@/lib/services/students";
@@ -136,6 +137,20 @@ describe("scores and results", () => {
     await saveTermReport(database.db, owner, { studentId: kids.Ada, principalComment: "Keep it up." });
     const ada = (await getClassResults(database.db, owner, classId)).students.find((s) => s.firstName === "Ada")!;
     expect(ada.report).toMatchObject({ classTeacherComment: "A focused, kind student.", principalComment: "Keep it up.", ratings: { Punctuality: 5, Neatness: 4 } });
+  });
+
+  it("drafts comments with AI for the same people who may write them", async () => {
+    process.env.AI_PROVIDER = "fake";
+    const withAi = (a: Access): Access => ({ ...a, plan: { ...a.plan, key: "standard", features: [...a.plan.features, "ai"] } });
+    try {
+      expect(await suggestComment(database.db, withAi(formTeacher), { studentId: kids.Ada, who: "teacher" })).toMatch(/hardworking/);
+      await expect(suggestComment(database.db, withAi(mathsTeacher), { studentId: kids.Ada, who: "teacher" })).rejects.toThrow(/class teacher/);
+      await expect(suggestComment(database.db, withAi(formTeacher), { studentId: kids.Ada, who: "principal" })).rejects.toThrow(/principal/);
+      expect(await suggestComment(database.db, withAi(owner), { studentId: kids.Ada, who: "principal", teacherComment: "Good term." })).toBeTruthy();
+      await expect(suggestComment(database.db, formTeacher, { studentId: kids.Ada, who: "teacher" })).rejects.toThrow(/Standard plan/);
+    } finally {
+      delete process.env.AI_PROVIDER;
+    }
   });
 
   it("on Free, publishes straight from open and locks everything once published", async () => {

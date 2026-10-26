@@ -9,7 +9,7 @@ import { Field, Input, Textarea } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 import { RATING_SCALE, RATING_TRAITS } from "@/lib/results/compute";
-import { saveTermReportAction, setResultStatusAction } from "../../actions";
+import { saveTermReportAction, setResultStatusAction, suggestCommentAction } from "../../actions";
 
 type Status = "open" | "reviewed" | "approved" | "published";
 type Perms = { review: boolean; approve: boolean; publish: boolean; unlock: boolean; comment: boolean; principalComment: boolean; workflow: boolean };
@@ -133,6 +133,7 @@ export function ReportEditor({
   report,
   canComment,
   canPrincipal,
+  ai,
 }: {
   slug: string;
   pdfHref: string;
@@ -140,6 +141,7 @@ export function ReportEditor({
   report: { classTeacherComment: string; principalComment: string; ratings: Record<string, number> };
   canComment: boolean;
   canPrincipal: boolean;
+  ai: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [teacher, setTeacher] = useState(report.classTeacherComment);
@@ -147,6 +149,22 @@ export function ReportEditor({
   const [ratings, setRatings] = useState(report.ratings);
   const [state, setState] = useState<{ error?: string; success?: string }>({});
   const [pending, startTransition] = useTransition();
+  const [drafting, setDrafting] = useState<null | "teacher" | "principal">(null);
+
+  async function suggest(who: "teacher" | "principal") {
+    setDrafting(who);
+    setState({});
+    const r = await suggestCommentAction(slug, { studentId: student.id, who, teacherComment: teacher });
+    setDrafting(null);
+    if (r.error || !r.text) return setState({ error: r.error ?? "AI didn't come back with anything. Please try again." });
+    (who === "teacher" ? setTeacher : setPrincipal)(r.text);
+  }
+  const suggestButton = (who: "teacher" | "principal") =>
+    ai && student.average !== null ? (
+      <button type="button" onClick={() => suggest(who)} disabled={drafting !== null} className="inline-flex items-center gap-1.5 fs-13.5 font-semibold text-brand hover:underline disabled:opacity-60">
+        <Icon name="wand" size={15} /> {drafting === who ? "Drafting…" : "Suggest with AI"}
+      </button>
+    ) : null;
   const rated = Object.keys(ratings).length;
   const total = RATING_TRAITS.affective.length + RATING_TRAITS.psychomotor.length;
 
@@ -179,7 +197,7 @@ export function ReportEditor({
       </button>
       {open ? (
         <div className="flex flex-col gap-5 border-t border-line px-5 py-5">
-          <Field label="Class teacher's comment" htmlFor={`ct-${student.id}`}>
+          <Field label="Class teacher's comment" htmlFor={`ct-${student.id}`} hint={canComment ? suggestButton("teacher") : undefined}>
             <Textarea id={`ct-${student.id}`} value={teacher} onChange={(e) => setTeacher(e.target.value)} disabled={!canComment} maxLength={600} rows={2} placeholder="e.g. A diligent student who participates well in class." />
           </Field>
           <div className="grid gap-5 md:grid-cols-2">
@@ -213,7 +231,7 @@ export function ReportEditor({
               </fieldset>
             ))}
           </div>
-          <Field label="Principal's comment" htmlFor={`pr-${student.id}`}>
+          <Field label="Principal's comment" htmlFor={`pr-${student.id}`} hint={canPrincipal ? suggestButton("principal") : undefined}>
             <Textarea id={`pr-${student.id}`} value={principal} onChange={(e) => setPrincipal(e.target.value)} disabled={!canPrincipal} maxLength={600} rows={2} />
           </Field>
           {state.error ? <Alert tone="danger">{state.error}</Alert> : null}

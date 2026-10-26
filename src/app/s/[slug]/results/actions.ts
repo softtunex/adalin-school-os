@@ -9,6 +9,7 @@ import { RESULT_STATUSES } from "@/lib/db/schema";
 import { userMessage } from "@/lib/errors";
 import { saveScores, saveTermReport, setClassResultStatus, setSheetStatus } from "@/lib/services/results";
 import { generatePins } from "@/lib/services/pins";
+import { suggestComment, suggestSchema } from "@/lib/services/ai-comments";
 
 const uuid = z.string().uuid();
 const entriesSchema = z
@@ -84,6 +85,17 @@ export async function generatePinsAction(slug: string, count: number, maxUses: n
     const result = await generatePins(getDb(), access, { count: Math.floor(Number(count)), maxUses: Math.floor(Number(maxUses)) }, (await requestMeta()).ip);
     revalidatePath(`/s/${slug}/results/pins`);
     return result;
+  } catch (error) {
+    return { error: userMessage(error) };
+  }
+}
+
+export async function suggestCommentAction(slug: string, input: unknown): Promise<{ text?: string; error?: string }> {
+  const parsed = suggestSchema.safeParse(input);
+  if (!parsed.success) return { error: "That couldn't be drafted." };
+  try {
+    const access = await requireAccess(slug);
+    return { text: await suggestComment(getDb(), access, parsed.data) };
   } catch (error) {
     return { error: userMessage(error) };
   }

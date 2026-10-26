@@ -13,6 +13,7 @@ import { getDb } from "@/lib/db/client";
 import { AppError } from "@/lib/errors";
 import { ordinal } from "@/lib/results/compute";
 import { getClassResults } from "@/lib/services/results";
+import { aiAvailability } from "@/lib/services/ai";
 import { RESULT_STATUS } from "../../status";
 import { ReportEditor, WorkflowBar } from "./class-client";
 
@@ -172,6 +173,7 @@ export default async function ClassResultsPage({ params, searchParams }: { param
                 report={{ classTeacherComment: s.report?.classTeacherComment ?? "", principalComment: s.report?.principalComment ?? "", ratings: s.report?.ratings ?? {} }}
                 canComment={data.permissions.comment && !locked}
                 canPrincipal={data.permissions.principalComment && !locked}
+                ai={aiAvailability(access).ok}
               />
             ))}
           </div>
