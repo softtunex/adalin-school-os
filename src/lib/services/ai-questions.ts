@@ -58,7 +58,7 @@ export async function draftQuestions(db: DB, access: Access, input: z.infer<type
       content: `[task:questions] You set exam questions for schools in Nigeria, following the Nigerian curriculum (NERDC) and WAEC/NECO style where it applies. Use clear, simple English suited to the pupils' age, Nigerian names, places and naira where an example needs them, and make sure every answer is correct.\n\n${FORMAT}`,
     },
     { role: "user", content: `Write ${input.count} ${input.difficulty} ${kinds} for ${input.subject}${input.level ? `, ${input.level}` : ""}, on: ${input.topic}` },
-  ], { maxTokens: 400 + input.count * 180, temperature: 0.6 });
+  ], { maxTokens: 400 + input.count * 180, temperature: 0.6, reasoning: "medium" });
   return checked(text);
 }
 

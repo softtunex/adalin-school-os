@@ -32,7 +32,9 @@ export function aiProvider(): "groq" | "fake" | null {
   return process.env.GROQ_API_KEY ? "groq" : null;
 }
 
-export async function complete(task: AiTask, messages: AiMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean } = {}): Promise<AiResult> {
+export type AiOptions = { maxTokens?: number; temperature?: number; json?: boolean; reasoning?: "low" | "medium" | "high" };
+
+export async function complete(task: AiTask, messages: AiMessage[], opts: AiOptions = {}): Promise<AiResult> {
   const provider = aiProvider();
   if (!provider) throw new AiUnavailable("AI isn't set up on this server yet.");
   const model = MODELS[task];
@@ -44,7 +46,9 @@ export async function complete(task: AiTask, messages: AiMessage[], opts: { maxT
     body: JSON.stringify({
       model,
       messages,
-      max_tokens: opts.maxTokens ?? 1500,
+      // Reasoning models spend part of max_tokens thinking before they answer; keep it short so the answer fits.
+      max_tokens: (opts.maxTokens ?? 1500) + (model.startsWith("openai/gpt-oss") ? 1500 : 0),
+      ...(model.startsWith("openai/gpt-oss") ? { reasoning_effort: opts.reasoning ?? "low" } : {}),
       temperature: opts.temperature ?? 0.4,
       ...(opts.json ? { response_format: { type: "json_object" } } : {}),
     }),
@@ -52,7 +56,7 @@ export async function complete(task: AiTask, messages: AiMessage[], opts: { maxT
   }).catch(() => null);
   if (!res) throw new AiUnavailable();
   const body = (await res.json().catch(() => null)) as {
-    choices?: { message?: { content?: string } }[];
+    choices?: { message?: { content?: string }; finish_reason?: string }[];
     usage?: { prompt_tokens?: number; completion_tokens?: number };
     error?: { message?: string };
   } | null;
@@ -60,6 +64,8 @@ export async function complete(task: AiTask, messages: AiMessage[], opts: { maxT
     console.error(`AI ${model} ${res.status}: ${body?.error?.message ?? "no body"}`);
     throw new AiUnavailable(res.status === 429 ? "AI has had a lot of requests. Please try again in a minute." : undefined);
   }
+  // An answer cut off mid-sentence is worse than none.
+  if (body?.choices?.[0]?.finish_reason === "length") throw new AiUnavailable("AI's answer was cut short. Please try again.");
   return {
     text: stripThinking(body?.choices?.[0]?.message?.content ?? ""),
     model,

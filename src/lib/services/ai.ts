@@ -4,7 +4,7 @@ import type { DB } from "../db/client";
 import { aiUsage, schools, type AiSettings } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
-import { aiProvider, AiUnavailable, complete, type AiMessage, type AiTask } from "../ai/provider";
+import { aiProvider, AiUnavailable, complete, type AiMessage, type AiOptions, type AiTask } from "../ai/provider";
 import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 
@@ -50,7 +50,7 @@ export function aiAvailability(access: AiActor): { ok: true } | { ok: false; rea
 }
 
 /** Runs one AI request for the school: checks the plan, the switch and today's allowance, then records it. */
-export async function runAi(db: DB, access: AiActor, feature: AiFeature, task: AiTask, messages: AiMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean } = {}) {
+export async function runAi(db: DB, access: AiActor, feature: AiFeature, task: AiTask, messages: AiMessage[], opts: AiOptions = {}) {
   const status = aiAvailability(access);
   if (!status.ok) throw new AppError(status.reason, status.upgrade ? "upgrade" : "forbidden");
   const limit = aiDailyLimit(access.plan.key);

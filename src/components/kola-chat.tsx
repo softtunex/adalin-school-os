@@ -14,7 +14,9 @@ const STARTERS = ["What can I do on this page?", "How do I get started?", "What 
 
 /** Turns Kola's reply into text with working links (only to pages inside SchoolHub) and bold. */
 function rich(text: string, linkPrefix: string, onLink: () => void): ReactNode[] {
-  return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*)/g).map((part, i) => {
+  // Raw addresses that slip through, like "(/p)" or "(e.g., `/p/children/…`)", are noise to people: drop them.
+  const tidy = text.replace(/(?<!\])\s*\((?:e\.g\.,?\s*)?`?\/(?:p|s)(?:[/?][^)\s`]*)?`?\)/g, "").replace(/`([^`]+)`/g, "$1");
+  return tidy.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*)/g).map((part, i) => {
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (link) {
       return link[2] === linkPrefix || link[2].startsWith(`${linkPrefix}/`) || link[2].startsWith(`${linkPrefix}?`) ? (
