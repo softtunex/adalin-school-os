@@ -183,7 +183,7 @@ export function Register({ slug, classId, className, date, readOnly, taken, init
       </Card>
 
       {!readOnly ? (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] backdrop-blur lg:left-[288px] sm:px-8">
+        <div data-action-bar className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-canvas/95 px-4 py-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] backdrop-blur lg:left-[288px] sm:px-8">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3">
             <p className="tabular fs-14 text-body">
               <span className="font-semibold text-success">{(counts.present ?? 0) + (counts.late ?? 0)} in</span>

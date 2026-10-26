@@ -56,7 +56,7 @@ export function TheoryMarks({ slug, attemptId, examId, nextToMark, questions }: 
           </label>
         </Card>
       ))}
-      <div className="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-canvas/95 py-3 backdrop-blur">
+      <div data-action-bar className="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-canvas/95 py-3 backdrop-blur">
         {error ? <Alert tone="danger">{error}</Alert> : null}
         <div className="flex items-center justify-between gap-3">
           <span className="fs-14 text-muted">

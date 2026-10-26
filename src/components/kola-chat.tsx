@@ -87,6 +87,8 @@ export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, abov
         className={cn(
           "fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-4 z-40 flex items-center gap-2 rounded-full border border-line-strong bg-canvas py-1.5 pl-1.5 pr-4 shadow-lg transition-transform hover:-translate-y-0.5 sm:right-6",
           aboveTabs && "max-sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))]",
+          // A page with a bottom action bar (Save, Apply, Submit): sit above it, never over its buttons.
+          "[body:has([data-action-bar])_&]:bottom-[calc(6rem+env(safe-area-inset-bottom,0px))]",
           open && "max-sm:hidden",
         )}
       >

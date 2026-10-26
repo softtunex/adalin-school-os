@@ -183,7 +183,7 @@ export function MarkingTable({ slug, assignmentId, maxScore, rows }: { slug: str
           );
         })}
       </ul>
-      <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:px-5">
+      <div data-action-bar className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:px-5">
         <span className="fs-13.5 text-muted">{changed.length ? `${changed.length} unsaved change${changed.length === 1 ? "" : "s"}` : "All saved"}</span>
         <Button onClick={save} disabled={pending || changed.length === 0}>
           {pending ? "Saving…" : "Save marks"}

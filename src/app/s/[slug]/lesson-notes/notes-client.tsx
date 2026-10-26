@@ -261,7 +261,7 @@ export function SchemeEditor({
         })}
       </ol>
       {editable ? (
-        <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:px-5">
+        <div data-action-bar className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-line bg-canvas/95 px-4 py-3 backdrop-blur sm:px-5">
           <span className="fs-13.5 text-muted">{dirty ? "Unsaved changes" : "Saved"}</span>
           <Button
             disabled={pending || !dirty}

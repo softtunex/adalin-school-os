@@ -21,7 +21,7 @@ const sizes: Record<Size, string> = {
   sm: "h-9 px-3 fs-13.5",
   md: "h-11 px-4 fs-14.5",
   lg: "h-12 px-5 fs-15",
-  xl: "h-14 px-8 fs-15 uppercase tracking-[0.06em]",
+  xl: "h-14 px-8 fs-16",
 };
 
 export function buttonClass(variant: Variant = "primary", size: Size = "md", extra?: string) {
