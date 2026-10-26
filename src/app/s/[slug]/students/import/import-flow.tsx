@@ -40,6 +40,8 @@ export function ImportFlow({ slug }: { slug: string }) {
     const fd = new FormData();
     fd.set("file", file);
     fd.set("intent", next);
+    // The teacher confirmed the headings AI matched at preview; the import uses the same ones.
+    if (next === "commit" && state.preview?.matched) fd.set("mapping", JSON.stringify(state.preview.matched));
     setIntent(next);
     startTransition(() => action(fd));
   }
@@ -163,6 +165,11 @@ export function ImportFlow({ slug }: { slug: string }) {
                 </Card>
               </div>
 
+              {preview.matchedLabels.length ? (
+                <Alert tone="blue" title="AI matched your column headings">
+                  {preview.matchedLabels.join(" · ")}. Check the names and classes below look right before you import.
+                </Alert>
+              ) : null}
               {preview.unknownHeaders.length ? (
                 <Alert tone="warning" title="Some columns were ignored">
                   We didn&apos;t recognise: {preview.unknownHeaders.join(", ")}. Rename them to match the template if they matter.

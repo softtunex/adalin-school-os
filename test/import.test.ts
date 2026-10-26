@@ -50,7 +50,9 @@ describe("reading spreadsheets", () => {
   });
 
   it("rejects files without name columns or of the wrong type", async () => {
-    await expect(readSpreadsheet(csv("Name,Class\nAda,P1\n"), "x.csv")).rejects.toThrow(/First name and Surname/);
+    await expect(readSpreadsheet(csv("Pupil,Class\nAda,P1\n"), "x.csv")).rejects.toThrow(/First name and Surname/);
+    // A single "Name" column is read as the whole name.
+    expect((await readSpreadsheet(csv("Name,Class\nAda Obi,P1\n"), "x.csv")).rows[0]).toMatchObject({ firstName: "Ada", lastName: "Obi" });
     await expect(readSpreadsheet(csv("hello"), "x.pdf")).rejects.toThrow(/Excel/);
   });
 });
@@ -109,5 +111,47 @@ describe("importing", () => {
     expect(preview.overLimit).toBe(1);
     await expect(commitImport(database.db, limited, preview.valid)).rejects.toThrow(/allows 3/);
     expect((await listStudents(database.db, limited)).total).toBe(2);
+  });
+});
+
+describe("a school's own headings", () => {
+  const file = csv(
+    "S/N,Pupil's Name,Sex,Class,Father's GSM,Mother's Name\n1,EZE Amaka Chioma,F,JSS 1 A,0803 123 4567,Mrs Uche Eze\n2,Tunde Bello,M,JSS 1 A,08091234567,Mrs Bisi Bello\n",
+  );
+
+  it("splits a whole-name column, surname first when it's in capitals", async () => {
+    const { splitFullName } = await import("@/lib/services/student-import");
+    expect(splitFullName("OKAFOR Adaeze Chioma")).toEqual({ firstName: "Adaeze", middleName: "Chioma", lastName: "Okafor" });
+    expect(splitFullName("Tunde Bello")).toEqual({ firstName: "Tunde", lastName: "Bello", middleName: undefined });
+  });
+
+  it("describes columns by their shape, never their contents", async () => {
+    const { columnShape } = await import("@/lib/services/student-import");
+    expect(columnShape(["0803 123 4567", "08091234567"])).toBe("phone numbers");
+    expect(columnShape(["F", "M"])).toBe("male/female");
+    expect(columnShape(["14/03/2014"])).toBe("dates");
+    expect(columnShape(["OKAFOR Adaeze Chioma"])).not.toContain("Adaeze");
+  });
+
+  it("asks the matcher about unknown headings only, and reuses its answer on import", async () => {
+    let asked: { header: string; shape: string }[] = [];
+    const mapHeaders = async (cols: { header: string; shape: string }[]) => {
+      asked = cols;
+      return { "Pupil's Name": "fullName", Sex: "gender", "Father's GSM": "g1_phone", "Mother's Name": "g1_name", "S/N": null, Bogus: "notAField" } as Record<string, string | null>;
+    };
+    const read = await readSpreadsheet(file, "class.csv", { mapHeaders });
+    // "Sex" and "Class" are headings SchoolHub already knows.
+    expect(asked.map((c) => c.header)).toEqual(["Pupil's Name", "Father's GSM", "Mother's Name"]);
+    expect(JSON.stringify(asked)).not.toMatch(/Amaka|0803/);
+    expect(read.matched).toEqual({ "Pupil's Name": "fullName", "Father's GSM": "g1_phone", "Mother's Name": "g1_name" });
+    expect(read.unknownHeaders).toEqual([]);
+    expect(read.rows[0]).toMatchObject({ firstName: "Amaka", middleName: "Chioma", lastName: "Eze", gender: "F", g1_phone: "0803 123 4567", g1_name: "Mrs Uche Eze" });
+
+    const again = await readSpreadsheet(file, "class.csv", { mapping: read.matched, mapHeaders: async () => { throw new Error("not asked twice"); } });
+    expect(again.rows).toEqual(read.rows);
+  });
+
+  it("still explains the problem when nothing matches the names", async () => {
+    await expect(readSpreadsheet(file, "class.csv")).rejects.toThrow(/First name and Surname/);
   });
 });

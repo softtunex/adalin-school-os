@@ -35,9 +35,17 @@ export const IMPORT_COLUMNS = [
   { key: "g2_phone", header: "Second parent phone", example: "", note: "" },
 ] as const;
 
-type ColumnKey = (typeof IMPORT_COLUMNS)[number]["key"];
+/** A template column, or one column holding the whole name (split on import). */
+export type ColumnKey = (typeof IMPORT_COLUMNS)[number]["key"] | "fullName";
+export const COLUMN_KEYS = new Set<string>([...IMPORT_COLUMNS.map((c) => c.key), "fullName"]);
 
 const ALIASES: Record<string, ColumnKey> = {
+  name: "fullName",
+  names: "fullName",
+  "full name": "fullName",
+  "student name": "fullName",
+  "name of student": "fullName",
+  "pupil name": "fullName",
   "admission number": "admissionNo",
   "adm no": "admissionNo",
   "reg no": "admissionNo",
@@ -116,8 +124,42 @@ function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((c) => c.trim()));
 }
 
-/** Reads an uploaded .xlsx or .csv into header-keyed rows. */
-export async function readSpreadsheet(buffer: ArrayBuffer, filename: string): Promise<{ rows: Record<string, string>[]; unknownHeaders: string[] }> {
+/** What a column's values look like, without the values: enough for AI to match the heading, nothing personal. */
+export function columnShape(values: string[]) {
+  const v = values.map((x) => x.trim()).filter(Boolean).slice(0, 20);
+  if (!v.length) return "empty";
+  const all = (re: RegExp) => v.every((x) => re.test(x));
+  if (all(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)) return "email addresses";
+  if (all(/^\+?[\d\s-]{10,16}$/)) return "phone numbers";
+  if (all(/^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$|^\d{4}-\d{2}-\d{2}$/)) return "dates";
+  if (all(/^(m|f|male|female|boy|girl)$/i)) return "male/female";
+  const distinct = new Set(v.map((x) => x.toLowerCase())).size;
+  const words = Math.round(v.reduce((n, x) => n + x.split(/\s+/).length, 0) / v.length);
+  const digits = v.some((x) => /\d/.test(x));
+  return `${digits ? "text with numbers" : "text"}, about ${words} word${words === 1 ? "" : "s"}${distinct <= 6 && v.length >= 4 ? `, few different values` : ""}`;
+}
+
+/** Splits a whole name. Nigerian lists often put the SURNAME first in capitals; otherwise it's first name first. */
+export function splitFullName(raw: string) {
+  const parts = raw.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return { firstName: parts[0] ?? "", lastName: "" };
+  const capsFirst = parts[0].length > 1 && parts[0] === parts[0].toUpperCase() && parts.slice(1).some((p) => p !== p.toUpperCase());
+  const [first, middle, last] = capsFirst ? [parts[1], parts.slice(2).join(" "), parts[0]] : [parts[0], parts.slice(1, -1).join(" "), parts[parts.length - 1]];
+  const title = (s: string) => (s === s.toUpperCase() ? s.charAt(0) + s.slice(1).toLowerCase() : s);
+  return { firstName: title(first), middleName: middle ? middle.split(" ").map(title).join(" ") : undefined, lastName: title(last) };
+}
+
+export type HeaderMapper = (columns: { header: string; shape: string }[]) => Promise<Record<string, string | null>>;
+
+/**
+ * Reads an uploaded .xlsx or .csv into header-keyed rows. Headings it doesn't know can be matched by
+ * `mapping` (from an earlier preview) or by `mapHeaders` (AI); `matched` reports what those decided.
+ */
+export async function readSpreadsheet(
+  buffer: ArrayBuffer,
+  filename: string,
+  opts: { mapping?: Record<string, string>; mapHeaders?: HeaderMapper } = {},
+): Promise<{ rows: Record<string, string>[]; unknownHeaders: string[]; matched: Record<string, ColumnKey> }> {
   let grid: string[][];
   if (/\.csv$/i.test(filename)) {
     grid = parseCsv(new TextDecoder("utf-8").decode(buffer).replace(/^﻿/, ""));
@@ -141,11 +183,27 @@ export async function readSpreadsheet(buffer: ArrayBuffer, filename: string): Pr
   }
 
   if (grid.length < 2) throw new AppError("The file has no student rows under the heading row.", "invalid");
-  const headers = grid[0].map((h) => headerKey(h));
-  if (!headers.includes("firstName") || !headers.includes("lastName")) {
+  const headers: (ColumnKey | null)[] = grid[0].map((h) => headerKey(h));
+  const matched: Record<string, ColumnKey> = {};
+  const take = (i: number, key: string | null | undefined) => {
+    if (!key || !COLUMN_KEYS.has(key) || headers.includes(key as ColumnKey)) return;
+    headers[i] = key as ColumnKey;
+    matched[grid[0][i].trim()] = key as ColumnKey;
+  };
+  if (opts.mapping) grid[0].forEach((h, i) => !headers[i] && take(i, opts.mapping![h.trim()]));
+  // Row counters ("S/N", "No.") aren't data: skip them rather than guess or report them.
+  const counter = (h: string) => /^(s\s*\/?\s*n|no\.?|serial( no\.?| number)?|#)$/i.test(h);
+  const unmatched = () => grid[0].map((h, i) => ({ i, header: h.trim() })).filter((c) => c.header && !headers[c.i] && !counter(c.header));
+  if (opts.mapHeaders && !opts.mapping && unmatched().length) {
+    const cols = unmatched().map((c) => ({ ...c, shape: columnShape(grid.slice(1).map((r) => r[c.i] ?? "")) }));
+    const answer = await opts.mapHeaders(cols.map(({ header, shape }) => ({ header, shape })));
+    for (const c of cols) take(c.i, answer[c.header]);
+  }
+  const hasNames = (headers.includes("firstName") && headers.includes("lastName")) || headers.includes("fullName");
+  if (!hasNames) {
     throw new AppError("We couldn't find the First name and Surname columns. Use the template headings.", "invalid");
   }
-  const unknownHeaders = grid[0].filter((h, i) => h.trim() && !headers[i]);
+  const unknownHeaders = unmatched().map((c) => c.header);
   const isExample = (r: Record<string, string>) =>
     r.firstName === "Adaeze" && r.lastName === "Okafor" && r.g1_name === "Mrs Ngozi Okafor";
   const rows = grid
@@ -155,11 +213,18 @@ export async function readSpreadsheet(buffer: ArrayBuffer, filename: string): Pr
       headers.forEach((key, i) => {
         if (key && cells[i] !== undefined) out[key] = String(cells[i]).trim();
       });
+      if (out.fullName && !out.firstName && !out.lastName) {
+        const n = splitFullName(out.fullName);
+        out.firstName = n.firstName;
+        out.lastName = n.lastName;
+        if (n.middleName && !out.middleName) out.middleName = n.middleName;
+      }
+      delete out.fullName;
       return out;
     })
     .filter((r) => !isExample(r));
   if (rows.length > MAX_IMPORT_ROWS) throw new AppError(`Import up to ${MAX_IMPORT_ROWS} students at a time. Split the file and try again.`, "invalid");
-  return { rows, unknownHeaders };
+  return { rows, unknownHeaders, matched };
 }
 
 function normalizeDate(raw: string | undefined): string | undefined {

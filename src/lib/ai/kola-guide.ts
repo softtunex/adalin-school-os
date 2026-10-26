@@ -7,7 +7,7 @@
 export const KOLA_GUIDE: Record<string, string> = {
   "": "Overview: the home page. Today's numbers (attendance, fees, results progress), things that need attention, and the setup checklist for a new school.",
   "/students":
-    "Students: every student, with search, class filter and export. Buttons: Add a student (one at a time), Import (Import from Excel: download the template, fill it, upload; up to 5 MB), Logins (create student logins and print slips with a temporary password), Promote (move classes up at the end of a session). Open a student to see tabs Details, Parents & guardians, Fees, Results, Health, Conduct and Class history.",
+    "Students: every student, with search, class filter and export. Buttons: Add a student (one at a time), Import (Import from Excel: download the template and fill it, or upload the school's own list, and AI matches its column headings when AI helpers are on; check the preview, then import; up to 5 MB), Logins (create student logins and print slips with a temporary password), Promote (move classes up at the end of a session). Open a student to see tabs Details, Parents & guardians, Fees, Results, Health, Conduct and Class history.",
   "/admissions":
     "Admissions: online applications. Settings → Admissions turns on Taking applications and sets the Application form fee. Parents apply at the school's public apply link. Each applicant moves through the Pipeline: review, entrance exam score, interview notes, offer, then enrol (which creates the student).",
   "/attendance":
