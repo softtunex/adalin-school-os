@@ -43,7 +43,7 @@ export const NAV: (NavItem | NavGroup)[] = [
     icon: "bookOpen",
     items: [
       { href: "/attendance", label: "Attendance", icon: "calendarCheck", anyOf: ["attendance:take", "attendance:edit_past", "attendance:report"], feature: "attendance", staffOnly: true, keywords: "register roll call absent" },
-      { href: "/results", label: "Results", icon: "results", anyOf: ["results:enter", "results:view"], feature: "score_entry", staffOnly: true, keywords: "scores report cards broadsheet grades pins" },
+      { href: "/results", label: "Results", icon: "results", anyOf: ["results:enter", "results:view"], feature: "score_entry", staffOnly: true, keywords: "scores report cards broadsheet grades pins scratch checker" },
       { href: "/timetable", label: "Timetable", icon: "clock", feature: "timetable", staffOnly: true, keywords: "periods schedule" },
       { href: "/academics", label: "Classes & subjects", icon: "bookOpen", anyOf: ["academics:view"], staffOnly: true, keywords: "academics sessions terms arms" },
     ],

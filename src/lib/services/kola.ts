@@ -27,6 +27,14 @@ const STOP = new Set(["what", "when", "where", "which", "with", "that", "this", 
 // Short words are mostly noise, but "AI" is exactly what some people ask about.
 const words = (s: string) => s.toLowerCase().match(/\bai\b|[a-z]{4,}/g)?.filter((w) => !STOP.has(w)) ?? [];
 
+/** Parts of a page some roles can open but not use, with who does them instead. */
+const CANT: Record<string, [Permission, string][]> = {
+  "/results": [["results:pins", "making Result PINs (scratch cards); the proprietor or school admin does that"]],
+  "/students": [["students:import", "importing students from Excel; the school admin or proprietor does that"]],
+  "/staff": [["staff:invite", "inviting staff; the proprietor or school admin does that"]],
+  "/fees": [["fees:manage", "setting fees or recording payments; the bursar does that"]],
+};
+
 /**
  * What Kola is told about this person: every page they can open (with links), and the full guide only
  * for the page they're on and the few pages the question is about. Sending the whole guide every time
@@ -55,7 +63,9 @@ export function kolaBrief(access: Access, focus: { page?: string; question?: str
   const lines = scored.map(({ p, key }) => {
     const where = p.group ? `${p.group} → ${p.label}` : p.label;
     const head = `- ${where} (link: ${p.href})${p.locked ? " [locked: needs a higher plan]" : ""}`;
-    return detailed.has(key) && KOLA_GUIDE[key] ? `${head}\n  ${KOLA_GUIDE[key]}` : head;
+    if (!detailed.has(key) || !KOLA_GUIDE[key]) return head;
+    const cant = (CANT[key] ?? []).filter(([perm]) => !can(access, perm)).map(([, what]) => what);
+    return `${head}\n  ${KOLA_GUIDE[key]}${cant.length ? `\n  This person can't do: ${cant.join("; ")}. Say who can, and don't give them the steps.` : ""}`;
   });
   // Always: the AI helpers on pages they can open, and Kola itself, so "where can I use AI?" has an answer.
   // Opening a page isn't enough: a subject teacher sees Students and Results but can't import or write report comments.

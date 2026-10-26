@@ -146,4 +146,13 @@ describe("allowances and Kola's brief", () => {
     expect(t).toMatch(/Write questions with AI/);
     expect(t).not.toMatch(/Import from Excel|Suggest with AI|AI & Kola/);
   });
+
+  it("explains scratch cards, and tells a teacher who makes them instead of how", async () => {
+    const owner = kolaBrief(await access(), { question: "How does the result scratch card work?" });
+    expect(owner.detailed).toContain("/results");
+    expect(owner.pages).toMatch(/Result checker link/);
+    expect(owner.pages).not.toMatch(/can't do: making Result PINs/);
+    const teacher = { ...(await access()), permissions: new Set(["results:enter", "results:view"]) } as unknown as Awaited<ReturnType<typeof access>>;
+    expect(kolaBrief(teacher, { question: "How does the result scratch card work?" }).pages).toMatch(/can't do: making Result PINs/);
+  });
 });
