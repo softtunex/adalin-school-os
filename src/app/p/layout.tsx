@@ -7,15 +7,19 @@ import { notifications } from "@/lib/db/schema";
 import { parentInbox } from "@/lib/services/messaging";
 import { myChildren } from "@/lib/services/parent-portal";
 import { ParentShell } from "./parent-shell";
+import { KolaChat } from "@/components/kola-chat";
+import { greetingName, parentKola } from "@/lib/services/kola";
+import { askParentKolaAction } from "./kola-actions";
 
 export default async function ParentLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
   if (!user) redirect("/parent");
   const db = getDb();
-  const [[{ updates }], inbox, wards] = await Promise.all([
+  const [[{ updates }], inbox, wards, kola] = await Promise.all([
     db.select({ updates: count() }).from(notifications).where(and(eq(notifications.userId, user.id), isNull(notifications.readAt))),
     parentInbox(db, user.id),
     myChildren(db, user.id),
+    parentKola(db, user.id),
   ]);
   const multiSchool = new Set(wards.map((c) => c.schoolId)).size > 1;
   const contact = user.phone?.startsWith("+234") && user.phone.length === 14 ? `0${user.phone.slice(4, 7)} ${user.phone.slice(7, 10)} ${user.phone.slice(10)}` : (user.phone ?? user.email ?? "");
@@ -26,6 +30,7 @@ export default async function ParentLayout({ children }: { children: ReactNode }
       kids={wards.map((c) => ({ id: c.studentId, name: `${c.firstName} ${c.lastName}`, detail: multiSchool ? c.school.name : c.relationship === "Parent" ? c.school.name : `${c.relationship} · ${c.school.name}` }))}
     >
       {children}
+      {kola ? <KolaChat ask={askParentKolaAction} linkPrefix="/p" firstName={greetingName(user.name)} aboveTabs starters={["How do I pay school fees?", "Where can I see results?", "How do I message a teacher?"]} /> : null}
     </ParentShell>
   );
 }

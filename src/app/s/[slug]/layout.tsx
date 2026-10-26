@@ -8,6 +8,7 @@ import { billingNotice } from "@/lib/services/billing";
 import { supportNotice } from "@/lib/services/platform";
 import { staffBadges } from "@/lib/services/staff-badges";
 import { KolaChat } from "@/components/kola-chat";
+import { askKolaAction } from "./kola-actions";
 import { greetingName } from "@/lib/services/kola";
 import { aiAvailability, aiSettings } from "@/lib/services/ai";
 
@@ -30,7 +31,7 @@ export default async function SchoolLayout({ children, params }: { children: Rea
       nav={resolveNav(slug, { permissions: access.permissions, features: new Set(access.plan.features), isStaff: access.isStaff, badges })}
     >
       {children}
-      {aiAvailability(access).ok && (access.isStaff || aiSettings(access.school.aiSettings).kolaForFamilies) ? <KolaChat slug={slug} firstName={greetingName(access.user.name)} /> : null}
+      {aiAvailability(access).ok && (access.isStaff || aiSettings(access.school.aiSettings).kolaForFamilies) ? <KolaChat ask={askKolaAction.bind(null, slug)} linkPrefix={`/s/${slug}`} firstName={greetingName(access.user.name)} /> : null}
     </AppShell>
   );
 }

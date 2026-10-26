@@ -17,6 +17,7 @@ import { requestLoginCode, verifyLoginCode } from "@/lib/services/parent-auth";
 import { getChildDetail, getParentHome, myChildren, requireChild } from "@/lib/services/parent-portal";
 import { acceptInvitation, inviteStaff } from "@/lib/services/staff";
 import { createStudent, guardianInputSchema, studentInputSchema } from "@/lib/services/students";
+import { askParentKola, parentKola } from "@/lib/services/kola";
 import { createTestDatabase } from "./helpers";
 
 let database: Database;
@@ -172,6 +173,21 @@ describe("parent portal", () => {
     expect((await myChildren(database.db, adaMum.id)).map((c) => c.firstName)).toEqual(["Ada"]);
     await expect(requireChild(database.db, adaMum.id, kids.Bayo)).rejects.toThrow(/couldn't find that child/);
     await expect(getChildDetail(database.db, adaMum, kids.Bayo)).rejects.toThrow(/couldn't find that child/);
+  });
+
+  it("offers Kola to parents on the school's AI allowance, unless the school switches it off", async () => {
+    process.env.AI_PROVIDER = "fake";
+    try {
+      const kola = await parentKola(database.db, adaMum.id);
+      expect(kola?.children.map((c) => c.firstName)).toEqual(["Ada"]);
+      expect(await askParentKola(database.db, adaMum, { messages: [{ role: "user", content: "How do I pay fees?" }] })).toContain("How do I pay fees?");
+      await database.db.update(schools).set({ aiSettings: { enabled: true, kolaForFamilies: false } }).where(eq(schools.id, owner.school.id));
+      expect(await parentKola(database.db, adaMum.id)).toBeNull();
+      await expect(askParentKola(database.db, adaMum, { messages: [{ role: "user", content: "Hi" }] })).rejects.toThrow(/isn't available/);
+    } finally {
+      await database.db.update(schools).set({ aiSettings: {} }).where(eq(schools.id, owner.school.id));
+      delete process.env.AI_PROVIDER;
+    }
   });
 });
 

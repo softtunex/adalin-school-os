@@ -5,7 +5,6 @@ import { aiUsage, schools, type AiSettings } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { aiProvider, AiUnavailable, complete, type AiMessage, type AiTask } from "../ai/provider";
-import { hasFeature } from "../plans/entitlements";
 import { requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 
@@ -24,6 +23,9 @@ export function aiSettings(s: AiSettings | null | undefined): Required<AiSetting
 export const AI_DAILY: Record<string, number> = { standard: 100, premium: 300, enterprise: 1000 };
 const AI_DAILY_OTHER = 50;
 
+/** Who is asking: a staff member (their Access) or a parent, with the school whose allowance it uses. */
+export type AiActor = { user: { id: string }; school: { id: string; aiSettings: AiSettings | null }; plan: { key: string; features: string[] } };
+
 export type AiFeature = "questions" | "questions_photo" | "comment" | "kola" | "import";
 
 export function aiDailyLimit(planKey: string) {
@@ -40,15 +42,15 @@ export async function aiUsedToday(db: DB, schoolId: string) {
 }
 
 /** Whether this person's school can use AI right now, and if not, why (in words for the screen). */
-export function aiAvailability(access: Access): { ok: true } | { ok: false; reason: string; upgrade?: boolean } {
-  if (!hasFeature(access.plan, "ai")) return { ok: false, reason: "AI helpers are on the Standard plan and above.", upgrade: true };
+export function aiAvailability(access: AiActor): { ok: true } | { ok: false; reason: string; upgrade?: boolean } {
+  if (!access.plan.features.includes("ai")) return { ok: false, reason: "AI helpers are on the Standard plan and above.", upgrade: true };
   if (!aiSettings(access.school.aiSettings).enabled) return { ok: false, reason: "AI helpers are switched off in Settings." };
   if (!aiProvider()) return { ok: false, reason: "AI isn't set up on this server yet." };
   return { ok: true };
 }
 
 /** Runs one AI request for the school: checks the plan, the switch and today's allowance, then records it. */
-export async function runAi(db: DB, access: Access, feature: AiFeature, task: AiTask, messages: AiMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean } = {}) {
+export async function runAi(db: DB, access: AiActor, feature: AiFeature, task: AiTask, messages: AiMessage[], opts: { maxTokens?: number; temperature?: number; json?: boolean } = {}) {
   const status = aiAvailability(access);
   if (!status.ok) throw new AppError(status.reason, status.upgrade ? "upgrade" : "forbidden");
   const limit = aiDailyLimit(access.plan.key);

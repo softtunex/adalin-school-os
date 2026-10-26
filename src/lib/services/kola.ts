@@ -1,9 +1,13 @@
 import { z } from "zod";
-import { KOLA_GENERAL, KOLA_GUIDE } from "../ai/kola-guide";
+import { eq } from "drizzle-orm";
+import { KOLA_GENERAL, KOLA_GUIDE, KOLA_PARENT_GUIDE } from "../ai/kola-guide";
 import type { DB } from "../db/client";
+import { schools } from "../db/schema";
+import { AppError } from "../errors";
 import { flattenNav, resolveNav } from "../navigation";
 import type { Access } from "./access";
-import { runAi } from "./ai";
+import { aiAvailability, aiSettings, runAi, type AiActor } from "./ai";
+import { myChildren } from "./parent-portal";
 
 /*
  * Kola, the helper: answers "how do I…" questions about SchoolHub from the help guide, for the pages
@@ -59,4 +63,42 @@ const TITLES = /^(mr|mrs|miss|ms|dr|prof|engr|chief|pastor|rev|alhaji|alhaja|haj
 export function greetingName(fullName: string) {
   const parts = fullName.trim().split(/\s+/);
   return parts.find((p) => !TITLES.test(p)) ?? parts[0] ?? "";
+}
+
+// ---------- Kola for parents ----------
+
+/** The school whose Kola a parent uses: the first of their children's schools that offers it to families. */
+export async function parentKola(db: DB, userId: string) {
+  const kids = await myChildren(db, userId);
+  for (const schoolId of [...new Set(kids.map((k) => k.schoolId))]) {
+    const kid = kids.find((k) => k.schoolId === schoolId)!;
+    const [school] = await db.select({ id: schools.id, name: schools.name, aiSettings: schools.aiSettings, planKey: schools.planKey }).from(schools).where(eq(schools.id, schoolId));
+    if (!school) continue;
+    const actor: AiActor = { user: { id: userId }, school, plan: { key: school.planKey, features: kid.school.features } };
+    if (aiAvailability(actor).ok && aiSettings(school.aiSettings).kolaForFamilies) {
+      return { actor, schoolName: school.name, children: kids.map((k) => ({ id: k.studentId, firstName: k.firstName, school: k.school.name })) };
+    }
+  }
+  return null;
+}
+
+export async function askParentKola(db: DB, user: { id: string; name: string }, input: z.infer<typeof kolaSchema>) {
+  const kola = await parentKola(db, user.id);
+  if (!kola) throw new AppError("Kola isn't available for your school.", "forbidden");
+  const kids = kola.children.map((c) => `- ${c.firstName} at ${c.school} (page: /p/children/${c.id}, sections like /p/children/${c.id}?tab=fees)`).join("\n");
+  const system = `[task:kola] You are Kola, the friendly helper in the Adalin SchoolHub parent app, used by parents of schools in Nigeria. You are talking to ${greetingName(user.name)}, a parent.${input.page ? ` They are on the page ${input.page}.` : ""}
+
+Answer questions about how to use the parent app, using only the guide below. Rules:
+- Be short and warm: a sentence or two, or a few numbered steps. Plain English.
+- Link pages with markdown using only links from the guide, e.g. "Open [Messages](/p/messages)". Section names are the tab names in the guide, e.g. [Fees](/p/children/<id>?tab=fees).
+- You can't see the children's records (fees owed, scores, attendance) or change anything. Say where in the app to look.
+- Questions about school policy, fees amounts, dates or a child's progress are for the school: suggest Message the teacher.
+- Never make up buttons or features. If unsure, suggest messaging the school.
+- Stay on the parent app and school matters. Politely decline anything else.
+
+${KOLA_PARENT_GUIDE}
+
+Their children:
+${kids}`;
+  return runAi(db, kola.actor, "kola", "text", [{ role: "system", content: system }, ...input.messages.slice(-8)], { maxTokens: 600, temperature: 0.3 });
 }

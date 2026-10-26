@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { askKolaAction } from "@/app/s/[slug]/kola-actions";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
 import { KOLA_SVG } from "@/lib/kola-svg";
@@ -14,11 +13,11 @@ const KOLA_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(KOLA_SVG)}`;
 const STARTERS = ["What can I do on this page?", "How do I get started?", "What can my role do?"];
 
 /** Turns Kola's reply into text with working links (only to pages inside SchoolHub) and bold. */
-function rich(text: string, slug: string, onLink: () => void): ReactNode[] {
+function rich(text: string, linkPrefix: string, onLink: () => void): ReactNode[] {
   return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*)/g).map((part, i) => {
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
     if (link) {
-      return link[2].startsWith(`/s/${slug}`) ? (
+      return link[2] === linkPrefix || link[2].startsWith(`${linkPrefix}/`) || link[2].startsWith(`${linkPrefix}?`) ? (
         <Link key={i} href={link[2]} onClick={onLink} className="font-semibold text-brand underline underline-offset-2">
           {link[1]}
         </Link>
@@ -31,7 +30,10 @@ function rich(text: string, slug: string, onLink: () => void): ReactNode[] {
   });
 }
 
-export function KolaChat({ slug, firstName }: { slug: string; firstName: string }) {
+type Ask = (input: { messages: Msg[]; page: string }) => Promise<{ reply?: string; error?: string }>;
+
+/** linkPrefix: replies may only link inside this part of the app (the school, or the parent app). */
+export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, aboveTabs = false }: { ask: Ask; linkPrefix: string; firstName: string; starters?: string[]; aboveTabs?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -62,7 +64,7 @@ export function KolaChat({ slug, firstName }: { slug: string; firstName: string 
     setDraft("");
     setError(null);
     start(async () => {
-      const r = await askKolaAction(slug, { messages: next, page: pathname });
+      const r = await ask({ messages: next, page: pathname });
       if (r.reply) setMessages((m) => [...m, { role: "assistant", content: r.reply! }]);
       else setError(r.error ?? "Kola couldn't answer just now. Please try again.");
     });
@@ -81,10 +83,10 @@ export function KolaChat({ slug, firstName }: { slug: string; firstName: string 
         aria-expanded={open}
         aria-label={open ? "Close Kola" : "Ask Kola for help"}
         className={cn(
-          "fixed right-4 z-40 flex items-center gap-2 rounded-full border border-line-strong bg-canvas py-1.5 pl-1.5 pr-4 shadow-lg transition-transform hover:-translate-y-0.5 sm:right-6",
+          "fixed bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] right-4 z-40 flex items-center gap-2 rounded-full border border-line-strong bg-canvas py-1.5 pl-1.5 pr-4 shadow-lg transition-transform hover:-translate-y-0.5 sm:right-6",
+          aboveTabs && "max-sm:bottom-[calc(5rem+env(safe-area-inset-bottom,0px))]",
           open && "max-sm:hidden",
         )}
-        style={{ bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <span className="grid size-10 place-items-center rounded-full bg-brand-wash">
           <img src={KOLA_IMG} alt="" className="size-9" />
@@ -115,7 +117,7 @@ export function KolaChat({ slug, firstName }: { slug: string; firstName: string 
             </div>
             {messages.length === 0 ? (
               <div className="flex flex-wrap gap-2">
-                {STARTERS.map((s) => (
+                {starters.map((s) => (
                   <button key={s} type="button" onClick={() => send(s)} className="rounded-full border border-brand/40 bg-canvas px-3 py-1.5 fs-13.5 font-medium text-ink hover:bg-brand-wash">
                     {s}
                   </button>
@@ -129,7 +131,7 @@ export function KolaChat({ slug, firstName }: { slug: string; firstName: string 
                 </div>
               ) : (
                 <div key={i} className="max-w-[90%] self-start whitespace-pre-line rounded-[16px] rounded-tl-[4px] bg-paper px-3.5 py-2.5 fs-14.5 text-ink">
-                  {rich(m.content, slug, closeOnPhone)}
+                  {rich(m.content, linkPrefix, closeOnPhone)}
                 </div>
               ),
             )}
