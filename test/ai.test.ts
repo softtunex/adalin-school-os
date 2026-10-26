@@ -9,6 +9,7 @@ import { registerSchoolOwner } from "@/lib/services/accounts";
 import { AI_DAILY, aiAvailability, aiUsedToday, runAi, saveAiSettings } from "@/lib/services/ai";
 import { cleanQuestionText, draftQuestions } from "@/lib/services/ai-questions";
 import { parseQuestions } from "@/lib/services/cbt";
+import { askKola, greetingName, kolaBrief } from "@/lib/services/kola";
 import { createTestDatabase } from "./helpers";
 
 let database: Database;
@@ -78,5 +79,29 @@ describe("cleaning what the model writes", () => {
     const parsed = parseQuestions(text);
     expect(parsed.errors).toEqual([]);
     expect(parsed.questions[0]).toMatchObject({ body: "What is 2 + 2?", answer: 1 });
+  });
+});
+
+describe("Kola", () => {
+  it("greets people by their first name, not their title", () => {
+    expect(greetingName("Mrs Funmilayo Adeyemi")).toBe("Funmilayo");
+    expect(greetingName("Dr. Adebayo Ogunleye")).toBe("Adebayo");
+    expect(greetingName("Olatunji Buari")).toBe("Olatunji");
+  });
+
+  it("only tells Kola about pages this person can open", async () => {
+    const a = await access();
+    const brief = kolaBrief(a);
+    expect(brief.pages).toContain(`/s/${slug}/students`);
+    const teacher = { ...a, permissions: new Set(["teaching:cbt"] as const), roles: [{ id: "t", key: "teacher", name: "Teacher", kind: "system" as const }] } as unknown as typeof a;
+    const t = kolaBrief(teacher);
+    expect(t.pages).toContain(`/s/${slug}/cbt`);
+    expect(t.pages).not.toContain(`/s/${slug}/fees`);
+    expect(t.roles).toBe("Teacher");
+  });
+
+  it("answers through the school's AI allowance", async () => {
+    const reply = await askKola(database.db, await access(), { messages: [{ role: "user", content: "How do I add a student?" }] });
+    expect(reply).toContain("How do I add a student?");
   });
 });
