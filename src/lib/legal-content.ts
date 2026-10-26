@@ -23,4 +23,5 @@ export const PROCESSORS = [
   { name: "Cloudflare", does: "Storing documents and learning materials", where: "Global" },
   { name: "Google and Microsoft", does: "Sign-in, only for people who choose it", where: "Global" },
   { name: "Groq", does: "AI helpers (question drafts, report comments, Kola), only for schools that use them", where: "United States" },
+  { name: "Google (Gemini)", does: "Backup AI for exam question drafts and matching spreadsheet column headings. No personal details are sent", where: "United States" },
 ] as const;

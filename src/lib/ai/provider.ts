@@ -3,7 +3,9 @@
  *
  * Each kind of task has a list of models to try in order. Each Groq model has its own daily allowance,
  * so when one is busy or nearly used up, the next one answers; a second company (OpenRouter) is the
- * last resort when its key is set. One account per company: the providers' rules forbid spreading
+ * last resort when its key is set. Google's free Gemini tier may use what it's sent to improve Google's
+ * products, so it only ever gets jobs marked publicData (no personal details), and only as a backup:
+ * it's much slower than Groq. One account per company: the providers' rules forbid spreading
  * use across several accounts to get round their limits.
  *
  * OLLAMA_URL (development only) sends everything to a model on this computer instead, with no limits.
@@ -17,16 +19,18 @@ export type AiMessage = { role: "system" | "user" | "assistant"; content: AiCont
 
 export type AiResult = { text: string; model: string; inputTokens: number; outputTokens: number };
 
-type Provider = "groq" | "openrouter" | "ollama";
+type Provider = "groq" | "gemini" | "openrouter" | "ollama";
 type Route = { provider: Provider; model: string };
 
 const BASE: Record<Provider, () => string> = {
   groq: () => "https://api.groq.com/openai/v1",
+  gemini: () => "https://generativelanguage.googleapis.com/v1beta/openai",
   openrouter: () => "https://openrouter.ai/api/v1",
   ollama: () => `${(process.env.OLLAMA_URL ?? "http://localhost:11434").replace(/\/$/, "")}/v1`,
 };
 const KEY: Record<Provider, () => string | undefined> = {
   groq: () => process.env.GROQ_API_KEY,
+  gemini: () => process.env.GEMINI_API_KEY,
   openrouter: () => process.env.OPENROUTER_API_KEY,
   ollama: () => "ollama",
 };
@@ -40,7 +44,7 @@ export const GROQ_MODELS: Record<AiTask, string[]> = {
 };
 
 /** The models to try for a task, in order, given which providers are set up. */
-export function routes(task: AiTask): Route[] {
+export function routes(task: AiTask, opts: { publicData?: boolean } = {}): Route[] {
   // A model on this computer, for development: never on the live site.
   if (process.env.OLLAMA_URL && process.env.VERCEL_ENV !== "production") {
     // One small model that reads photos too, so a laptop needs a single ~3 GB download.
@@ -48,6 +52,9 @@ export function routes(task: AiTask): Route[] {
     return [{ provider: "ollama", model }];
   }
   const out: Route[] = process.env.GROQ_API_KEY ? GROQ_MODELS[task].map((model) => ({ provider: "groq" as const, model })) : [];
+  if (opts.publicData && process.env.GEMINI_API_KEY && task !== "vision" && task !== "guard") {
+    out.push({ provider: "gemini", model: process.env.GEMINI_MODEL ?? "gemini-flash-lite-latest" });
+  }
   if (process.env.OPENROUTER_API_KEY) {
     const model = task === "vision" ? process.env.OPENROUTER_VISION_MODEL : (process.env.OPENROUTER_MODEL ?? "openai/gpt-oss-120b");
     if (model) out.push({ provider: "openrouter", model });
@@ -108,14 +115,21 @@ export function resetAiRouting() {
 
 // ---------- Asking ----------
 
-export type AiOptions = { maxTokens?: number; temperature?: number; json?: boolean; reasoning?: "low" | "medium" | "high" };
+export type AiOptions = {
+  maxTokens?: number;
+  temperature?: number;
+  json?: boolean;
+  reasoning?: "low" | "medium" | "high";
+  /** Nothing personal is sent (a topic, column headings), so free tiers that keep data may help. */
+  publicData?: boolean;
+};
 
 /** Models that think before answering need room for it within max_tokens. */
-const thinks = (model: string) => /gpt-oss|qwen3/i.test(model);
+const thinks = (model: string) => /gpt-oss|qwen3|gemini/i.test(model);
 
 export async function complete(task: AiTask, messages: AiMessage[], opts: AiOptions = {}): Promise<AiResult> {
   if (process.env.AI_PROVIDER === "fake") return fakeComplete(GROQ_MODELS[task][0], messages);
-  const all = routes(task);
+  const all = routes(task, { publicData: opts.publicData });
   if (!all.length) throw new AiUnavailable("AI isn't set up on this server yet.");
   const now = Date.now();
   const ready = all.filter((r) => (restingUntil.get(routeKey(r)) ?? 0) <= now);
@@ -144,7 +158,7 @@ async function ask(route: Route, messages: AiMessage[], opts: AiOptions): Promis
       model,
       messages: sent,
       max_tokens: (opts.maxTokens ?? 1500) + (thinks(model) && !local ? 1500 : 0),
-      ...(model.includes("gpt-oss") && !local ? { reasoning_effort: opts.reasoning ?? "low" } : {}),
+      ...((model.includes("gpt-oss") || provider === "gemini") && !local ? { reasoning_effort: opts.reasoning ?? "low" } : {}),
       temperature: opts.temperature ?? 0.4,
       ...(opts.json ? { response_format: { type: "json_object" } } : {}),
     }),

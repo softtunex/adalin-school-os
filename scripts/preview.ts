@@ -10,8 +10,8 @@ const port = process.env.PREVIEW_PORT ?? "3005";
 
 // A production build also reads .env.production.local, which holds the live keys. Blank them (a variable
 // already set, even to "", wins over the file) so the preview never emails, texts or charges anyone for real.
-// Only the AI key stays, from .env.local.
-const KEEP = new Set(["GROQ_API_KEY"]);
+// Only the AI keys stay, from .env.local.
+const KEEP = new Set(["GROQ_API_KEY", "GEMINI_API_KEY"]);
 const live = existsSync(".env.production.local")
   ? [...readFileSync(".env.production.local", "utf8").matchAll(/^([A-Z0-9_]+)=/gm)].map((m) => m[1]).filter((k) => !KEEP.has(k))
   : [];

@@ -14,6 +14,7 @@ describe("switching between AI models", () => {
     delete process.env.AI_PROVIDER;
     delete process.env.OLLAMA_URL;
     delete process.env.OPENROUTER_API_KEY;
+    delete process.env.GEMINI_API_KEY;
     process.env.GROQ_API_KEY = "test-key";
     calls = [];
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -67,6 +68,13 @@ describe("switching between AI models", () => {
     mockFetch(() => new Response("{}", { status: 400 }));
     await expect(complete("text", [{ role: "user", content: "hi" }])).rejects.toThrow(/busy/);
     expect(calls).toHaveLength(1);
+  });
+
+  it("gives Google Gemini only jobs without personal details, and only after Groq", () => {
+    process.env.GEMINI_API_KEY = "g-key";
+    expect(routes("text").some((r) => r.provider === "gemini")).toBe(false);
+    expect(routes("fast", { publicData: true }).map((r) => r.provider)).toEqual(["groq", "groq", "groq", "gemini"]);
+    expect(routes("vision", { publicData: true }).some((r) => r.provider === "gemini")).toBe(false);
   });
 
   it("uses only the model on this computer when OLLAMA_URL is set, never on the live site", () => {
