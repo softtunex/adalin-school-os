@@ -86,7 +86,8 @@ test("owner sets up a school, invites a teacher, and the teacher only sees teach
 
   // Back as the owner: the teacher now shows on the staff list.
   await page.goto(`/s/${slug}/staff`);
-  await expect(page.getByRole("cell", { name: /^Mr Chidi Okeke/ })).toBeVisible();
+  // A table row on desktop, a list row on phones: whichever is showing.
+  await expect(page.getByText(/^Mr Chidi Okeke/).locator("visible=true").first()).toBeVisible();
   await expect(page.getByText("2 / 5", { exact: true })).toBeVisible();
 
   // Logging out sends protected pages back to login, preserving the destination.

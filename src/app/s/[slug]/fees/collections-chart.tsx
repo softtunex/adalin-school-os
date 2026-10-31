@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatNaira, formatNairaCompact } from "@/lib/money";
 
-const W = 640;
 const H = 200;
 const PAD = { top: 12, right: 8, bottom: 26, left: 52 };
 
@@ -21,6 +20,16 @@ function label(day: string) {
 /** Money collected per day over the last 30 days. One series, so no legend; hover for exact figures. */
 export function CollectionsChart({ series }: { series: { day: string; amount: number }[] }) {
   const [hover, setHover] = useState<number | null>(null);
+  // Drawn at the width it's shown at, so labels stay readable on a phone instead of shrinking with the chart.
+  const box = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(640);
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(280, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const max = niceMax(Math.max(...series.map((s) => s.amount)));
   const innerW = W - PAD.left - PAD.right;
   const innerH = H - PAD.top - PAD.bottom;
@@ -32,7 +41,7 @@ export function CollectionsChart({ series }: { series: { day: string; amount: nu
   const active = hover !== null ? series[hover] : null;
 
   return (
-    <div className="relative">
+    <div ref={box} className="relative">
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={`Fees collected per day over the last 30 days, ${formatNaira(total)} in total`} onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>

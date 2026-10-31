@@ -104,6 +104,36 @@ export default async function StaffPage({
               {filtered ? "Try a different search or clear the filters." : "Invite your teachers and admin staff. Each person only sees what their role allows."}
             </EmptyState>
           ) : (
+            <>
+            <ul className="flex flex-col divide-y divide-line border-t border-line md:hidden">
+              {staff.map((m) => {
+                const isSelf = m.membershipId === access.membershipId;
+                const roles = m.roles.filter((r) => r.kind === "staff").map((r) => r.name).join(", ");
+                return (
+                  <li key={m.membershipId} className="flex items-center gap-3 px-4 py-3">
+                    <Avatar name={m.name} size={40} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-ink">
+                        {m.name} {isSelf ? <span className="font-normal text-muted">(you)</span> : null}
+                      </span>
+                      <span className="block truncate fs-13 text-muted">{[roles, m.jobTitle].filter(Boolean).join(" · ") || m.email}</span>
+                    </span>
+                    {m.status !== "active" ? <Badge tone="danger">Deactivated</Badge> : null}
+                    {!isSelf ? (
+                      <MemberActions
+                        slug={slug}
+                        member={{ membershipId: m.membershipId, name: m.name, status: m.status === "active" ? "active" : "deactivated", roleIds: m.roles.map((r) => r.roleId) }}
+                        roles={grantable}
+                        canAssign={can(access, "staff:assign_roles")}
+                        canDeactivate={can(access, "staff:deactivate")}
+                        canExport={can(access, "school:export")}
+                      />
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="hidden md:block">
             <Table>
               <thead>
                 <tr>
@@ -174,6 +204,8 @@ export default async function StaffPage({
                 })}
               </tbody>
             </Table>
+            </div>
+            </>
           )}
         </TableCard>
 
