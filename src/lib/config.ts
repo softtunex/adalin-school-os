@@ -1,6 +1,7 @@
 export const APP_NAME = "Adalin SchoolHub";
 export const APP_TAGLINE = "Run your whole school from one place.";
-export const SUPPORT_WHATSAPP = "+234 000 000 0000";
+export const SUPPORT_WHATSAPP = "+234 905 208 6394";
+export const SUPPORT_WHATSAPP_LINK = `https://wa.me/${SUPPORT_WHATSAPP.replace(/\D/g, "")}`;
 
 export const SESSION_COOKIE = "sos_session";
 export const SESSION_TTL_DAYS = 30;

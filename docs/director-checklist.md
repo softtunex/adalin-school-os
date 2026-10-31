@@ -30,7 +30,7 @@ Collected during the build so work never stops for a question. Handed over at th
 2. **Pricing.** ₦0 / ₦600 / ₦1,200 / ₦1,800 per student per term, Free capped at 50 students and 5 staff (`src/lib/plans/catalog.ts`).
 3. **Default theme.** Light, with dark mode.
 4. **Pilot school.** Needed before launch.
-5. **Support WhatsApp number** shown in the app (`src/lib/config.ts`).
+5. ~~Support WhatsApp number~~ Done 31 Oct 2026: +234 905 208 6394 (`src/lib/config.ts`), shown as a WhatsApp link in Settings → Plan & billing.
 6. **Our cut of online fee payments.** The spec mentions a small processing margin. Built as `PAYSTACK_PLATFORM_PERCENT` (default 0%, so Adalin takes nothing until you set it). Paystack's own fee is charged to the school. Decide the percentage, or keep it at 0 as a selling point.
 8. **SMS credit prices.** Packs built at ₦5 (500), ₦4.50 (2,000), ₦4 (5,000) and ₦3.50 (20,000) per credit, against Termii's cost of roughly ₦2.5–₦4 per SMS. Adjust in `src/lib/services/credits.ts` once Termii confirms our rate.
 9. **Student portal timing.** Parked to Phase 5, where students actually need logins (CBT exams, assignments, timetable). Parents already see everything in Phase 4.

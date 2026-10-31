@@ -1,7 +1,7 @@
 import { Alert, Badge, Card, EmptyState, Table, TableCard, Td, Th } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/cn";
-import { SUPPORT_WHATSAPP } from "@/lib/config";
+import { SUPPORT_WHATSAPP, SUPPORT_WHATSAPP_LINK } from "@/lib/config";
 import { getDb } from "@/lib/db/client";
 import { formatNaira } from "@/lib/money";
 import { FEATURES, LIMITS, type FeatureKey, type LimitKey } from "@/lib/plans/catalog";
@@ -127,7 +127,10 @@ export async function PlanTab({ slug, access, canBill, paid, failed }: { slug: s
           <p className="mt-1 fs-14 text-muted">Priced per student, per term. Upgrades start straight away; a cheaper plan starts next term.</p>
         </div>
         <p className="fs-14 text-muted">
-          Questions? WhatsApp us: <span className="select-all font-semibold text-ink">{SUPPORT_WHATSAPP}</span>
+          Questions? WhatsApp us:{" "}
+          <a href={SUPPORT_WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-brand">
+            {SUPPORT_WHATSAPP}
+          </a>
         </p>
       </div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(13.5rem,1fr))] gap-4">
