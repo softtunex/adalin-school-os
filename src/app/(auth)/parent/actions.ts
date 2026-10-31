@@ -7,7 +7,7 @@ import { userMessage } from "@/lib/errors";
 import type { FormState } from "@/lib/form-state";
 import { sendEmail } from "@/lib/mail";
 import { sendPlatformSms } from "@/lib/services/outbox";
-import { loginCodeMessage, requestLoginCode, testLoginCodesAllowed, verifyLoginCode, type Destination } from "@/lib/services/parent-auth";
+import { loginCodeMessage, parseDestination, phoneSignInAvailable, requestLoginCode, testLoginCodesAllowed, verifyLoginCode, type Destination } from "@/lib/services/parent-auth";
 
 /** In development, CI and demos (never the live site), with no SMS or email provider set up, the code is shown on screen. */
 function showCodeOnScreen(d: Destination) {
@@ -18,6 +18,9 @@ function showCodeOnScreen(d: Destination) {
 export async function requestCodeAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const raw = String(formData.get("destination") ?? "").slice(0, 120);
   const shown: { code?: string } = {};
+  if (parseDestination(raw)?.kind === "phone" && !phoneSignInAvailable()) {
+    return { error: "We can't send text messages yet. Please sign in with the email address your child's school has for you.", values: { destination: raw } };
+  }
   try {
     const { ip } = await requestMeta();
     const result = await requestLoginCode(getDb(), raw, ip, async (d, code) => {

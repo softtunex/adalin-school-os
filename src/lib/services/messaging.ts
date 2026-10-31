@@ -145,7 +145,7 @@ export async function startStaffConversation(db: DB, access: Access, input: z.in
       .innerJoin(guardians, eq(guardians.id, studentGuardians.guardianId))
       .where(and(eq(studentGuardians.studentId, student.id), sql`${guardians.userId} is not null`));
     const parentIds = [...new Set(parents.map((p) => p.userId!))].filter((id) => id !== access.user.id);
-    if (!parentIds.length) throw new AppError(`None of ${student.firstName}'s parents use the parent app yet. They can sign in with the phone number or email the school has for them.`, "conflict");
+    if (!parentIds.length) throw new AppError(`None of ${student.firstName}'s parents use the parent app yet. They can sign in with the email address (or, where texts are switched on, the phone number) the school has for them.`, "conflict");
     const [c] = await tx.insert(conversations).values({ schoolId: access.school.id, subject: input.subject, studentId: student.id, createdBy: access.user.id }).returning();
     await tx.insert(conversationParticipants).values([
       { schoolId: access.school.id, conversationId: c.id, userId: access.user.id, role: "staff" as const },

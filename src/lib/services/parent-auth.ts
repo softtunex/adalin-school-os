@@ -26,6 +26,11 @@ export function testLoginCodesAllowed() {
 
 const FIXED_TEST_CODE = "123456";
 
+/** Parents can sign in with a phone number only once texts can reach them (or on a test server, where the code shows on screen). */
+export function phoneSignInAvailable() {
+  return Boolean(process.env.TERMII_API_KEY) || testLoginCodesAllowed();
+}
+
 export type Destination = { kind: "phone" | "email"; value: string };
 
 export function parseDestination(raw: string): Destination | null {

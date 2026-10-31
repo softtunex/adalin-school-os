@@ -53,7 +53,7 @@ export const KOLA_AI: Record<string, string> = {
   "/settings": "Switch AI helpers on or off, let parents ask Kola, and see today's AI use (Settings → AI & Kola).",
 };
 
-export const KOLA_GENERAL = `General: SchoolHub works on phones and computers; on a phone the menu is behind the button at the top left. Plans are Free, Basic, Standard, Premium and Enterprise; a page with a lock needs a higher plan (Settings → Plan & billing). Parents sign in at /parent with their phone number or email and a code; students sign in at /student with the school code, admission number and password. Forgot password: use "Forgot password?" on the login page. A new school's first steps: complete the School profile, set up Classes & subjects (classes, subjects, the current session and term), add students (Import from Excel is fastest), invite staff, then set fees.`;
+export const KOLA_GENERAL = `General: SchoolHub works on phones and computers; on a phone the menu is behind the button at the top left. Plans are Free, Basic, Standard, Premium and Enterprise; a page with a lock needs a higher plan (Settings → Plan & billing). Parents sign in at /parent with the email address the school has for them and a code (phone numbers work too once text messages are switched on), so each parent needs an email on their child's record; students sign in at /student with the school code, admission number and password. Forgot password: use "Forgot password?" on the login page. A new school's first steps: complete the School profile, set up Classes & subjects (classes, subjects, the current session and term), add students (Import from Excel is fastest), invite staff, then set fees.`;
 
 /** The parent app, for Kola in the parent portal. */
 export const KOLA_PARENT_GUIDE = `The parent app has four tabs: Home (link: /p), Messages (link: /p/messages), Updates (link: /p/notifications) and Account (link: /p/account). On a phone they are along the bottom.
@@ -61,4 +61,4 @@ Home lists your children; open a child to see their page. A child's page has sec
 To talk to a teacher: open the child and tap Message the teacher, or go to Messages → New message.
 Updates shows alerts from the school (results published, fees due, absences).
 Account: your name, phone and email, and How should schools reach you? (email, SMS). Sign out is there too.
-Signing in: parents sign in on the parent sign-in page with the phone number or email the school has, and a code sent to them. If a child is missing or details are wrong, the school must update them: message the school.`;
+Signing in: parents sign in on the parent sign-in page with the email address the school has for them, and a code sent to them. (Signing in with a phone number only works once the school's text messages are switched on.) If a child is missing or details are wrong, the school must update them: message the school.`;

@@ -11,6 +11,7 @@ import { hasFeature } from "@/lib/plans/entitlements";
 import { can } from "@/lib/services/access";
 import { describeAudience, listAnnouncements, parentAppReach } from "@/lib/services/announcements";
 import { creditBalance } from "@/lib/services/outbox";
+import { phoneSignInAvailable } from "@/lib/services/parent-auth";
 import { clearStaffBadge } from "@/lib/services/staff-badges";
 import { AnnouncementMenu, ComposeButton } from "./announcements-client";
 import { formatWhen } from "@/lib/dates";
@@ -98,7 +99,12 @@ export default async function AnnouncementsPage({ params }: { params: Promise<{ 
               <Progress value={reach.total ? (reach.linked / reach.total) * 100 : 0} tone="brand" label="Parents on the app" />
               {portal ? (
                 <>
-                  <p className="fs-14 text-muted">Parents sign in with the phone number or email on their child&apos;s record. No passwords. Share this link in your WhatsApp groups:</p>
+                  <p className="fs-14 text-muted">
+                    {phoneSignInAvailable()
+                      ? "Parents sign in with the phone number or email on their child's record."
+                      : "Parents sign in with the email address on their child's record, so make sure each parent has one."}{" "}
+                    No passwords. Share this link in your WhatsApp groups:
+                  </p>
                   <CopyField value={parentUrl} label="Parent app link" />
                 </>
               ) : (

@@ -8,7 +8,8 @@ import { Field, Input } from "@/components/ui/form";
 import { initialFormState } from "@/lib/form-state";
 import { requestCodeAction, verifyCodeAction } from "./actions";
 
-export function ParentLogin() {
+/** phone: whether parents can sign in with a phone number yet (texts must be able to reach them). Until then, email only. */
+export function ParentLogin({ phone }: { phone: boolean }) {
   const [sent, send] = useActionState(requestCodeAction, initialFormState);
   const [checked, check] = useActionState(verifyCodeAction, initialFormState);
   const [restart, setRestart] = useState(0);
@@ -38,7 +39,7 @@ export function ParentLogin() {
           </SubmitButton>
         </form>
         <button type="button" onClick={() => setRestart((n) => n + 1)} className="self-start fs-14 font-bold text-blue">
-          Use a different number or email
+          {phone ? "Use a different number or email" : "Use a different email"}
         </button>
       </div>
     );
@@ -48,7 +49,9 @@ export function ParentLogin() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="fs-28 font-black tracking-[-0.03em]">Parent sign in</h1>
-        <p className="mt-1 fs-15 text-muted">Use the phone number or email your child&apos;s school has for you. No password needed.</p>
+        <p className="mt-1 fs-15 text-muted">
+          {phone ? "Use the phone number or email your child's school has for you." : "Use the email address your child's school has for you."} No password needed.
+        </p>
       </div>
       <form
         action={(fd) => {
@@ -58,9 +61,15 @@ export function ParentLogin() {
         className="flex flex-col gap-5"
       >
         {sent.error ? <Alert tone="danger">{sent.error}</Alert> : null}
-        <Field label="Phone number or email" htmlFor="destination">
-          <Input id="destination" name="destination" required autoComplete="tel" defaultValue={sent.values?.destination} placeholder="0803 123 4567" className="h-12 fs-17" />
-        </Field>
+        {phone ? (
+          <Field label="Phone number or email" htmlFor="destination">
+            <Input id="destination" name="destination" required autoComplete="tel" defaultValue={sent.values?.destination} placeholder="0803 123 4567" className="h-12 fs-17" />
+          </Field>
+        ) : (
+          <Field label="Email address" htmlFor="destination">
+            <Input id="destination" name="destination" type="email" required autoComplete="email" inputMode="email" defaultValue={sent.values?.destination} placeholder="you@example.com" className="h-12 fs-17" />
+          </Field>
+        )}
         <SubmitButton size="lg" pendingText="Sending code…">
           Send me a code
         </SubmitButton>
