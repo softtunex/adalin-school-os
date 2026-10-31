@@ -32,7 +32,8 @@ function rich(text: string, linkPrefix: string, onLink: () => void): ReactNode[]
   });
 }
 
-type Ask = (input: { messages: Msg[]; page: string }) => Promise<{ reply?: string; error?: string }>;
+/** upgrade: the school has run out of AI for today and this person can move it to a bigger plan. */
+type Ask = (input: { messages: Msg[]; page: string }) => Promise<{ reply?: string; error?: string; upgrade?: boolean }>;
 
 /** linkPrefix: replies may only link inside this part of the app (the school, or the parent app). */
 export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, aboveTabs = false }: { ask: Ask; linkPrefix: string; firstName: string; starters?: string[]; aboveTabs?: boolean }) {
@@ -40,7 +41,7 @@ export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, abov
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   const [pending, start] = useTransition();
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -68,7 +69,7 @@ export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, abov
     start(async () => {
       const r = await ask({ messages: next, page: pathname });
       if (r.reply) setMessages((m) => [...m, { role: "assistant", content: r.reply! }]);
-      else setError(r.error ?? "Kola couldn't answer just now. Please try again.");
+      else setError({ text: r.error ?? "Kola couldn't answer just now. Please try again.", upgrade: r.upgrade });
     });
   };
   const closeOnPhone = () => {
@@ -150,7 +151,12 @@ export function KolaChat({ ask, linkPrefix, firstName, starters = STARTERS, abov
             ) : null}
             {error ? (
               <div className="self-start rounded-[12px] border border-danger/30 bg-danger-wash px-3.5 py-2.5 fs-14 text-danger" role="alert">
-                {error}
+                {error.text}
+                {error.upgrade ? (
+                  <Link href={`${linkPrefix}/settings?tab=plan`} onClick={closeOnPhone} className="mt-2 flex w-fit items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 fs-13.5 font-semibold text-white hover:bg-brand-ink">
+                    See plans <Icon name="arrowRight" size={15} />
+                  </Link>
+                ) : null}
               </div>
             ) : null}
           </div>

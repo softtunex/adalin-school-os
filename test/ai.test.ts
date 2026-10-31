@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { stripThinking } from "@/lib/ai/provider";
+import { stripThinking, type AiMessage } from "@/lib/ai/provider";
 import type { Database } from "@/lib/db/client";
 import { aiUsage, schools } from "@/lib/db/schema";
 import { withTenant } from "@/lib/db/tenant";
@@ -55,13 +55,21 @@ describe("AI helpers", () => {
     await saveAiSettings(database.db, off, { enabled: true, kolaForFamilies: true });
   });
 
-  it("stops at the daily allowance", async () => {
+  it("stops at the daily allowance, and offers whoever pays a bigger plan", async () => {
     const a = await access();
     await withTenant(database.db, schoolId, (tx) =>
       // Other people's requests: the school total, not this person's own allowance.
       tx.insert(aiUsage).values(Array.from({ length: AI_DAILY.standard }, () => ({ schoolId, userId: null, feature: "kola", model: "test" }))),
     );
-    await expect(runAi(database.db, a, "kola", "fast", [{ role: "user", content: "Hi" }])).rejects.toThrow(/today's 100 AI requests/);
+    const hi: AiMessage[] = [{ role: "user", content: "Hi" }];
+    // The proprietor can pay for more.
+    await expect(runAi(database.db, a, "kola", "fast", hi)).rejects.toMatchObject({ code: "upgrade", message: expect.stringMatching(/today's 100 AI requests.*move to Premium in Settings → Plan & billing/) });
+    // Staff without billing are told who can.
+    const teacher = { ...a, permissions: new Set([...a.permissions].filter((p) => p !== "school:billing")) } as typeof a;
+    await expect(runAi(database.db, teacher, "kola", "fast", hi)).rejects.toMatchObject({ code: "rate_limited", message: expect.stringMatching(/Your proprietor can move the school to Premium/) });
+    // Families are never asked to pay for the school's plan.
+    const parent = { user: { id: userId }, isStaff: false, school: a.school, plan: a.plan };
+    await expect(runAi(database.db, parent, "kola", "fast", hi)).rejects.toMatchObject({ code: "rate_limited", message: expect.not.stringMatching(/Premium|proprietor/) });
     await withTenant(database.db, schoolId, (tx) => tx.delete(aiUsage).where(eq(aiUsage.schoolId, schoolId)));
   });
 

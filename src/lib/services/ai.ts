@@ -5,7 +5,7 @@ import { aiUsage, schools, users, type AiSettings } from "../db/schema";
 import { withTenant } from "../db/tenant";
 import { AppError } from "../errors";
 import { aiProvider, AiUnavailable, complete, type AiMessage, type AiOptions, type AiTask } from "../ai/provider";
-import { requirePermission, type Access } from "./access";
+import { can, requirePermission, type Access } from "./access";
 import { recordAudit } from "./audit";
 
 /*
@@ -22,6 +22,9 @@ export function aiSettings(s: AiSettings | null | undefined): Required<AiSetting
 /** AI requests a school can make in a day (Lagos time), by plan. */
 export const AI_DAILY: Record<string, number> = { standard: 100, premium: 300, enterprise: 1000 };
 const AI_DAILY_OTHER = 50;
+
+/** The plan a school can move to itself for more AI a day, offered when it runs out. Above that, Adalin arranges it. */
+const AI_UPGRADE: Record<string, { key: string; name: string }> = { standard: { key: "premium", name: "Premium" } };
 
 /** AI requests one person can make in a day, inside the school's allowance, so no one uses it all up. */
 export const AI_PER_PERSON = { staff: 30, family: 10 } as const;
@@ -66,7 +69,15 @@ export async function runAi(db: DB, access: AiActor, feature: AiFeature, task: A
   }
   const limit = aiDailyLimit(access.plan.key);
   if ((await aiUsedToday(db, access.school.id)) >= limit) {
-    throw new AppError(`Your school has used today's ${limit} AI requests. They reset at midnight.`, "rate_limited");
+    const used = `Your school has used today's ${limit} AI requests. They reset at midnight.`;
+    const next = AI_UPGRADE[access.plan.key];
+    // Whoever pays is offered more; other staff are told who to ask; families just wait for tomorrow.
+    if (!access.isStaff) throw new AppError(used, "rate_limited");
+    if (!next) throw new AppError(`${used} For a higher limit, contact Adalin support.`, "rate_limited");
+    if ("permissions" in access && can(access as Access, "school:billing")) {
+      throw new AppError(`${used} For ${AI_DAILY[next.key]} a day, move to ${next.name} in Settings → Plan & billing.`, "upgrade");
+    }
+    throw new AppError(`${used} Your proprietor can move the school to ${next.name} for ${AI_DAILY[next.key]} a day.`, "rate_limited");
   }
   const log = (row: { model: string; inputTokens: number; outputTokens: number; ok: boolean }) =>
     withTenant(db, access.school.id, (tx) => tx.insert(aiUsage).values({ schoolId: access.school.id, userId: access.user.id, feature, ...row }));
