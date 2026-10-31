@@ -6,18 +6,18 @@ import { Logo } from "@/components/brand";
 import { AttendanceScene, FeesScene, Kola, NigeriaScene, ParentsScene, ReportScene } from "@/components/illustrations/art";
 import { Illustration } from "@/components/illustrations";
 import { ButtonLink } from "@/components/ui/button";
-import { Icon, type IconName } from "@/components/ui/icons";
+import { Icon } from "@/components/ui/icons";
 import { APP_NAME } from "@/lib/config";
 import { cn } from "@/lib/cn";
 import { DEFAULT_PLANS, FEATURES } from "@/lib/plans/catalog";
 import { formatNaira } from "@/lib/nigeria";
 
 /** How a Nigerian school term runs, and where SchoolHub helps at each point. */
-const TERM: { when: string; what: string; detail: string; icon: IconName; tone: string }[] = [
-  { when: "Before resumption", what: "Fees go out", detail: "Invoices for every student, payable online in parts.", icon: "wallet", tone: "bg-[#FFF0E6] text-[#B84300]" },
-  { when: "Every morning", what: "Register in a minute", detail: "Teachers mark the few who are absent. Parents hear by 9am.", icon: "calendarCheck", tone: "bg-[#E6F4EA] text-[#1E7A34]" },
-  { when: "Mid-term", what: "CA tests on CBT", detail: "Set from the question bank, marked automatically.", icon: "monitor", tone: "bg-[#E8F2FB] text-[#14639A]" },
-  { when: "End of term", what: "Report cards out", detail: "Scores, positions and comments, approved and published.", icon: "results", tone: "bg-[#F1ECFB] text-[#5B3FB0]" },
+const TERM: { when: string; what: string; detail: string }[] = [
+  { when: "Before resumption", what: "Fees go out", detail: "Invoices for every student, payable online in parts." },
+  { when: "Every morning", what: "Register in a minute", detail: "Teachers mark the few who are absent. Parents see it in the app that morning." },
+  { when: "Mid-term", what: "CA tests on CBT", detail: "Set from the question bank, marked automatically." },
+  { when: "End of term", what: "Report cards out", detail: "Scores, positions and comments, approved and published." },
 ];
 
 const SECTIONS: { name: string; label: string; title: string; text: ReactNode; art: ReactNode; points: string[] }[] = [
@@ -27,7 +27,7 @@ const SECTIONS: { name: string; label: string; title: string; text: ReactNode; a
     title: "Everyone starts present. Tap the few who aren't.",
     text: "The register takes a minute on any phone. If the network drops, it saves and sends when the signal comes back.",
     art: <AttendanceScene className="w-full" />,
-    points: ["Works offline", "Parents told about absences", "Attendance printed on every report card"],
+    points: ["Works offline", "Attendance printed on every report card"],
   },
   {
     name: "report-cards",
@@ -35,7 +35,7 @@ const SECTIONS: { name: string; label: string; title: string; text: ReactNode; a
     title: "Report cards without the late nights.",
     text: "Teachers enter CA and exam scores. SchoolHub works out totals, grades and positions, and the principal approves before anything reaches parents.",
     art: <ReportScene className="w-full" />,
-    points: ["A1 to F9 grading, or your own", "Result checker PINs", "AI drafts comments for teachers to edit"],
+    points: ["A1 to F9 grading, or your own","Result checker PINs for parents without the app", "AI drafts comments for teachers to edit"],
   },
   {
     name: "fees",
@@ -51,7 +51,7 @@ const SECTIONS: { name: string; label: string; title: string; text: ReactNode; a
     title: "Parents see what they need, on their phone.",
     text: "Results, attendance, homework and fees for each child, plus messages to the class teacher at hours the school sets.",
     art: <ParentsScene className="w-full" />,
-    points: ["Parent app with no password to forget", "SMS and WhatsApp alerts", "Kola answers their how-to questions"],
+    points: ["Parent app with no password to forget", "Kola answers their how-to questions"],
   },
   {
     name: "nigeria",
@@ -59,17 +59,17 @@ const SECTIONS: { name: string; label: string; title: string; text: ReactNode; a
     title: "Built around the Nigerian school year.",
     text: "Three terms, sessions, CA and exams, class arms and positions are already there. British and Montessori schools can switch their setup in Settings.",
     art: <NigeriaScene className="w-full" />,
-    points: ["Ready from a template in minutes", "Import students from your own Excel list", "Support on WhatsApp in Lagos hours"],
+    points: ["Ready from a template in minutes", "Import students from your own Excel list"],
   },
 ];
 
-const ROLES: { who: string; gets: string; icon: IconName }[] = [
-  { who: "Proprietor", gets: "Fees collected, debtors and results progress on one screen.", icon: "building" },
-  { who: "Principal", gets: "Approves results and lesson notes, and sees every class.", icon: "shield" },
-  { who: "Teacher", gets: "Register, scores, homework and CBT for their own classes only.", icon: "bookOpen" },
-  { who: "Bursar", gets: "Invoices, payments, receipts, expenses and payroll.", icon: "wallet" },
-  { who: "Parent", gets: "Each child's results, fees and messages, with no password.", icon: "users" },
-  { who: "Student", gets: "Homework, CBT tests, materials and their report card.", icon: "graduation" },
+const ROLES: { who: string; gets: string }[] = [
+  { who: "Proprietor", gets: "Fees collected, debtors and results progress on one screen." },
+  { who: "Principal", gets: "Approves results and lesson notes, and sees every class." },
+  { who: "Teacher", gets: "Register, scores, homework and CBT for their own classes only." },
+  { who: "Bursar", gets: "Invoices, payments, receipts, expenses and payroll." },
+  { who: "Parent", gets: "Each child's results, fees and messages, with no password." },
+  { who: "Student", gets: "Homework, CBT tests, materials and their report card." },
 ];
 
 /** The product itself, drawn in the page: a report card, a payment and today's register. */
@@ -176,15 +176,11 @@ export default async function HomePage() {
       <main>
         <section className="mx-auto grid max-w-[1120px] items-center gap-10 px-5 pb-14 pt-10 md:grid-cols-[1.05fr_1fr] md:gap-14 md:pb-20 md:pt-16">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-brand-wash px-3 py-1.5 fs-13.5 font-semibold text-brand-ink">
-              <span className="size-2 rounded-full bg-brand" aria-hidden />
-              For nursery, primary and secondary schools
-            </p>
-            <h1 className="mt-5 max-w-[15ch] font-display fs-40 font-extrabold leading-[1.08] tracking-[-0.02em] text-ink [text-wrap:balance] sm:fs-52">
+            <h1 className="max-w-[15ch] font-display fs-40 font-extrabold leading-[1.08] tracking-[-0.02em] text-ink [text-wrap:balance] sm:fs-52">
               Your whole school, in one simple app.
             </h1>
             <p className="mt-5 max-w-[46ch] fs-18 leading-relaxed text-body">
-              Attendance, results, fees and parents, set up in an afternoon and used from any phone. Free for schools with up to 50 students.
+              Attendance, results, fees and parents for nursery, primary and secondary schools, set up in an afternoon and used from any phone. Free for schools with up to 50 students.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
               <ButtonLink href="/signup" size="xl" className="max-sm:w-full">
@@ -194,11 +190,7 @@ export default async function HomePage() {
                 Log in to your school
               </Link>
             </div>
-            <p className="mt-5 flex flex-wrap gap-x-5 gap-y-1 fs-14 text-muted">
-              <span>No card needed</span>
-              <span>Works on any phone</span>
-              <span>Your data stays yours</span>
-            </p>
+            <p className="mt-5 fs-14 text-muted">No card needed to start.</p>
           </div>
           <HeroBoard />
         </section>
@@ -206,18 +198,15 @@ export default async function HomePage() {
         <section id="how-it-works" className="scroll-mt-20 bg-paper">
           <div className="mx-auto max-w-[1120px] px-5 py-14 md:py-20">
             <h2 className="max-w-[24ch] font-display fs-30 font-extrabold leading-[1.15] tracking-[-0.015em] text-ink [text-wrap:balance] sm:fs-36">A term with {APP_NAME}, from resumption to vacation.</h2>
-            <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ol className="relative mt-12 grid gap-9 lg:grid-cols-4 lg:gap-8">
+              {/* The term as one line: down the page on phones, across it on wide screens. */}
+              <span aria-hidden className="absolute bottom-2 left-[9px] top-2 w-[3px] rounded-full bg-[linear-gradient(var(--brand),var(--line-strong))] lg:bottom-auto lg:left-0 lg:right-0 lg:top-[9px] lg:h-[3px] lg:w-auto lg:bg-[linear-gradient(90deg,var(--brand),var(--line-strong))]" />
               {TERM.map((t, i) => (
-                <li key={t.what} className="relative flex flex-col gap-3 rounded-[18px] border border-line bg-canvas p-5">
-                  <div className="flex items-center justify-between">
-                    <span className={cn("grid size-11 place-items-center rounded-[13px]", t.tone)}>
-                      <Icon name={t.icon} size={21} strokeWidth={2.2} />
-                    </span>
-                    <span className="tabular fs-13 font-semibold text-muted">{String(i + 1).padStart(2, "0")}</span>
-                  </div>
+                <li key={t.what} className="relative pl-10 lg:pl-0 lg:pt-10">
+                  <span aria-hidden className={cn("absolute left-0 top-0.5 size-[21px] rounded-full border-[5px] border-paper lg:top-0", i === 0 ? "bg-brand" : "bg-ink")} />
                   <p className="fs-13 font-semibold uppercase tracking-[0.08em] text-muted">{t.when}</p>
-                  <p className="-mt-1.5 fs-18 font-semibold text-ink">{t.what}</p>
-                  <p className="fs-14.5 leading-relaxed text-body">{t.detail}</p>
+                  <p className="mt-1 font-display fs-22 font-extrabold text-ink">{t.what}</p>
+                  <p className="mt-2 max-w-[34ch] fs-15 leading-relaxed text-body">{t.detail}</p>
                 </li>
               ))}
             </ol>
@@ -231,19 +220,14 @@ export default async function HomePage() {
         <section className="border-y border-line bg-paper">
           <div className="mx-auto max-w-[1120px] px-5 py-14 md:py-20">
             <h2 className="max-w-[22ch] font-display fs-30 font-extrabold leading-[1.15] tracking-[-0.015em] text-ink [text-wrap:balance] sm:fs-36">Everyone sees their own part, and only that.</h2>
-            <div className="mt-10 grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+            <dl className="mt-10 grid gap-x-12 md:grid-cols-2">
               {ROLES.map((r) => (
-                <div key={r.who} className="flex gap-4">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-full bg-canvas text-brand ring-1 ring-line">
-                    <Icon name={r.icon} size={20} strokeWidth={2.2} />
-                  </span>
-                  <div>
-                    <p className="fs-16.5 font-semibold text-ink">{r.who}</p>
-                    <p className="mt-1 fs-14.5 leading-relaxed text-body">{r.gets}</p>
-                  </div>
+                <div key={r.who} className="flex flex-col gap-1 border-t border-line-strong py-5 sm:flex-row sm:items-baseline sm:gap-6">
+                  <dt className="shrink-0 font-display fs-19 font-extrabold text-ink sm:w-32">{r.who}</dt>
+                  <dd className="fs-15.5 leading-relaxed text-body">{r.gets}</dd>
                 </div>
               ))}
-            </div>
+            </dl>
           </div>
         </section>
 
