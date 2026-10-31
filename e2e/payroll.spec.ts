@@ -13,10 +13,10 @@ async function signIn(browser: Browser, email: string) {
 }
 
 /** Next month: the demo already has this month drafted and last month paid. */
+/** The month after this one in Lagos, as the demo seed counts months (its "this month" draft must not clash). */
 function nextMonth() {
-  const d = new Date();
-  d.setUTCDate(1);
-  d.setUTCMonth(d.getUTCMonth() + 1);
+  const [y, m] = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos", year: "numeric", month: "2-digit" }).format(new Date()).split("-").map(Number);
+  const d = new Date(Date.UTC(y, m, 1)); // month index m is next month, since m is 1-based
   return d.toISOString().slice(0, 7);
 }
 
