@@ -85,7 +85,7 @@ async function crawlRole(role: string, browser: import("@playwright/test").Brows
   const navLinks = async () => {
     const nav = page.getByRole("navigation", { name: "Main" });
     if (await nav.count()) {
-      for (const g of await nav.getByRole("button").all()) if ((await g.getAttribute("aria-expanded")) === "false") await g.click().catch(() => {});
+      for (const g of await nav.getByRole("button").all()) if ((await g.getAttribute("aria-expanded", { timeout: 2000 }).catch(() => null)) === "false") await g.click({ timeout: 2000 }).catch(() => {});
       return nav.locator("a[href]").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
     }
     return page.locator("nav a[href]").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
@@ -107,8 +107,10 @@ async function crawlRole(role: string, browser: import("@playwright/test").Brows
     const openers = page.locator('main [aria-haspopup]:visible, main [aria-expanded="false"]:visible');
     const n = Math.min(await openers.count(), 25);
     for (let i = 0; i < n; i++) {
+      // A menu can re-render the page; anything that has gone is skipped, not waited for.
       const o = openers.nth(i);
-      const label = ((await o.getAttribute("aria-label")) ?? (await o.innerText().catch(() => ""))).trim().slice(0, 60);
+      if (!(await o.isVisible().catch(() => false))) continue;
+      const label = ((await o.getAttribute("aria-label", { timeout: 2000 }).catch(() => null)) ?? (await o.innerText({ timeout: 2000 }).catch(() => ""))).trim().slice(0, 60);
       if (/delete|remove|publish|approve|pay|send|log ?out|sign out/i.test(label)) continue;
       await o.click({ timeout: 3000 }).catch(() => {});
       await page.waitForTimeout(300);
@@ -134,12 +136,18 @@ async function crawlRole(role: string, browser: import("@playwright/test").Brows
     return page.locator("main a[href]").evaluateAll((as) => as.map((a) => (a as HTMLAnchorElement).href));
   };
 
+  // One page that misbehaves is noted and skipped; the rest of this person's pages still get read.
+  const safeVisit = (url: string, via?: string) =>
+    visit(url, via).catch((e: Error) => {
+      console.log(`  ${role}: skipped ${routeOf(url)} (${e.message.split("\n")[0].slice(0, 80)})`);
+      return [] as string[];
+    });
   for (const url of queue) {
-    const inner = (await visit(url)) ?? [];
+    const inner = (await safeVisit(url)) ?? [];
     // One level deeper: the first link to each kind of sub-page (e.g. one student, one invoice).
     const kinds = new Map<string, string>();
     for (const h of inner) if (h.startsWith(BASE) && !kinds.has(routeOf(h))) kinds.set(routeOf(h), h);
-    for (const h of kinds.values()) await visit(h, `from ${routeOf(url)}`);
+    for (const h of kinds.values()) await safeVisit(h, `from ${routeOf(url)}`);
   }
   await context.close();
   console.log(`${role}: ${seenPages.size} pages and tabs`);

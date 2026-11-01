@@ -39,6 +39,7 @@ export const EMAILS = [
 /** Journeys that cross pages or people. Each must be shown from start to finish. */
 export const JOURNEYS = [
   "journey: Create a school and finish the setup checklist",
+  "journey: Each role sees its own overview",
   "journey: Invite a teacher, who joins and sees only their screens",
   "journey: Give a staff member a role, and take it away",
   "journey: Add a student with a parent, then the parent signs in",

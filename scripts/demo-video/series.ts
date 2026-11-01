@@ -317,6 +317,208 @@ export const SCENES: Scene[] = [
       await expect(p.getByLabel("School name")).toBeVisible();
     },
   },
+
+  /* ---------------- Episode 2: The overview and analytics ---------------- */
+  {
+    id: "e2-1",
+    chapter: EPISODES.overview,
+    plan: "Free",
+    kind: "desktop",
+    title: "Today",
+    as: "owner",
+    covers: [
+      "/s/[slug]",
+      "/s/[slug]#today",
+      "/s/[slug]: Today",
+      "/s/[slug]: Overview",
+      "/s/[slug]: Add a student",
+      "/s/[slug]: Import students",
+      "/s/[slug]: Invite staff",
+      "/s/[slug]: Classes & subjects",
+      "/s/[slug]: View all",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(S);
+      r.caption("The overview: the first page you see each day");
+      await r.wait(2000);
+      await r.point(p.getByRole("link", { name: "Today" }));
+      r.caption("Today shows what's happening now. Analytics shows how the school is doing.");
+      await r.wait(2200);
+      r.caption("A greeting, the date, and where you are in the term and session");
+      await r.wait(2000);
+      const clock = p.getByRole("button", { name: /Clock in|Clock out/ });
+      if (await clock.count()) {
+        r.caption("Staff clock in and out right here when they arrive", "Standard");
+        await r.point(clock.first());
+        await r.wait(2000);
+      }
+      r.caption("Students (with girls and boys), staff, classes and the current term at a glance");
+      await r.point(p.getByText("Students", { exact: true }).first());
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByRole("link", { name: /Add a student/ }).first(), "Shortcuts to the jobs you do most: add a student"],
+        [p.getByRole("link", { name: /Import students/ }).first(), "Import a whole class list from Excel"],
+        [p.getByRole("link", { name: /Invite staff/ }).first(), "Invite staff with a login link"],
+        [p.getByRole("link", { name: /Classes & subjects/ }).first(), "Classes, arms, teachers and terms"],
+      ], 1500);
+      r.caption("Recent activity: what your team did, with who and when");
+      await r.point(p.getByRole("heading", { name: "Recent activity" }));
+      await r.wait(2200);
+      r.caption("View all opens the full audit log", "Standard");
+      await r.point(p.getByRole("link", { name: "View all" }));
+      await r.wait(1600);
+      const badge = p.getByRole("navigation", { name: "Main" }).locator("span").filter({ hasText: /^\d+$/ }).first();
+      if (await badge.count()) {
+        r.caption("Orange numbers in the menu are things waiting for you, like a lesson note to approve");
+        await r.point(badge);
+        await r.wait(2200);
+      }
+    },
+  },
+  {
+    id: "e2-2",
+    chapter: EPISODES.overview,
+    plan: "Free",
+    kind: "desktop",
+    title: "A teacher's overview",
+    as: "teacher",
+    covers: ["journey: Each role sees its own overview"],
+    async run(r) {
+      await r.go(S);
+      r.caption("Each person's overview fits their job. This is a class teacher's.");
+      await r.wait(2600);
+      r.caption("A shorter menu: only the pages a teacher's role allows");
+      await r.point(r.page.getByRole("navigation", { name: "Main" }));
+      await r.wait(2400);
+      r.caption("And only the shortcuts they can use. A bursar or librarian sees their own.");
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e2-3",
+    chapter: EPISODES.overview,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Term summary",
+    as: "owner",
+    covers: [
+      "/s/[slug]/analytics",
+      "/s/[slug]#analytics",
+      "/s/[slug]: Analytics",
+      "/s/[slug]/analytics#overview",
+      "/s/[slug]/analytics: Term summary",
+      "/s/[slug]/analytics: Analytics",
+      "/s/[slug]/analytics: Attendance",
+      "/s/[slug]/analytics: Fees",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(S);
+      r.caption("Analytics: how the school is doing, this term against last");
+      await r.click(p.getByRole("link", { name: "Analytics" }).first(), 1200);
+      await r.wait(1600);
+      const term = p.getByLabel(/Term/).first();
+      if (await term.count()) {
+        r.caption("Pick any term to look back on");
+        await r.point(term);
+        await r.wait(1600);
+      }
+      r.caption("Average score, pass rate, attendance and fees collected, each with the change on last term");
+      await r.wait(2800);
+      await r.reveal(p.getByRole("heading", { name: "Results over time" }));
+      r.caption("Results over time: hover any point for the exact figures");
+      await r.wait(2400);
+      await r.point(p.getByText("Show as a table").first());
+      r.caption("Or show it as a table");
+      await r.wait(1600);
+      await r.reveal(p.getByRole("heading", { name: "Students who need attention" }));
+      r.caption("The students who need attention, with the reason for each");
+      await r.wait(2200);
+      await r.reveal(p.getByRole("heading", { name: "Attendance by week" }));
+      r.caption("Attendance by week, score sheets submitted, and students and admissions");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e2-4",
+    chapter: EPISODES.overview,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Academics",
+    as: "owner",
+    covers: ["/s/[slug]/analytics#academics", "/s/[slug]/analytics: Academics"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/analytics`);
+      r.caption("Academics: which subjects are strong and which need help");
+      await r.click(p.getByRole("link", { name: "Academics" }).first(), 1200);
+      await r.wait(1400);
+      const cls = p.getByLabel("Class").first();
+      if (await cls.count()) {
+        r.caption("Narrow it to one class");
+        await r.point(cls);
+        await r.wait(1400);
+      }
+      r.caption("Subjects, weakest first, with their average, pass rate and change on last term");
+      await r.wait(2600);
+      await r.reveal(p.getByRole("heading", { name: "The weakest subjects over time" }));
+      r.caption("The weakest subjects over time");
+      await r.wait(2200);
+      await r.reveal(p.getByRole("heading", { name: "Spread of scores this term" }));
+      r.caption("How scores are spread this term");
+      await r.wait(2200);
+      await r.reveal(p.getByText("Class by subject", { exact: true }).first());
+      r.caption("Every class by every subject in one table. Darker means higher.");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e2-5",
+    chapter: EPISODES.overview,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Students at risk",
+    as: "owner",
+    covers: ["/s/[slug]/analytics#students", "/s/[slug]/analytics: Students at risk", "/s/[slug]/analytics: Low scores", "/s/[slug]/analytics: Falling", "/s/[slug]/analytics: See everyone flagged"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/analytics`);
+      r.caption("Students at risk: SchoolHub flags who needs help before report cards go out");
+      await r.click(p.getByRole("link", { name: "Students at risk" }).first(), 1200);
+      await r.wait(1600);
+      r.caption("Low scores, falling grades and poor attendance, counted separately");
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByLabel("Class").first(), "Filter by class"],
+        [p.getByLabel("Reason").first(), "Or by the reason they were flagged"],
+      ], 1400);
+      await r.reveal(p.getByText("Students who need attention", { exact: true }).last());
+      r.caption("Each student, why they were flagged, and their numbers. Open one to see the full picture.");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e2-6",
+    chapter: EPISODES.overview,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Teachers",
+    as: "owner",
+    covers: ["/s/[slug]/analytics#teachers", "/s/[slug]/analytics: Teachers"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/analytics`);
+      r.caption("Teachers: how every teacher is keeping up this term");
+      await r.click(p.getByRole("link", { name: "Teachers" }).first(), 1200);
+      await r.wait(1600);
+      r.caption("Score sheets submitted, lesson notes sent and homework set, across the school");
+      await r.wait(2400);
+      await r.reveal(p.getByText("By teacher, least done first", { exact: true }).first());
+      r.caption("Each teacher, least done first, so you know who to check on");
+      await r.wait(2600);
+    },
+  },
 ];
 
 if (require.main === module) {

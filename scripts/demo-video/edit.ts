@@ -13,6 +13,8 @@ import { chromium, type Page } from "@playwright/test";
 import { BASE, PHONE, type Take } from "./kit";
 
 const NAME = process.argv[2] ?? "overview";
+/** Episodes (chapters) to cut this time; none means all. With some named, the combined video isn't rebuilt. */
+const ONLY = process.argv.slice(3);
 const DIR = path.join(".data", "demo-video", NAME);
 const WORK = path.join(DIR, "work");
 const FFMPEG = process.env.FFMPEG ?? "ffmpeg";
@@ -201,6 +203,7 @@ async function main() {
   mkdirSync(path.join(DIR, "chapters"), { recursive: true });
 
   for (const [i, chapter] of chapters.entries()) {
+    if (ONLY.length && !ONLY.includes(chapter)) continue;
     const n = series ? series.indexOf(chapter) : i;
     const total = series ? series.length : chapters.length;
     console.log(`${chapter}`);
@@ -221,6 +224,10 @@ async function main() {
   }
   await browser.close();
 
+  if (ONLY.length) {
+    console.log(`Done: ${ONLY.join(", ")} in ${path.join(DIR, "chapters")}`);
+    return;
+  }
   all.push(outro);
   const out = path.join(DIR, `adalin-schoolhub-${NAME}.mp4`);
   join(all, out);
