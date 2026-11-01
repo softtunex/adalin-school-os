@@ -36,7 +36,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </p>
       )}
       <Link href="/parent" className="mt-4 flex items-center justify-center gap-2 rounded-chunk border border-line bg-paper px-4 py-3 fs-14.5 font-semibold text-ink hover:border-brand">
-        Parent? Sign in with your phone number
+        Parent? Sign in here, no password needed
       </Link>
       <p className="mt-6 text-center fs-13 text-muted">
         <Link href="/privacy" className="hover:text-ink hover:underline">

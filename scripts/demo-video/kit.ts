@@ -37,6 +37,9 @@ export type Scene = {
   /** Save this scene's sign-in under a name, for later scenes. */
   saveAs?: string;
   run: (r: Recorder, ctx: Ctx) => Promise<void>;
+  /** What this scene shows: routes ("/s/[slug]/fees"), tabs ("/s/[slug]/settings#plan") and button or link
+   *  labels ("/login: Forgot password?"), checked against the inventory by coverage.mjs. */
+  covers?: string[];
 };
 
 /** In-page helpers (clock, pointer, hidden demo notices); see browser.js. */
@@ -213,7 +216,7 @@ export const ACCOUNTS: Record<string, (page: Page) => Promise<void>> = {
   enterprise: staff("enterprise@demo.adalinschoolhub.ng"),
   parent: async (page) => {
     await page.goto("/parent");
-    await page.getByLabel("Phone number or email").fill("parent8@example.com");
+    await page.getByLabel(/Phone number or email|Email address/).fill("parent8@example.com");
     await page.getByRole("button", { name: "Send me a code" }).click();
     await page.getByLabel("6-digit code").fill("123456");
     await page.getByRole("button", { name: "Continue" }).click();

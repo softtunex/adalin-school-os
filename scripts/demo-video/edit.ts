@@ -191,20 +191,24 @@ async function main() {
   };
 
   const chapters = [...new Set(takes.map((t) => t.chapter))];
-  const withCards = chapters.length > 1;
+  // The series always gets one file per episode, numbered by its place in the series, even when only one is recorded.
+  const series = NAME === "series" ? Object.values((await import("./series")).EPISODES) as string[] : null;
+  const withCards = chapters.length > 1 || !!series;
   const intro = await still("00-intro", card(INTRO.title, INTRO.sub, logo), INTRO.seconds);
   const outro = await still("zz-outro", card(OUTRO.title, OUTRO.sub, logo), OUTRO.seconds);
   const all = [intro];
   let seconds = INTRO.seconds + OUTRO.seconds;
   mkdirSync(path.join(DIR, "chapters"), { recursive: true });
 
-  for (const [n, chapter] of chapters.entries()) {
+  for (const [i, chapter] of chapters.entries()) {
+    const n = series ? series.indexOf(chapter) : i;
+    const total = series ? series.length : chapters.length;
     console.log(`${chapter}`);
     const parts: string[] = [];
     if (withCards) {
       const plans = [...new Set(takes.filter((t) => t.chapter === chapter).flatMap((t) => [t.plan, ...t.marks.map((m) => m.tag)]).filter(Boolean) as string[])];
       plans.sort((a, b) => PLAN_ORDER.indexOf(a) - PLAN_ORDER.indexOf(b));
-      parts.push(await still(`ch${String(n + 1).padStart(2, "0")}`, chapterCard(n + 1, chapters.length, chapter, plans, logo), 3));
+      parts.push(await still(`ch${String(n + 1).padStart(2, "0")}`, chapterCard(n + 1, total, chapter, plans, logo), 3));
       seconds += 3;
     }
     for (const take of takes.filter((t) => t.chapter === chapter)) {
