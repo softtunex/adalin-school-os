@@ -2,6 +2,16 @@
  * Browser security policy. The Content-Security-Policy is built per request with a fresh nonce
  * (in the proxy), so only scripts this app rendered can run; the rest are fixed headers.
  */
+/** Where browsers upload private files directly (see lib/documents.ts), so the policy lets them. */
+function storageOrigin() {
+  try {
+    if (process.env.STORAGE_ENDPOINT) return ` ${new URL(process.env.STORAGE_ENDPOINT).origin}`;
+  } catch {
+    return "";
+  }
+  return process.env.R2_ACCOUNT_ID ? ` https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com` : "";
+}
+
 export function contentSecurityPolicy(nonce: string, dev = process.env.NODE_ENV !== "production") {
   return [
     "default-src 'self'",
@@ -10,7 +20,7 @@ export function contentSecurityPolicy(nonce: string, dev = process.env.NODE_ENV 
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    `connect-src 'self'${dev ? " ws: wss:" : ""}`,
+    `connect-src 'self'${storageOrigin()}${dev ? " ws: wss:" : ""}`,
     "media-src 'self' blob: https:",
     "frame-src https://www.youtube-nocookie.com",
     // The offline service worker and the install manifest come from this site only.

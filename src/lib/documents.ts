@@ -59,12 +59,19 @@ export function sniffMatches(ext: DocExt, head: Uint8Array): boolean {
   }
 }
 
+/** Any S3-compatible store (Backblaze B2 today) from STORAGE_*, else Cloudflare R2 from R2_*. */
 function r2() {
-  const { R2_ACCOUNT_ID: account, R2_ACCESS_KEY_ID: key, R2_SECRET_ACCESS_KEY: secret, R2_BUCKET: bucket } = process.env;
+  const s = process.env;
+  if (s.STORAGE_ENDPOINT && s.STORAGE_ACCESS_KEY_ID && s.STORAGE_SECRET_ACCESS_KEY && s.STORAGE_BUCKET) {
+    return {
+      client: new AwsClient({ accessKeyId: s.STORAGE_ACCESS_KEY_ID, secretAccessKey: s.STORAGE_SECRET_ACCESS_KEY, service: "s3", region: s.STORAGE_REGION ?? "auto" }),
+      base: `${s.STORAGE_ENDPOINT.replace(/\/$/, "")}/${s.STORAGE_BUCKET}`,
+    };
+  }
+  const { R2_ACCOUNT_ID: account, R2_ACCESS_KEY_ID: key, R2_SECRET_ACCESS_KEY: secret, R2_BUCKET: bucket } = s;
   if (!account || !key || !secret || !bucket) return null;
   return { client: new AwsClient({ accessKeyId: key, secretAccessKey: secret, service: "s3", region: "auto" }), base: `https://${account}.r2.cloudflarestorage.com/${bucket}` };
 }
-
 function localDir() {
   return path.resolve(process.env.FILES_DIR ?? path.join(process.cwd(), ".data", "files"));
 }
