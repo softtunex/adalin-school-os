@@ -519,6 +519,156 @@ export const SCENES: Scene[] = [
       await r.wait(2600);
     },
   },
+
+  /* ---------------- Episode 3: Settings: your school ---------------- */
+  {
+    id: "e3-1",
+    chapter: EPISODES.setSchool,
+    plan: "Free",
+    kind: "desktop",
+    title: "The settings menu",
+    as: "owner",
+    covers: ["/s/[slug]/settings", "shared:settings-nav: Settings", "shared:settings-nav: School", "shared:settings-nav: Money", "shared:settings-nav: People & messages", "shared:settings-nav: Operations", "shared:settings-nav: Advanced", "shared:settings-nav: More"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings`);
+      r.caption("Settings: everything about how your school runs, in one place");
+      await r.wait(2200);
+      r.caption("Grouped by area: your school, money, people and messages, operations, and advanced");
+      await r.point(p.getByText("Money", { exact: true }).first());
+      await r.wait(2400);
+      r.caption("This episode covers the School group. The others have their own episodes.");
+      await r.point(p.getByText("School", { exact: true }).first());
+      await r.wait(2200);
+    },
+  },
+  {
+    id: "e3-2",
+    chapter: EPISODES.setSchool,
+    plan: "Free",
+    kind: "desktop",
+    title: "School profile",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#profile",
+      "/s/[slug]/settings: School profile",
+      "/s/[slug]/settings: Save profile",
+      "/s/[slug]/settings: School name",
+      "/s/[slug]/settings: Motto",
+      "/s/[slug]/settings: Address",
+      "/s/[slug]/settings: Choose logo image",
+      "/s/[slug]/settings: School colour",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=profile`);
+      r.caption("School profile: these details appear on report cards, receipts and letters");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByLabel("School name"), "The school's name, type and curriculum"],
+        [p.getByLabel("Address"), "Address, city, state and country"],
+        [p.getByLabel("Phone"), "Phone and email parents can reach"],
+        [p.getByLabel("Admission number prefix"), "The start of every admission number, like ADC"],
+      ], 1500);
+      await r.type(p.getByLabel("Motto"), "Knowledge, character and service");
+      r.caption("Change anything, then save");
+      await r.click(p.getByRole("button", { name: "Save profile" }), 1200);
+      await r.wait(1400);
+      await r.reveal(p.getByLabel("Choose logo image"));
+      r.caption("Your logo: on every page, report card, receipt and ID card");
+      await r.wait(2200);
+      await r.reveal(p.getByRole("heading", { name: "School colour" }));
+      r.caption("School colour: the app, report cards and the parent app in your colours", "Premium");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e3-3",
+    chapter: EPISODES.setSchool,
+    plan: "Free",
+    kind: "desktop",
+    title: "Support access",
+    as: "owner",
+    covers: ["/s/[slug]/settings: Let Adalin support in", "/s/[slug]/settings: What do you need help with?", "/s/[slug]/settings: For how long"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=profile`);
+      await r.offCamera(() => p.getByRole("heading", { name: "Let Adalin support in" }).scrollIntoViewIfNeeded());
+      r.caption("Need help? Let Adalin support into your school, only when you choose");
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByLabel("What do you need help with?"), "Say what you need"],
+        [p.getByLabel("For how long"), "Choose how long. Access ends by itself, and every step is in your audit log."],
+      ], 2000);
+    },
+  },
+  {
+    id: "e3-4",
+    chapter: EPISODES.setSchool,
+    plan: "Standard",
+    kind: "desktop",
+    title: "AI & Kola",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#ai",
+      "/s/[slug]/settings: AI & Kola",
+      "/s/[slug]/settings: AI helpers and Kola",
+      "/s/[slug]/settings: Use AI helpers",
+      "/s/[slug]/settings: Let parents ask Kola",
+      "/s/[slug]/settings: AI requests used today",
+      "/s/[slug]/settings: Most AI use today",
+      "/s/[slug]/settings: Save",
+      "/s/[slug]/settings#grading",
+      "/s/[slug]/settings: Grading & assessment",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=profile`);
+      r.caption("Grading & assessment opens in Classes and subjects, covered in its own episode");
+      await r.point(p.getByRole("link", { name: "Grading & assessment" }).first());
+      await r.wait(2200);
+      r.caption("AI & Kola: switch the AI helpers on or off for the whole school");
+      await r.click(p.getByRole("link", { name: "AI & Kola" }).first(), 1200);
+      await r.wait(1600);
+      await tour(r, [
+        [p.getByLabel("Use AI helpers"), "Drafting test questions, report card comments and reading Excel headings"],
+        [p.getByLabel("Let parents ask Kola"), "Let parents ask Kola about the parent app"],
+      ], 2200);
+      r.caption("How many AI requests the school used today, out of its daily allowance");
+      await r.point(p.getByText("AI requests used today").first());
+      await r.wait(2400);
+      r.caption("And who used the most, so nobody uses up the day's allowance alone");
+      await r.point(p.getByText("Most AI use today").first());
+      await r.wait(2200);
+      await r.point(p.getByRole("button", { name: "Save" }));
+      r.caption("Save when you change anything");
+      await r.wait(1400);
+    },
+  },
+  {
+    id: "e3-5",
+    chapter: EPISODES.setSchool,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "Web address",
+    as: "enterprise",
+    covers: ["/s/[slug]/settings#domain", "/s/[slug]/settings: Web address", "/s/[slug]/settings: Your own web address", "/s/[slug]/settings: Your school's address", "/s/[slug]/settings: Add this record"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/s/adalin-heights-school-ikoyi/settings?tab=domain");
+      r.caption("Web address: put SchoolHub on your own school address", "Enterprise");
+      await r.wait(2400);
+      await r.point(p.getByLabel("Your school's address").first());
+      r.caption("For example portal.yourschool.edu.ng. The login page then shows your name and logo.");
+      await r.wait(2600);
+      const record = p.getByRole("heading", { name: "Add this record" });
+      if (await record.count()) {
+        await r.reveal(record);
+        r.caption("Add the one record shown here where your domain is managed, and it goes live");
+        await r.wait(2600);
+      }
+    },
+  },
 ];
 
 if (require.main === module) {
