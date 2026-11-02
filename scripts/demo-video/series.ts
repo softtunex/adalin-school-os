@@ -535,10 +535,10 @@ export const SCENES: Scene[] = [
       r.caption("Settings: everything about how your school runs, in one place");
       await r.wait(2200);
       r.caption("Grouped by area: your school, money, people and messages, operations, and advanced");
-      await r.point(p.getByText("Money", { exact: true }).first());
+      await r.point(p.locator("text=Money >> visible=true").first());
       await r.wait(2400);
       r.caption("This episode covers the School group. The others have their own episodes.");
-      await r.point(p.getByText("School", { exact: true }).first());
+      await r.point(p.locator("text=School profile >> visible=true").first());
       await r.wait(2200);
     },
   },
@@ -558,6 +558,8 @@ export const SCENES: Scene[] = [
       "/s/[slug]/settings: Address",
       "/s/[slug]/settings: Choose logo image",
       "/s/[slug]/settings: School colour",
+      "/s/[slug]/settings: Save colour",
+      "/s/[slug]/settings: Upload logo",
     ],
     async run(r) {
       const p = r.page;
@@ -574,32 +576,15 @@ export const SCENES: Scene[] = [
       r.caption("Change anything, then save");
       await r.click(p.getByRole("button", { name: "Save profile" }), 1200);
       await r.wait(1400);
-      await r.reveal(p.getByLabel("Choose logo image"));
-      r.caption("Your logo: on every page, report card, receipt and ID card");
+      await r.reveal(p.getByRole("button", { name: "Upload logo" }));
+      r.caption("Upload logo: shown on every page, report card, receipt and ID card");
       await r.wait(2200);
       await r.reveal(p.getByRole("heading", { name: "School colour" }));
       r.caption("School colour: the app, report cards and the parent app in your colours", "Premium");
       await r.wait(2600);
-    },
-  },
-  {
-    id: "e3-3",
-    chapter: EPISODES.setSchool,
-    plan: "Free",
-    kind: "desktop",
-    title: "Support access",
-    as: "owner",
-    covers: ["/s/[slug]/settings: Let Adalin support in", "/s/[slug]/settings: What do you need help with?", "/s/[slug]/settings: For how long"],
-    async run(r) {
-      const p = r.page;
-      await r.go(`${S}/settings?tab=profile`);
-      await r.offCamera(() => p.getByRole("heading", { name: "Let Adalin support in" }).scrollIntoViewIfNeeded());
-      r.caption("Need help? Let Adalin support into your school, only when you choose");
+      r.caption("Pick one of these, or any colour by its code, see the preview, then Save colour", "Premium");
+      await r.point(p.getByRole("button", { name: "Save colour" }));
       await r.wait(2400);
-      await tour(r, [
-        [p.getByLabel("What do you need help with?"), "Say what you need"],
-        [p.getByLabel("For how long"), "Choose how long. Access ends by itself, and every step is in your audit log."],
-      ], 2000);
     },
   },
   {
@@ -624,7 +609,7 @@ export const SCENES: Scene[] = [
     async run(r) {
       const p = r.page;
       await r.go(`${S}/settings?tab=profile`);
-      r.caption("Grading & assessment opens in Classes and subjects, covered in its own episode");
+      r.caption("Grading & assessment opens in Classes and subjects, covered in its own episode", "Free");
       await r.point(p.getByRole("link", { name: "Grading & assessment" }).first());
       await r.wait(2200);
       r.caption("AI & Kola: switch the AI helpers on or off for the whole school");
@@ -634,12 +619,13 @@ export const SCENES: Scene[] = [
         [p.getByLabel("Use AI helpers"), "Drafting test questions, report card comments and reading Excel headings"],
         [p.getByLabel("Let parents ask Kola"), "Let parents ask Kola about the parent app"],
       ], 2200);
-      r.caption("How many AI requests the school used today, out of its daily allowance");
-      await r.point(p.getByText("AI requests used today").first());
+      r.caption("Used today: the school's AI requests so far, out of its daily allowance");
+      await r.point(p.getByText("Used today").first());
       await r.wait(2400);
-      r.caption("And who used the most, so nobody uses up the day's allowance alone");
-      await r.point(p.getByText("Most AI use today").first());
-      await r.wait(2200);
+      r.caption("Each staff member gets 30 a day and each parent 10, so no one uses it all. It resets at midnight.");
+      await r.wait(2800);
+      r.caption("Once AI has been used, the people using it most are listed here too");
+      await r.wait(2000);
       await r.point(p.getByRole("button", { name: "Save" }));
       r.caption("Save when you change anything");
       await r.wait(1400);
@@ -652,21 +638,27 @@ export const SCENES: Scene[] = [
     kind: "desktop",
     title: "Web address",
     as: "enterprise",
-    covers: ["/s/[slug]/settings#domain", "/s/[slug]/settings: Web address", "/s/[slug]/settings: Your own web address", "/s/[slug]/settings: Your school's address", "/s/[slug]/settings: Add this record"],
+    covers: ["/s/[slug]/settings#domain", "/s/[slug]/settings: Web address", "/s/[slug]/settings: Your own web address", "/s/[slug]/settings: Your school's address", "/s/[slug]/settings: Add this record", "/s/[slug]/settings: Check now", "/s/[slug]/settings: Change", "/s/[slug]/settings: Stop using it"],
     async run(r) {
       const p = r.page;
       await r.go("/s/adalin-heights-school-ikoyi/settings?tab=domain");
       r.caption("Web address: put SchoolHub on your own school address", "Enterprise");
       await r.wait(2400);
-      await r.point(p.getByLabel("Your school's address").first());
-      r.caption("For example portal.yourschool.edu.ng. The login page then shows your name and logo.");
-      await r.wait(2600);
+      r.caption("Type the address you want, for example portal.adalinheights.edu.ng, and save");
+      await r.type(p.getByLabel("Your school's address").first(), "portal.adalinheights.edu.ng");
+      await r.click(p.getByRole("button", { name: "Save" }), 1500);
+      await r.wait(1200);
       const record = p.getByRole("heading", { name: "Add this record" });
       if (await record.count()) {
         await r.reveal(record);
         r.caption("Add the one record shown here where your domain is managed, and it goes live");
         await r.wait(2600);
       }
+      await tour(r, [
+        [p.getByRole("button", { name: "Check now" }), "Check now tests whether the record has taken effect"],
+        [p.getByRole("button", { name: "Change" }), "Change the address"],
+        [p.getByRole("button", { name: "Stop using it" }), "Or stop using it. Your usual SchoolHub address keeps working either way."],
+      ], 1800);
     },
   },
 ];
