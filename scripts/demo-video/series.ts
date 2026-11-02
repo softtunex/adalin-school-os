@@ -666,9 +666,9 @@ export const SCENES: Scene[] = [
         await r.wait(2600);
       }
       await tour(r, [
-        [p.getByRole("button", { name: "Check now" }), "Check now tests whether the record has taken effect"],
-        [p.getByRole("button", { name: "Change" }), "Change the address"],
-        [p.getByRole("button", { name: "Stop using it" }), "Or stop using it. Your usual SchoolHub address keeps working either way."],
+        [p.getByRole("button", { name: "Check now", exact: true }), "Check now tests whether the record has taken effect"],
+        [p.getByRole("button", { name: "Change", exact: true }), "Change: use a different address"],
+        [p.getByRole("button", { name: "Stop using it", exact: true }), "Or stop using it. Your usual SchoolHub address keeps working either way."],
       ], 1800);
     },
   },
