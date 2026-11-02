@@ -642,6 +642,17 @@ export const SCENES: Scene[] = [
     async run(r) {
       const p = r.page;
       await r.go("/s/adalin-heights-school-ikoyi/settings?tab=domain");
+      // Start from no address, so the scene can be re-recorded: clear any saved one off camera.
+      const stop = p.getByRole("button", { name: "Stop using it" });
+      if (await stop.count()) {
+        await r.offCamera(async () => {
+          await stop.click();
+          const confirm = p.getByRole("dialog").getByRole("button", { name: /Stop using it|Remove|Yes/ });
+          if (await confirm.count()) await confirm.first().click();
+          await p.waitForLoadState("networkidle");
+          await p.reload();
+        });
+      }
       r.caption("Web address: put SchoolHub on your own school address", "Enterprise");
       await r.wait(2400);
       r.caption("Type the address you want, for example portal.adalinheights.edu.ng, and save");
