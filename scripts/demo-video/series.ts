@@ -835,6 +835,355 @@ export const SCENES: Scene[] = [
       }
     },
   },
+
+  /* ---------------- Episode 5: Settings: people, messages and operations ---------------- */
+  {
+    id: "e5-1",
+    chapter: EPISODES.setPeople,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Messaging",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#messaging",
+      "/s/[slug]/settings: Messaging",
+      "/s/[slug]/settings: SMS credits",
+      "/s/[slug]/settings: Buy for ₦2,500",
+      "/s/[slug]/settings: Alerts and messaging",
+      "/s/[slug]/settings: Absence alerts",
+      "/s/[slug]/settings: Results published",
+      "/s/[slug]/settings: Payment receipts",
+      "/s/[slug]/settings: Also send these alerts by SMS",
+      "/s/[slug]/settings: Parents can message teachers",
+      "/s/[slug]/settings: Students can see their own results",
+      "/s/[slug]/settings: Only during set hours",
+      "/s/[slug]/settings: From",
+      "/s/[slug]/settings: To",
+      "/s/[slug]/settings: SMS sender name (optional)",
+      "/s/[slug]/settings: Save settings",
+      "/s/[slug]/settings: Recently sent",
+      "journey: Buy message credits",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=messaging`);
+      r.caption("Messaging: text message credits, automatic alerts to parents, and who can message whom");
+      await r.wait(2600);
+      r.caption("Your credit balance, and what was sent in the last 30 days");
+      await r.wait(2000);
+      r.caption("Buy credits in packs. Bigger packs cost less per message. Pay online with Paystack.", "Standard");
+      await r.point(p.getByRole("button", { name: /^Buy for ₦/ }).first());
+      await r.wait(2600);
+      await r.reveal(p.getByRole("heading", { name: "Alerts and messaging" }));
+      r.caption("Alerts and messaging: what parents are told automatically");
+      await r.wait(1800);
+      await tour(r, [
+        [p.getByLabel(/^Absence alerts/).first(), "Absence alerts: parents hear within minutes when a child is marked absent"],
+        [p.getByLabel(/^Results published/).first(), "Results published: parents are told when the report card is ready"],
+        [p.getByLabel(/^Payment receipts/).first(), "Payment receipts: every payment, cash or online, gets a receipt"],
+        [p.getByLabel(/^Also send these alerts by SMS/).first(), "Also by SMS, for parents who aren't on the app. Uses credits."],
+        [p.getByLabel(/^Parents can message teachers/).first(), "Parents can message their child's class teacher from the parent app"],
+        [p.getByLabel(/^Students can see their own results/).first(), "Students can see their own report cards in the student portal"],
+      ], 2200);
+      const hours = p.getByLabel(/^Only during set hours/).first();
+      r.caption("Only during set hours: parents can read messages any time, but only send within these hours");
+      const was = await hours.isChecked();
+      if (!was) await r.click(hours, 900);
+      await r.wait(1200);
+      await tour(r, [
+        [p.getByLabel("From", { exact: true }), "From"],
+        [p.getByLabel("To", { exact: true }), "To"],
+      ], 1300);
+      if (!was) await r.offCamera(() => hours.uncheck());
+      await tour(r, [
+        [p.getByLabel("SMS sender name (optional)"), "Your own sender name, like ADALIN, once it's registered. Until then texts come from SchoolHub."],
+        [p.getByRole("button", { name: "Save settings" }), "Save settings"],
+      ], 2400);
+      const recent = p.getByRole("heading", { name: "Recently sent" });
+      if (await recent.count()) {
+        await r.reveal(recent);
+        r.caption("Recently sent: every email and text, and whether it arrived. Failed texts are refunded.");
+        await r.wait(2600);
+      }
+    },
+  },
+  {
+    id: "e5-2",
+    chapter: EPISODES.setPeople,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Admissions",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#admissions",
+      "/s/[slug]/settings: Admissions",
+      "/s/[slug]/settings: Admission form",
+      "/s/[slug]/settings: Taking applications",
+      "/s/[slug]/settings: Every class",
+      "/s/[slug]/settings: Entrance exam",
+      "/s/[slug]/settings: Interview",
+      "/s/[slug]/settings: Exam and interview",
+      "/s/[slug]/settings: No assessment",
+      "/s/[slug]/settings: Application form fee (₦)",
+      "/s/[slug]/settings: Welcome message (optional)",
+      "/s/[slug]/settings: Entrance exam details (optional)",
+      "/s/[slug]/settings: Save",
+      "/s/[slug]/settings: Your admission link",
+      "/s/[slug]/settings: Copy",
+      "/s/[slug]/settings: Open the form",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=admissions`);
+      r.caption("Admissions: set up the online application form");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByLabel(/^Taking applications/).first(), "Taking applications: switch it off and the form says admissions are closed"],
+        [p.getByLabel("Every class", { exact: true }), "Which classes you're admitting into: every class, or only some"],
+        [p.getByText("Entrance exam", { exact: true }).first(), "How you assess applicants: an entrance exam"],
+        [p.getByText("Interview", { exact: true }).first(), "an interview"],
+        [p.getByText("Exam and interview", { exact: true }).first(), "either or both"],
+        [p.getByText("No assessment", { exact: true }).first(), "or straight from application to offer"],
+        [p.getByLabel("Application form fee (₦)"), "A form fee, paid online when the parent applies. Leave it at 0 for free."],
+        [p.getByLabel("Welcome message (optional)"), "A welcome message at the top of the form"],
+        [p.getByLabel("Entrance exam details (optional)"), "Exam details: date, venue, what to bring"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 1900);
+      await r.reveal(p.getByRole("heading", { name: "Your admission link" }));
+      r.caption("Your admission link: share it on WhatsApp, your website or social media");
+      await r.click(p.getByRole("button", { name: "Copy", exact: true }), 900);
+      await r.wait(1600);
+      r.caption("Open the form to see what parents see. The full journey is in the Online admissions episode.");
+      await r.point(p.getByRole("link", { name: "Open the form" }));
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e5-3",
+    chapter: EPISODES.setPeople,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Staff & HR",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#hr",
+      "/s/[slug]/settings: Staff & HR",
+      "/s/[slug]/settings: Staff hours and leave",
+      "/s/[slug]/settings: School resumes",
+      "/s/[slug]/settings: Late after",
+      "/s/[slug]/settings: Closing time",
+      "/s/[slug]/settings: Mon",
+      "/s/[slug]/settings: Sat",
+      "/s/[slug]/settings: Annual leave",
+      "/s/[slug]/settings: Sick leave",
+      "/s/[slug]/settings: Casual leave",
+      "/s/[slug]/settings: Maternity leave",
+      "/s/[slug]/settings: Paternity leave",
+      "/s/[slug]/settings: Compassionate leave",
+      "/s/[slug]/settings: Study leave",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=hr`);
+      r.caption("Staff & HR: working hours for clocking in, and how much leave each staff member gets");
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByLabel("School resumes"), "When the school day starts"],
+        [p.getByLabel("Late after"), "Staff who clock in after this are marked late"],
+        [p.getByLabel("Closing time"), "Closing time"],
+        [p.getByLabel("Mon", { exact: true }), "The working days. Tick Saturday if staff come in on Saturdays."],
+        [p.getByLabel("Annual leave"), "Leave allowances, in days per year: annual"],
+        [p.getByLabel("Sick leave"), "sick"],
+        [p.getByLabel("Casual leave"), "casual"],
+        [p.getByLabel("Maternity leave"), "maternity and paternity"],
+        [p.getByLabel("Compassionate leave"), "compassionate"],
+        [p.getByLabel("Study leave"), "and study leave. SchoolHub counts what's left when staff ask for leave."],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 1700);
+    },
+  },
+  {
+    id: "e5-4",
+    chapter: EPISODES.setPeople,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Payroll",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#payroll",
+      "/s/[slug]/settings: Payroll",
+      "/s/[slug]/settings: Pay day",
+      "/s/[slug]/settings: Deduct PAYE",
+      "/s/[slug]/settings: Pension",
+      "/s/[slug]/settings: National Housing Fund",
+      "/s/[slug]/settings: Record paid payroll in Expenses",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=payroll`);
+      r.caption("Payroll: when staff are paid, and what's deducted");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByLabel("Pay day"), "Pay day: the day of the month salaries go out"],
+        [p.getByLabel(/^Deduct PAYE/).first(), "PAYE tax, worked out on the Nigeria Tax Act 2025 bands"],
+        [p.getByLabel(/^Pension/).first(), "Pension: 8% from staff, 10% from the school"],
+        [p.getByLabel(/^National Housing Fund/).first(), "National Housing Fund: 2.5% of basic pay"],
+        [p.getByLabel(/^Record paid payroll in Expenses/).first(), "Paid payroll goes into Expenses as salaries, so the school's accounts stay complete"],
+      ], 2300);
+      r.caption("Save. Payslips then show every deduction.");
+      await r.click(p.getByRole("button", { name: "Save", exact: true }), 1200);
+      await r.wait(1800);
+    },
+  },
+  {
+    id: "e5-5",
+    chapter: EPISODES.setPeople,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Behaviour",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#behaviour",
+      "/s/[slug]/settings: Behaviour",
+      "/s/[slug]/settings: Merit categories",
+      "/s/[slug]/settings: Incident categories",
+      "/s/[slug]/settings: Tell parents about incidents",
+      "/s/[slug]/settings: Tell parents about merits too (good news travels)",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=behaviour`);
+      r.caption("Behaviour: the merits and incidents your teachers can record");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByLabel("Merit categories"), "Merit categories, one per line. Change them to suit your school."],
+        [p.getByLabel("Incident categories"), "Incident categories, one per line"],
+        [p.getByLabel("Tell parents about incidents"), "Tell parents about every incident, only serious ones, or never automatically"],
+        [p.getByLabel(/Tell parents about merits too/).first(), "And good news too, if you like"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2000);
+    },
+  },
+  {
+    id: "e5-5b",
+    chapter: EPISODES.setPeople,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Library and inventory",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#library",
+      "/s/[slug]/settings: Library",
+      "/s/[slug]/settings: Loan length (days)",
+      "/s/[slug]/settings: Books per borrower",
+      "/s/[slug]/settings: Fine per day late (₦)",
+      "/s/[slug]/settings#inventory",
+      "/s/[slug]/settings: Inventory",
+      "/s/[slug]/settings: Categories",
+      "/s/[slug]/settings: Rooms and places",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=library`);
+      r.caption("Library: the lending rules");
+      await r.wait(1800);
+      await tour(r, [
+        [p.getByLabel("Loan length (days)"), "How many days a book can be borrowed for"],
+        [p.getByLabel("Books per borrower"), "How many books one person can have at a time"],
+        [p.getByLabel("Fine per day late (₦)"), "A fine for each day late. Leave it at 0 for none."],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2000);
+      await r.go(`${S}/settings?tab=inventory`);
+      r.caption("Inventory: how the school's property is grouped");
+      await r.wait(1800);
+      await tour(r, [
+        [p.getByLabel("Categories"), "Categories, like furniture, ICT and lab equipment"],
+        [p.getByLabel("Rooms and places"), "Rooms and places, so you know where everything is"],
+        [p.getByLabel(/offer to add it to Expenses/).first(), "When new stock has a cost, offer to record it in Expenses"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2000);
+    },
+  },
+  {
+    id: "e5-6",
+    chapter: EPISODES.setPeople,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Sick bay, transport and boarding",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#health",
+      "/s/[slug]/settings: Sick bay",
+      "/s/[slug]/settings: Medicines kept",
+      "/s/[slug]/settings: Tell parents",
+      "/s/[slug]/settings#transport",
+      "/s/[slug]/settings: Transport",
+      "/s/[slug]/settings: Tell parents in the app when their child is marked on the bus",
+      "/s/[slug]/settings#hostel",
+      "/s/[slug]/settings: Boarding",
+      "/s/[slug]/settings: Parents can ask for an exeat in the app",
+      "/s/[slug]/settings: Text parents when their child signs out of school and back in",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=health`);
+      r.caption("Sick bay: the medicines the school keeps, and when parents hear about a visit");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByLabel("Medicines kept"), "Medicines kept, one per line. The nurse picks from this list."],
+        [p.getByLabel("Tell parents"), "Tell parents after every visit, only when a child is sent home or referred, or never"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2200);
+      await r.go(`${S}/settings?tab=transport`);
+      r.caption("Transport");
+      await r.wait(1400);
+      await tour(r, [
+        [p.getByLabel(/marked on the bus/).first(), "Tell parents in the app when their child gets on the school bus"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2200);
+      await r.go(`${S}/settings?tab=hostel`);
+      r.caption("Boarding");
+      await r.wait(1400);
+      await tour(r, [
+        [p.getByLabel(/ask for an exeat/).first(), "Parents can ask for an exeat in the app. The warden approves it."],
+        [p.getByLabel(/signs out of school and back in/).first(), "Text parents when a boarder signs out and comes back"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2400);
+    },
+  },
+  {
+    id: "e5-7",
+    chapter: EPISODES.setPeople,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Documents",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#documents",
+      "/s/[slug]/settings: Documents",
+      "/s/[slug]/settings: Name",
+      "/s/[slug]/settings: Title",
+      "/s/[slug]/settings: Upload",
+      "/s/[slug]/settings: Remove",
+      "/s/[slug]/settings: Add a signatory",
+      "/s/[slug]/settings: ID card note",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=documents`);
+      r.caption("Documents: who signs your certificates, testimonials and letters");
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByLabel("Name", { exact: true }).first(), "Each signatory's name"],
+        [p.getByLabel("Title", { exact: true }).first(), "their title, like Principal"],
+        [p.getByText("Upload", { exact: true }).first(), "and a photo of their signature"],
+        [p.getByRole("button", { name: "Remove" }).first(), "Remove a signatory"],
+        [p.getByRole("button", { name: "Add a signatory" }), "or add another"],
+        [p.getByLabel("ID card note"), "A note printed on the back of every ID card"],
+        [p.getByRole("button", { name: "Save", exact: true }), "Save"],
+      ], 2000);
+    },
+  },
 ];
 
 if (require.main === module) {

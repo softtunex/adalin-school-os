@@ -21,6 +21,8 @@ const FFMPEG = process.env.FFMPEG ?? "ffmpeg";
 const W = 1920;
 const H = 1080;
 const FPS = 30;
+// A desktop caption only paints this strip along the bottom, so only the strip is saved and overlaid.
+const CAP_BAND = 300;
 
 // The phone screen's place on the stage (native size, so no scaling).
 const SCREEN = { x: 1210, y: Math.round((H - PHONE.viewport.height) / 2), w: PHONE.viewport.width, h: PHONE.viewport.height, r: 40 };
@@ -45,7 +47,7 @@ const badge = (tag: string | undefined, size: number) =>
   tag ? `<span class="badge" style="font-size:${size}px;padding:${size * 0.35}px ${size * 0.8}px;background:${BADGE[tag] ?? "#b84300"};color:#fff">${esc(tag)}</span>` : "";
 
 /** Draw an overlay over a blank app page and save it; transparent wherever the overlay doesn't paint. */
-async function render(page: Page, html: string, file: string) {
+async function render(page: Page, html: string, file: string, clip?: { x: number; y: number; width: number; height: number }) {
   await page.evaluate(
     ([css, body]) => {
       document.body.innerHTML = `<style>${css}</style><div id="__overlay">${body}</div>`;
@@ -54,7 +56,7 @@ async function render(page: Page, html: string, file: string) {
     [BASE_CSS, html],
   );
   await page.waitForTimeout(150);
-  await page.screenshot({ path: file, omitBackground: true });
+  await page.screenshot({ path: file, omitBackground: true, clip });
 }
 
 function captionPill(text: string, tag?: string) {
@@ -138,7 +140,7 @@ function ffmpeg(args: string[]) {
   execFileSync(FFMPEG, ["-v", "error", "-y", ...args], { stdio: "inherit" });
 }
 
-const ENCODE = ["-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p", "-r", String(FPS), "-movflags", "+faststart"];
+const ENCODE = ["-c:v", "libx264", "-preset", "medium", "-crf", "18", "-pix_fmt", "yuv420p", "-r", String(FPS), "-movflags", "+faststart"];
 
 function join(parts: string[], out: string) {
   const list = `${out}.txt`;
@@ -169,11 +171,16 @@ async function main() {
   };
 
   const scene = async (take: Take) => {
-    const { keep, length, spans } = timeline(take);
+    const { keep, length, spans: all } = timeline(take);
+    // Captions run back to back, so they're played as one track: one picture in memory at a time,
+    // instead of every caption looping under the whole scene. A caption too short to show is dropped.
+    const spans = all.filter((s) => Math.round(s.to * FPS) > Math.round(s.from * FPS));
+    const phone = take.kind === "phone";
+    const band = phone ? undefined : { x: 0, y: H - CAP_BAND, width: W, height: CAP_BAND };
     const overlays: string[] = [];
     for (const [i, s] of spans.entries()) {
       const png = path.join(WORK, `${take.id}-cap${i}.png`);
-      await render(page, take.kind === "phone" ? stage(take.title, s.text, s.tag, logo) : captionPill(s.text, s.tag), png);
+      await render(page, phone ? stage(take.title, s.text, s.tag, logo) : captionPill(s.text, s.tag), png, band);
       overlays.push(png);
     }
     const select = keep.map(([a, b]) => `between(t,${a.toFixed(3)},${b.toFixed(3)})`).join("+");
@@ -184,10 +191,17 @@ async function main() {
     } else {
       chain.push(`${trimmed},scale=${W}:${H}:flags=lanczos[v0]`);
     }
-    spans.forEach((s, i) => chain.push(`[v${i}][${i + 1}:v]overlay=0:0:enable='between(t,${s.from.toFixed(3)},${s.to.toFixed(3)})'[v${i + 1}]`));
-    chain.push(`[v${spans.length}]fade=t=in:st=0:d=0.3:color=0xf7f6f4,fade=t=out:st=${Math.max(0, length - 0.3).toFixed(3)}:d=0.3:color=0xf7f6f4[out]`);
+    let last = "v0";
+    if (spans.length) {
+      chain.push(`${spans.map((_, i) => `[${i + 1}:v]format=rgba,setsar=1[c${i}]`).join(";")}`);
+      chain.push(`${spans.map((_, i) => `[c${i}]`).join("")}concat=n=${spans.length}:v=1:a=0[caps]`);
+      chain.push(`[v0][caps]overlay=0:${band ? band.y : 0}:eof_action=pass[v1]`);
+      last = "v1";
+    }
+    chain.push(`[${last}]fade=t=in:st=0:d=0.3:color=0xf7f6f4,fade=t=out:st=${Math.max(0, length - 0.3).toFixed(3)}:d=0.3:color=0xf7f6f4[out]`);
+    const inputs = overlays.flatMap((o, i) => ["-loop", "1", "-framerate", String(FPS), "-t", ((Math.round(spans[i].to * FPS) - Math.round(spans[i].from * FPS)) / FPS).toFixed(4), "-i", o]);
     const mp4 = path.join(WORK, `${take.id}.mp4`);
-    ffmpeg(["-i", take.video, ...overlays.flatMap((o) => ["-loop", "1", "-i", o]), "-filter_complex", chain.join(";"), "-map", "[out]", "-t", length.toFixed(3), ...ENCODE, mp4]);
+    ffmpeg(["-i", take.video, ...inputs, "-filter_complex", chain.join(";"), "-map", "[out]", "-t", length.toFixed(3), ...ENCODE, mp4]);
     console.log(`  ${take.id}: ${length.toFixed(1)}s, ${spans.length} captions`);
     return { mp4, length };
   };
