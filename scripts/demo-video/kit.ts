@@ -281,7 +281,9 @@ export async function runStoryboard(name: string, scenes: Scene[]) {
       console.log(`${take.length.toFixed(1)}s`);
     } catch (e) {
       failed.push(scene.id);
-      console.log(`FAILED: ${(e as Error).message.split("\n")[0]}`);
+      // Which line of the storyboard was running, so a failed step can be found without guessing.
+      const at = ((e as Error).stack ?? "").split("\n").find((l) => /demo-video[\\/](series|full|overview)\.ts/.test(l))?.match(/(\w+\.ts):(\d+)/);
+      console.log(`FAILED${at ? ` at ${at[1]}:${at[2]}` : ""}: ${(e as Error).message.split("\n")[0]}`);
       await r?.page?.screenshot({ path: path.join(out, `${scene.id}-failed.png`) }).catch(() => {});
       await r?.context?.close().catch(() => {});
     }

@@ -672,6 +672,169 @@ export const SCENES: Scene[] = [
       ], 1800);
     },
   },
+
+  /* ---------------- Episode 4: Settings: money ---------------- */
+  {
+    id: "e4-1",
+    chapter: EPISODES.setMoney,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Payments",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#payments",
+      "/s/[slug]/settings: Payments",
+      "/s/[slug]/settings: Where fees are paid into",
+      "/s/[slug]/settings: Bank",
+      "/s/[slug]/settings: Account number",
+      "/s/[slug]/settings: Update account",
+      "/s/[slug]/settings: Collection rules",
+      "/s/[slug]/settings: Hold results until fees are paid",
+      "/s/[slug]/settings: Send reminders automatically",
+      "/s/[slug]/settings: Remind each family at most every",
+      "/s/[slug]/settings: Note at the bottom of invoices (optional)",
+      "/s/[slug]/settings: Save rules",
+      "journey: Connect the school's bank account for online fees",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=payments`);
+      r.caption("Payments: where school fees go, and how SchoolHub collects them");
+      await r.wait(2200);
+      r.caption("Where fees are paid into: the school's own bank account", "Standard");
+      await r.point(p.getByLabel("Bank"));
+      await r.wait(2000);
+      await tour(r, [
+        [p.getByLabel("Account number"), "The account number. SchoolHub checks the account name with the bank for you."],
+        [p.getByRole("button", { name: "Update account" }), "Save it once. Parents' online payments then go straight to the school, never through Adalin."],
+      ], 2400);
+      r.caption("Paystack takes its small fee per payment. SchoolHub takes nothing.", "Standard");
+      await r.wait(2400);
+      await r.reveal(p.getByText("Collection rules", { exact: true }).first());
+      r.caption("Collection rules: how SchoolHub follows up on what's owed");
+      await r.wait(1800);
+      await tour(r, [
+        [p.getByLabel(/Hold results until fees are paid/), "Hold results: parents who still owe can't see that term's report card"],
+        [p.getByLabel(/Send reminders automatically/), "Send reminders by email on weekday mornings. Switch it on to choose how often."],
+      ], 2400);
+      await r.type(p.getByLabel("Note at the bottom of invoices (optional)"), "Pay by transfer to the school account, or online with a card.");
+      r.caption("A note printed at the bottom of every invoice");
+      await r.click(p.getByRole("button", { name: "Save rules" }), 1200);
+      await r.wait(1400);
+    },
+  },
+  {
+    id: "e4-2",
+    chapter: EPISODES.setMoney,
+    plan: "Free",
+    kind: "desktop",
+    title: "Plan & billing",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#plan",
+      "/s/[slug]/settings: Plan & billing",
+      "/s/[slug]/settings: Plans",
+      "/s/[slug]/settings: Move to Basic",
+      "/s/[slug]/settings: Move to Standard",
+      "/s/[slug]/settings: Stay on Premium",
+      "/s/[slug]/settings: Confirm",
+      "/s/[slug]/settings: Cancel",
+      "/s/[slug]/settings: Done",
+      "/s/[slug]/settings: Bills",
+      "/s/[slug]/settings: Pay ₦100,800",
+      "/s/[slug]/settings: +234 905 208 6394",
+      "journey: Upgrade the plan, and move to a cheaper one next term",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=plan`);
+      r.caption("Plan & billing: your plan, what each plan includes, and your SchoolHub bills");
+      await r.wait(2400);
+      r.caption("Every plan is priced per student, per term. Here's what each one adds.");
+      await r.reveal(p.getByRole("heading", { name: "Plans" }));
+      await r.wait(2600);
+      r.caption("Upgrades start straight away. A cheaper plan starts next term, so nothing is lost mid-term.");
+      await r.click(p.getByRole("button", { name: "Move to Standard" }), 900);
+      await r.wait(2200);
+      await r.point(p.getByRole("dialog").getByRole("button", { name: "Cancel" }).first());
+      r.caption("The cost is shown before you confirm. Cancel, or Confirm.");
+      await r.wait(1400);
+      await r.click(p.getByRole("dialog").getByRole("button", { name: "Confirm" }).first(), 1200);
+      await r.wait(1600);
+      await r.click(p.getByRole("dialog").getByRole("button", { name: "Done" }).first(), 900);
+      r.caption("Changed your mind before next term? Stay on your plan with one click.");
+      await r.click(p.getByRole("button", { name: "Stay on Premium" }), 900);
+      await r.wait(1200);
+      await r.click(p.getByRole("dialog").getByRole("button", { name: "Confirm" }).first(), 1200);
+      await r.wait(1400);
+      // The page refreshes and the pop-up closes itself once the plan is kept.
+      const done = p.getByRole("dialog").getByRole("button", { name: "Done" });
+      if (await done.isVisible().catch(() => false)) await r.click(done.first(), 900);
+      r.caption("Back on Premium, as if nothing changed");
+      await r.wait(1600);
+      const bill = p.getByRole("button", { name: /^Pay ₦/ }).first();
+      if (await bill.count()) {
+        await r.reveal(bill);
+        r.caption("Bills: one per term, for the students on roll. Pay online with Paystack.");
+        await r.wait(2600);
+      }
+      const wa = p.getByRole("link", { name: "+234 905 208 6394" });
+      if (await wa.count()) {
+        await r.reveal(wa);
+        r.caption("Questions about plans? WhatsApp Adalin straight from here.");
+        await r.wait(2200);
+      }
+    },
+  },
+  {
+    id: "e4-3",
+    chapter: EPISODES.setMoney,
+    plan: "Free",
+    kind: "desktop",
+    title: "Support access",
+    as: "owner",
+    covers: ["/s/[slug]/settings: Let Adalin support in", "/s/[slug]/settings: What do you need help with?", "/s/[slug]/settings: For how long", "/s/[slug]/settings: 24 hours", "/s/[slug]/settings: 3 days", "/s/[slug]/settings: Let support in"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=plan`);
+      await r.offCamera(() => p.getByRole("heading", { name: "Let Adalin support in" }).scrollIntoViewIfNeeded());
+      r.caption("Need help? Let Adalin support into your school, only when you choose");
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByLabel("What do you need help with?"), "Say what you need help with"],
+        [p.getByText("24 hours", { exact: true }), "Choose how long: 24 hours"],
+        [p.getByText("3 days", { exact: true }), "or 3 days. Access ends by itself."],
+        [p.getByRole("button", { name: "Let support in", exact: true }), "Every step support takes shows in your audit log"],
+      ], 1900);
+    },
+  },
+  {
+    id: "e4-4",
+    chapter: EPISODES.setMoney,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Add-ons",
+    as: "owner",
+    covers: ["/s/[slug]/settings#addons", "/s/[slug]/settings: Add-ons", "/s/[slug]/settings: Order", "/s/[slug]/settings: Your add-ons", "/s/[slug]/settings: SMS and WhatsApp credits", "/s/[slug]/settings: Buy credits under Messaging"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=addons`);
+      r.caption("Add-ons: extras you can order without changing plan");
+      await r.wait(2400);
+      r.caption("School colours below Premium, guided setup, on-site training, and printed result PIN cards");
+      await r.point(p.getByRole("button", { name: "Order" }).first());
+      await r.wait(2800);
+      await r.reveal(p.getByText("Your add-ons", { exact: true }).first());
+      r.caption("What you've ordered shows under Your add-ons");
+      await r.wait(2000);
+      const credits = p.getByRole("link", { name: "Buy credits under Messaging" });
+      if (await credits.count()) {
+        await r.reveal(credits);
+        r.caption("Message credits are bought under Messaging, covered in the next episode");
+        await r.wait(2200);
+      }
+    },
+  },
 ];
 
 if (require.main === module) {
