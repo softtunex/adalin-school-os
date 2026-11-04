@@ -1184,6 +1184,204 @@ export const SCENES: Scene[] = [
       ], 2000);
     },
   },
+
+  /* ---------------- Episode 6: Settings: sign-in, data and advanced ---------------- */
+  {
+    id: "e6-1",
+    chapter: EPISODES.setAdvanced,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "Campuses",
+    as: "enterprise",
+    covers: [
+      "/s/[slug]/settings#campuses",
+      "/s/[slug]/settings: Campuses",
+      "/s/[slug]/settings: Open the group dashboard",
+      "/s/[slug]/settings: Remove",
+      "/s/[slug]/settings: Add a campus",
+      "/s/[slug]/settings: New campus",
+      "/s/[slug]/settings: Add campus",
+      "/s/[slug]/settings: Or bring in a school you already run",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go("/s/adalin-heights-school-ikoyi/settings?tab=campuses");
+      r.caption("Campuses: run several schools as one group");
+      await r.wait(2400);
+      r.caption("Every campus in the group, each with its own students, staff and fees");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByRole("link", { name: "Open the group dashboard" }), "The group dashboard shows every campus side by side"],
+        [p.getByRole("button", { name: "Remove" }).first(), "Remove a campus from the group. Its records stay safe in that school."],
+        [p.getByLabel("New campus"), "Add a new campus by name"],
+        [p.getByRole("button", { name: "Add campus" }), "and it's set up with the group's plan"],
+      ], 2300);
+      const bring = p.getByLabel("Or bring in a school you already run");
+      if (await bring.count()) {
+        r.caption("Or bring in a school you already run on SchoolHub");
+        await r.point(bring);
+        await r.wait(2200);
+      }
+      r.caption("The group dashboard itself is in the Enterprise episode");
+      await r.wait(1800);
+    },
+  },
+  {
+    id: "e6-2",
+    chapter: EPISODES.setAdvanced,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "Staff sign-in",
+    as: "enterprise",
+    covers: [
+      "/s/[slug]/settings#signin",
+      "/s/[slug]/settings: Staff sign-in",
+      "/s/[slug]/settings: Staff must log in with their work account",
+      "/s/[slug]/settings: Which accounts",
+      "/s/[slug]/settings: Google",
+      "/s/[slug]/settings: Microsoft",
+      "/s/[slug]/settings: Save sign-in rule",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go("/s/adalin-heights-school-ikoyi/settings?tab=signin");
+      r.caption("Staff sign-in: make staff use their school Google or Microsoft account");
+      await r.wait(2400);
+      const must = p.getByLabel(/^Staff must log in with their work account/).first();
+      const was = await must.isChecked();
+      r.caption("Switch it on, and staff can no longer sign in with a password");
+      if (!was) await r.click(must, 900);
+      await r.wait(1800);
+      await tour(r, [
+        [p.getByLabel("Google", { exact: true }), "Choose which accounts count: Google"],
+        [p.getByLabel("Microsoft", { exact: true }), "Microsoft, or both"],
+      ], 1800);
+      r.caption("Proprietors can always use their password, so the school can't be locked out");
+      await r.wait(2400);
+      r.caption("Save sign-in rule");
+      await r.point(p.getByRole("button", { name: "Save sign-in rule" }));
+      await r.wait(1600);
+      if (!was) await r.offCamera(() => must.uncheck());
+    },
+  },
+  {
+    id: "e6-3",
+    chapter: EPISODES.setAdvanced,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "API & webhooks",
+    as: "enterprise",
+    covers: [
+      "/s/[slug]/settings#api",
+      "/s/[slug]/settings: API & webhooks",
+      "/s/[slug]/settings: API documentation",
+      "/s/[slug]/settings: API keys",
+      "/s/[slug]/settings: New key",
+      "/s/[slug]/settings: Create key",
+      "/s/[slug]/settings: Revoke",
+      "/s/[slug]/settings: Revoke key",
+      "/s/[slug]/settings: Webhooks",
+      "/s/[slug]/settings: Add webhook",
+      "/s/[slug]/settings: Address",
+      "/s/[slug]/settings: Send a test",
+      "/s/[slug]/settings: Switch off",
+      "/s/[slug]/settings: Remove",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go("/s/adalin-heights-school-ikoyi/settings?tab=api");
+      r.caption("API & webhooks: connect your website, accounting software or other systems");
+      await r.wait(2400);
+      r.caption("Developers: the API documentation explains every endpoint");
+      await r.point(p.getByRole("link", { name: "API documentation" }));
+      await r.wait(2000);
+
+      r.caption("API keys let another system read from SchoolHub. They can only read, and only your school.");
+      await r.click(p.getByRole("button", { name: "New key" }), 900);
+      await r.wait(800);
+      await r.type(dialog.getByLabel("Name"), "School website");
+      r.caption("Name it after the system that uses it, then choose what it can read");
+      await r.click(dialog.getByLabel(/^Students and their parents/).first(), 700);
+      await r.click(dialog.getByLabel(/^Classes and terms/).first(), 700);
+      await r.click(dialog.getByRole("button", { name: "Create key" }), 1200);
+      r.caption("The full key is shown once. Copy it into the other system now.");
+      await r.wait(2800);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      r.caption("Each key shows what it can read and when it was last used");
+      await r.wait(2000);
+      r.caption("Revoke a key and anything using it stops straight away");
+      await r.click(p.getByRole("button", { name: "Revoke", exact: true }).first(), 900);
+      await r.wait(1200);
+      await r.click(dialog.getByRole("button", { name: "Revoke key" }), 1200);
+      await r.wait(1400);
+
+      await r.reveal(p.getByRole("heading", { name: "Webhooks", exact: true }));
+      r.caption("Webhooks: SchoolHub tells your other systems the moment something happens");
+      await r.wait(2200);
+      await r.click(p.getByRole("button", { name: "Add webhook" }), 900);
+      await r.wait(800);
+      await r.type(dialog.getByLabel("Address"), "https://accounts.adalinheights.edu.ng/schoolhub");
+      r.caption("Where to send it, and when: a new student, a payment, published results");
+      await r.click(dialog.getByLabel(/^A fee payment is recorded/).first(), 700);
+      await r.click(dialog.getByLabel(/^A student is added/).first(), 700);
+      await r.click(dialog.getByRole("button", { name: "Add webhook" }), 1200);
+      r.caption("A signing secret, shown once, so your system can check each message really came from SchoolHub");
+      await r.wait(3000);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      await tour(r, [
+        [p.getByRole("button", { name: "Send a test" }), "Send a test to check your system receives it"],
+        [p.getByRole("button", { name: "Switch off" }), "Switch it off for a while"],
+      ], 2000);
+      r.caption("Or remove it. Every delivery shows here, and failed ones retry for about 9 hours.");
+      await r.click(p.getByRole("button", { name: "Remove", exact: true }).first(), 900);
+      await r.wait(1200);
+      await r.click(dialog.getByRole("button", { name: "Remove", exact: true }), 1200);
+      await r.wait(1600);
+    },
+  },
+  {
+    id: "e6-4",
+    chapter: EPISODES.setAdvanced,
+    plan: "Free",
+    kind: "desktop",
+    title: "Data & privacy",
+    as: "owner",
+    covers: [
+      "/s/[slug]/settings#data",
+      "/s/[slug]/settings: Data & privacy",
+      "/s/[slug]/settings: Download all your data",
+      "/s/[slug]/settings: Download everything",
+      "/s/[slug]/settings: When someone asks for their data",
+      "/s/[slug]/settings: How Adalin looks after your data",
+      "/s/[slug]/settings: Downloads",
+      "journey: Download all the school's data",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/settings?tab=data`);
+      r.caption("Data & privacy: your school's data belongs to your school");
+      await r.wait(2400);
+      r.caption("Download everything: students, staff, results, attendance, fees, all as spreadsheets in one ZIP");
+      await r.point(p.getByRole("link", { name: "Download everything" }));
+      await r.wait(2600);
+      const download = p.waitForEvent("download", { timeout: 60_000 }).catch(() => null);
+      await r.click(p.getByRole("link", { name: "Download everything" }), 900);
+      r.caption("Keep it, move to another system, or hand it to an auditor. Passwords and PINs are left out.");
+      await download;
+      await r.wait(2400);
+      await r.reveal(p.getByRole("heading", { name: "When someone asks for their data" }));
+      r.caption("When a parent or staff member asks for their own data, download it from their profile");
+      await r.wait(3000);
+      await r.reveal(p.getByRole("heading", { name: "How Adalin looks after your data" }));
+      r.caption("How Adalin looks after your data: encrypted, never sold, never used for advertising");
+      await r.wait(3000);
+      await r.offCamera(() => p.reload());
+      await r.reveal(p.getByRole("heading", { name: "Downloads" }));
+      r.caption("Every download is listed here, and in the activity log");
+      await r.wait(2600);
+    },
+  },
 ];
 
 if (require.main === module) {
