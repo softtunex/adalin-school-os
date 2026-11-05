@@ -9,6 +9,7 @@
  *   npx tsx scripts/demo-video/series.ts "Getting started"  one episode
  *   npx tsx scripts/demo-video/series.ts e1-3               one scene
  */
+import path from "node:path";
 import { expect } from "@playwright/test";
 import { runStoryboard, S, type Recorder, type Scene } from "./kit";
 
@@ -1935,6 +1936,401 @@ export const SCENES: Scene[] = [
       await r.wait(1200);
       await r.click(dialog.getByRole("button", { name: "Delete role" }), 1200);
       await r.wait(1600);
+    },
+  },
+
+  /* ---------------- Episode 9: Students ---------------- */
+  {
+    id: "e9-1",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "desktop",
+    title: "The student list",
+    as: "owner",
+    covers: [
+      "/s/[slug]/students",
+      "/s/[slug]/students: All students",
+      "/s/[slug]/students: Search name or admission no…",
+      "/s/[slug]/students: Class",
+      "/s/[slug]/students: Status",
+      "/s/[slug]/students: Export CSV",
+      "/s/[slug]/students: Promote",
+      "/s/[slug]/students: Logins",
+      "/s/[slug]/students: Import",
+      "/s/[slug]/students: Add student",
+      "/s/[slug]/students: View profile",
+      "/s/[slug]/students: Edit details",
+      "/s/[slug]/students: Mark as graduated",
+      "/s/[slug]/students: Suspend",
+      "/s/[slug]/students: Withdraw",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/students`);
+      r.caption("Students: every student in the school, with their class and parents");
+      await r.wait(2600);
+      r.caption("Search by name or admission number");
+      await r.type(p.getByPlaceholder("Search name or admission no…"), "Lawal");
+      await r.wait(1800);
+      await r.offCamera(() => p.goto(`${S}/students`));
+      r.caption("Show one class");
+      await r.select(p.getByRole("combobox", { name: /^Class/ }), { label: "JSS 1 Gold" });
+      await r.wait(1800);
+      await r.offCamera(() => p.goto(`${S}/students`));
+      await tour(r, [
+        [p.getByRole("combobox", { name: /^Status/ }), "Or students who have graduated, left or been suspended"],
+        [p.getByRole("link", { name: "Export CSV" }), "Export the list as a spreadsheet"],
+      ], 2000);
+      r.caption("Each student has a menu");
+      await r.click(p.getByRole("button", { name: /^(Actions for|More actions)/ }).first(), 700);
+      await tour(r, [
+        [p.getByRole("menuitem", { name: "View profile" }), "View their profile"],
+        [p.getByRole("menuitem", { name: "Edit details" }), "Edit their details"],
+        [p.getByRole("menuitem", { name: "Mark as graduated" }), "Mark them as graduated"],
+        [p.getByRole("menuitem", { name: "Suspend" }), "Suspend them"],
+        [p.getByRole("menuitem", { name: "Withdraw" }), "or withdraw them when they leave. Their records stay."],
+      ], 1700);
+      await p.keyboard.press("Escape");
+      await tour(r, [
+        [p.getByRole("link", { name: "Add student" }), "Up top: add a student"],
+        [p.getByRole("link", { name: "Import" }), "import a whole list from Excel"],
+        [p.getByRole("link", { name: "Logins" }), "give students their own logins"],
+        [p.getByRole("link", { name: "Promote" }), "and promote everyone at the end of the year. All of these are in this episode."],
+      ], 2000);
+    },
+  },
+  {
+    id: "e9-2",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "desktop",
+    title: "Add a student",
+    as: "owner",
+    covers: [
+      "/s/[slug]/students/new",
+      "/s/[slug]/students/new: First name",
+      "/s/[slug]/students/new: Surname",
+      "/s/[slug]/students/new: Middle name (optional)",
+      "/s/[slug]/students/new: Date of birth",
+      "/s/[slug]/students/new: Female",
+      "/s/[slug]/students/new: Class",
+      "/s/[slug]/students/new: Admission number",
+      "/s/[slug]/students/new: Date admitted",
+      "/s/[slug]/students/new: State of origin",
+      "/s/[slug]/students/new: LGA",
+      "/s/[slug]/students/new: Religion",
+      "/s/[slug]/students/new: Home address",
+      "/s/[slug]/students/new: Blood group",
+      "/s/[slug]/students/new: Genotype",
+      "/s/[slug]/students/new: Allergies and medical notes",
+      "/s/[slug]/students/new: Full name",
+      "/s/[slug]/students/new: Relationship",
+      "/s/[slug]/students/new: Phone number",
+      "/s/[slug]/students/new: Email (optional)",
+      "/s/[slug]/students/new: Add a second parent or guardian",
+      "/s/[slug]/students/new: Save and add another",
+      "/s/[slug]/students/new: Save student",
+    ],
+    async run(r) {
+      const p = r.page;
+      const date = async (label: string, value: string) => {
+        await r.point(p.getByLabel(label));
+        await p.getByLabel(label).fill(value);
+        await r.wait(600);
+      };
+      await r.go(`${S}/students/new`);
+      r.caption("Add a student: Kemi Adisa is joining JSS 1 Gold");
+      await r.wait(2000);
+      await r.type(p.getByLabel("First name"), "Kemi");
+      await r.type(p.getByLabel("Surname"), "Adisa");
+      await date("Date of birth", "2014-05-02");
+      await r.click(p.getByLabel("Female"), 600);
+      await r.reveal(p.getByRole("heading", { name: "Class and admission" }));
+      r.caption("Her class. The admission number is made for you, with your school's prefix.");
+      await r.select(p.getByLabel("Class", { exact: true }), { label: "JSS 1 Gold" });
+      await r.point(p.getByLabel("Admission number"));
+      await r.wait(1600);
+      await r.reveal(p.getByRole("heading", { name: "Background" }));
+      r.caption("Background, for records and reports");
+      await r.select(p.getByLabel("State of origin"), "Ogun");
+      await r.select(p.getByLabel("Religion"), "Christianity");
+      await r.reveal(p.getByRole("heading", { name: "Health", exact: true }));
+      r.caption("Health details the nurse will need");
+      await r.select(p.getByLabel("Blood group"), "O+");
+      await r.select(p.getByLabel("Genotype"), "AA");
+      await r.reveal(p.getByRole("heading", { name: "Parent or guardian" }));
+      r.caption("Her parent. The email lets her mother sign in to the parent app.");
+      await r.type(p.getByLabel("Full name"), "Mrs Funke Adisa");
+      await r.select(p.getByLabel("Relationship"), "Mother");
+      await r.type(p.getByLabel("Phone number"), "0802 555 0188");
+      await r.type(p.getByLabel("Email (optional)"), "funke.adisa@example.com");
+      await tour(r, [
+        [p.getByRole("button", { name: "Add a second parent or guardian" }), "Add a second parent if you like"],
+        [p.getByRole("button", { name: "Save and add another" }), "Adding several? Save and add another."],
+      ], 1800);
+      r.caption("Save student");
+      await r.click(p.getByRole("button", { name: "Save student" }), 1500);
+      await r.offCamera(() => p.waitForURL(/students\/[0-9a-f-]{36}/, { timeout: 30_000 }));
+      r.caption("Kemi's profile is ready, with her mother linked");
+      await r.wait(2800);
+    },
+  },
+  {
+    id: "e9-3",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "phone",
+    title: "Parents",
+    covers: ["journey: Add a student with a parent, then the parent signs in", "email: Parent sign-in code"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/parent");
+      r.caption("Mrs Adisa opens the parent app");
+      await r.wait(1800);
+      await r.type(p.getByLabel(/Phone number or email|Email address/), "funke.adisa@example.com");
+      r.caption("She enters the email the school has for her. No password needed.");
+      await r.click(p.getByRole("button", { name: "Send me a code" }), 1200);
+      r.caption("A code arrives by email");
+      await r.type(p.getByLabel("6-digit code"), "123456");
+      await r.click(p.getByRole("button", { name: "Continue" }), 1200);
+      await r.offCamera(() => p.waitForURL(/\/p$/, { timeout: 60_000 }));
+      r.caption("She's in, and sees Kemi. The parent app has its own episode.");
+      await r.wait(3200);
+    },
+  },
+  {
+    id: "e9-4",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "desktop",
+    title: "A student's profile",
+    as: "owner",
+    covers: [
+      "/s/[slug]/students/[id]",
+      "/s/[slug]/students/[id]: Details",
+      "/s/[slug]/students/[id]: Change status",
+      "/s/[slug]/students/[id]: Message parents",
+      "/s/[slug]/students/[id]: Download their data",
+      "/s/[slug]/students/[id]: Edit details",
+      "/s/[slug]/students/[id]#parents",
+      "/s/[slug]/students/[id]: Parents & guardians",
+      "/s/[slug]/students/[id]: Make primary contact",
+      "/s/[slug]/students/[id]: Remove from student",
+      "/s/[slug]/students/[id]: Add parent or guardian",
+      "/s/[slug]/students/[id]: Link parent",
+      "/s/[slug]/students/[id]#history",
+      "/s/[slug]/students/[id]: Class history",
+      "/s/[slug]/students/[id]#fees",
+      "/s/[slug]/students/[id]: Fees",
+      "/s/[slug]/students/[id]: One-off invoice",
+      "/s/[slug]/students/[id]: Save discounts",
+      "/s/[slug]/students/[id]#conduct",
+      "/s/[slug]/students/[id]: Conduct",
+      "/s/[slug]/students/[id]#health",
+      "/s/[slug]/students/[id]: Health",
+      "/s/[slug]/students/[id]: Save health record",
+      "/s/[slug]/students/[id]/edit",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/students?q=Oluwaseun+Lawal`);
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: /Oluwaseun Lawal/ }).first().click();
+        await p.waitForURL(/students\/[0-9a-f-]{36}/);
+      });
+      const base = p.url().split("?")[0];
+      r.caption("A student's profile: everything about Oluwaseun in one place");
+      await r.wait(2600);
+      r.caption("At a glance: fees, and brothers and sisters in the same school");
+      await r.wait(2400);
+      r.caption("Change status: suspend, withdraw or graduate");
+      await r.click(p.getByRole("button", { name: "Change status" }), 700);
+      await r.wait(1600);
+      await p.keyboard.press("Escape");
+      await tour(r, [
+        [p.getByRole("link", { name: "Message parents" }), "Message the parents"],
+        [p.getByRole("link", { name: "Download their data" }), "Download the student's data if the family asks for it"],
+        [p.getByRole("link", { name: "Edit details" }), "Edit details, on the same form you add a student with"],
+      ], 1900);
+
+      await r.go(`${base}?tab=parents`);
+      r.caption("Parents & guardians: who to contact, and who can use the parent app");
+      await r.wait(2200);
+      await r.click(p.getByRole("button", { name: /^Actions for Mrs/ }).first(), 700);
+      // "Make primary contact" only shows for a parent who isn't the primary contact already.
+      const primary = p.getByRole("menuitem", { name: "Make primary contact" });
+      if (await primary.count()) await tour(r, [[primary, "Make a parent the first person the school contacts"]], 1800);
+      else {
+        r.caption("Mrs Lawal is the primary contact: the first person the school gets in touch with");
+        await r.wait(2000);
+      }
+      await tour(r, [[p.getByRole("menuitem", { name: "Remove from student" }), "Remove a parent from a student"]], 1800);
+      await p.keyboard.press("Escape");
+      r.caption("Add a parent or guardian. If they already have a child here, they're linked, not duplicated.");
+      await r.click(p.getByRole("button", { name: "Add parent or guardian" }), 900);
+      await r.point(dialog.getByRole("button", { name: "Link parent" }));
+      await r.wait(2200);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+
+      await r.go(`${base}?tab=history`);
+      r.caption("Class history: every class, year by year");
+      await r.wait(2400);
+      await r.go(`${base}?tab=fees`);
+      r.caption("Fees: invoices and what's been paid");
+      await r.wait(2200);
+      await tour(r, [
+        [p.getByRole("button", { name: "One-off invoice" }), "Raise a one-off invoice, like for a uniform"],
+        [p.getByRole("button", { name: "Save discounts" }), "and set discounts or scholarships for this student"],
+      ], 2000);
+      await r.go(`${base}?tab=conduct`);
+      r.caption("Conduct: merits and incidents");
+      await r.wait(2200);
+      await r.go(`${base}?tab=health`);
+      r.caption("Health: the medical record and every sick bay visit");
+      await r.point(p.getByRole("button", { name: "Save health record" }));
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e9-5",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "desktop",
+    title: "Import from Excel",
+    as: "owner",
+    covers: [
+      "/s/[slug]/students/import",
+      "/s/[slug]/students/import: Download template",
+      "/s/[slug]/students/import: Add students one at a time",
+      "/s/[slug]/students/import: Import students",
+      "/s/[slug]/students/import: View students",
+      "journey: Import students from the school's own Excel list",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/students/import`);
+      r.caption("Import: bring in a whole class, or the whole school, from Excel");
+      await r.wait(2400);
+      r.caption("Use our template, or your own list. SchoolHub works out your column headings.");
+      await r.point(p.getByRole("link", { name: "Download template" }));
+      await r.wait(2400);
+      r.caption("Here's the school's own list for the new JSS 1 Gold intake");
+      await r.point(p.locator("input[type=file]").locator(".."));
+      await p.locator("input[type=file]").setInputFiles(path.resolve(".data/demo-video/assets/JSS1 Gold new intake.xlsx"));
+      await r.wait(1600);
+      const check = p.getByRole("button", { name: /Check|Preview|Continue/ }).first();
+      if (await check.isVisible().catch(() => false)) await r.click(check, 1500);
+      await r.offCamera(() => p.getByRole("button", { name: /^Import \d+ students?/ }).waitFor({ timeout: 60_000 }));
+      r.caption("A check before anything is saved: who's coming in, which class, and any problems");
+      await r.wait(3000);
+      r.caption("Columns it doesn't need, like S/N, are simply left out");
+      await r.wait(2400);
+      await r.click(p.getByRole("button", { name: /^Import \d+ students?/ }), 1500);
+      await r.offCamera(() => p.getByText(/students imported/).waitFor({ timeout: 60_000 }));
+      r.caption("Done: four new students, each with a parent and an admission number");
+      await r.wait(2600);
+      await r.point(p.getByRole("link", { name: "View students" }));
+      await r.wait(1400);
+    },
+  },
+  {
+    id: "e9-6",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "desktop",
+    title: "Student logins",
+    as: "owner",
+    covers: [
+      "/s/[slug]/students/logins",
+      "/s/[slug]/students/logins: Class",
+      "/s/[slug]/students/logins: Select all",
+      "/s/[slug]/students/logins: Issue for selected",
+      "/s/[slug]/students/logins: Reset password",
+      "/s/[slug]/students/logins: Print slips",
+      "/s/[slug]/students/logins: Done",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/students/logins`);
+      r.caption("Student logins: let students sign in to do homework, CBT tests and see their results");
+      await r.wait(2600);
+      r.caption("Pick a class");
+      await r.select(p.getByRole("combobox", { name: /^Class/ }), { label: "JSS 1 Gold" });
+      await r.wait(1600);
+      r.caption("Tick the students who need a login, or all of them with one tick");
+      await r.point(p.getByLabel("Select all"));
+      await r.wait(1400);
+      const boxes = p.getByRole("checkbox", { name: /^Select (?!all)/ });
+      await r.click(boxes.nth(0), 500);
+      await r.click(boxes.nth(1), 500);
+      r.caption("Students who already have one can have their password reset");
+      await r.point(p.getByRole("button", { name: /^Reset \d+ password/ }));
+      await r.wait(2000);
+      r.caption("Issue for selected");
+      await r.click(p.getByRole("button", { name: "Issue for selected" }), 1500);
+      r.caption("A slip for each student: the web address, school code, admission number and a first password");
+      await r.wait(3400);
+      r.caption("Print the slips and hand them out. Students choose their own password when they first sign in.");
+      await r.point(p.getByRole("button", { name: "Print slips" }));
+      await r.wait(2600);
+      await r.click(p.getByRole("button", { name: "Done" }), 900);
+    },
+  },
+  {
+    id: "e9-7",
+    chapter: EPISODES.students,
+    plan: "Free",
+    kind: "desktop",
+    title: "End-of-session promotion",
+    as: "owner",
+    covers: [
+      "/s/[slug]/students/promote",
+      "/s/[slug]/students/promote: Create 2027/2028 session",
+      "/s/[slug]/students/promote: Set all to",
+      "/s/[slug]/students/promote: Promote",
+      "/s/[slug]/students/promote: Repeat class",
+      "/s/[slug]/students/promote: Graduate",
+      "/s/[slug]/students/promote: Withdraw",
+      "/s/[slug]/students/promote: Apply to",
+      "/s/[slug]/students/promote: Make 2027/2028 the current session",
+      "/s/[slug]/students/promote: Cancel",
+      "/s/[slug]/students/promote: Apply promotion",
+      "/s/[slug]/students/promote: View students",
+      "journey: Promote classes at the end of the session",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/students/promote`);
+      r.caption("End of the school year: move everyone up a class in one go");
+      await r.wait(2400);
+      const create = p.getByRole("button", { name: /^Create .* session$/ });
+      if (await create.count()) {
+        r.caption("First, the next session. Its three terms are made for you.");
+        await r.click(create, 1500);
+        await r.offCamera(() => p.getByRole("button", { name: /^Apply to \d+ students/ }).waitFor({ timeout: 60_000 }));
+      }
+      r.caption("Every class, with each student set to move up. SS 3 is set to graduate.");
+      await r.wait(3000);
+      r.caption("Change a whole class at once");
+      await r.point(p.getByRole("combobox", { name: /^Set all in/ }).first());
+      await r.wait(1800);
+      r.caption("or one student: Aisha is repeating JSS 1");
+      await r.select(p.getByRole("combobox", { name: "Next session for Aisha Adeyemi" }), { label: "Repeat class" });
+      await r.wait(1800);
+      r.caption("The bar at the bottom counts who's promoted, repeating, graduating or leaving");
+      await r.point(p.getByRole("button", { name: /^Apply to \d+ students/ }));
+      await r.wait(2400);
+      await r.click(p.getByRole("button", { name: /^Apply to \d+ students/ }), 900);
+      r.caption("Check the totals, and choose whether the new session starts now");
+      await r.wait(2600);
+      await r.point(dialog.getByRole("button", { name: "Cancel" }));
+      await r.wait(1000);
+      await r.click(dialog.getByRole("button", { name: "Apply promotion" }), 1500);
+      await r.offCamera(() => p.getByRole("link", { name: "View students" }).waitFor({ timeout: 60_000 }));
+      r.caption("Done. Every student is in their new class, and last year's records are kept in their class history.");
+      await r.wait(3200);
     },
   },
 ];
