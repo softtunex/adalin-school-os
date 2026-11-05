@@ -1700,6 +1700,243 @@ export const SCENES: Scene[] = [
       ], 1600);
     },
   },
+
+  /* ---------------- Episode 8: Staff, roles and permissions ---------------- */
+  {
+    id: "e8-1",
+    chapter: EPISODES.staff,
+    plan: "Free",
+    kind: "desktop",
+    title: "Staff",
+    as: "owner",
+    covers: [
+      "/s/[slug]/staff",
+      "/s/[slug]/staff: All staff",
+      "/s/[slug]/staff: Search name, email or title…",
+      "/s/[slug]/staff: Role",
+      "/s/[slug]/staff: Status",
+      "/s/[slug]/staff: Export CSV",
+      "/s/[slug]/staff: Edit roles",
+      "/s/[slug]/staff: Save roles",
+      "/s/[slug]/staff: Deactivate",
+      "/s/[slug]/staff: Reactivate",
+      "/s/[slug]/staff: Download their data",
+      "journey: Give a staff member a role, and take it away",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/staff`);
+      r.caption("Staff: everyone who works at the school, and what each person can do");
+      await r.wait(2600);
+      r.caption("How many staff, who's active, invitations waiting, and the places your plan allows");
+      await r.wait(2600);
+      r.caption("Search by name, email or job title");
+      await r.type(p.getByPlaceholder("Search name, email or title…"), "Adeyemi");
+      await r.wait(1600);
+      await r.offCamera(() => p.goto(`${S}/staff`));
+      await tour(r, [
+        [p.getByRole("combobox", { name: /^Role/ }), "Filter by role"],
+        [p.getByRole("combobox", { name: /^Status/ }), "or by status: active or deactivated"],
+        [p.getByRole("link", { name: "Export CSV" }), "Export the list as a spreadsheet"],
+      ], 1900);
+
+      const row = p.getByRole("button", { name: "Actions for Mrs Funmilayo Adeyemi" });
+      r.caption("Each person has an actions menu. Give Mrs Adeyemi a second role: Librarian.");
+      await r.click(row, 700);
+      await r.click(p.getByRole("menuitem", { name: "Edit roles" }), 900);
+      r.caption("Roles decide which screens and buttons someone sees. A person can have more than one.");
+      await r.wait(2000);
+      await r.click(dialog.getByLabel(/^Librarian/), 800);
+      await r.click(dialog.getByRole("button", { name: "Save roles" }), 1200);
+      await r.wait(1200);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 800);
+      r.caption("She now has the Library in her menu, alongside her classes");
+      await r.wait(2400);
+      r.caption("Take a role away the same way");
+      await r.click(row, 700);
+      await r.click(p.getByRole("menuitem", { name: "Edit roles" }), 900);
+      await r.click(dialog.getByLabel(/^Librarian/), 800);
+      await r.click(dialog.getByRole("button", { name: "Save roles" }), 1200);
+      await r.wait(1000);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 800);
+
+      r.caption("When someone leaves, deactivate them. They can't sign in, but their records stay.");
+      await r.click(row, 700);
+      await r.point(p.getByRole("menuitem", { name: "Deactivate" }));
+      await r.wait(2200);
+      r.caption("Download their data if they ask for it. Reactivate brings a deactivated person back.");
+      await r.point(p.getByRole("menuitem", { name: "Download their data" }));
+      await r.wait(2400);
+      await p.keyboard.press("Escape");
+      await r.wait(600);
+    },
+  },
+  {
+    id: "e8-2",
+    chapter: EPISODES.staff,
+    plan: "Free",
+    kind: "desktop",
+    title: "Invite staff",
+    as: "owner",
+    covers: [
+      "/s/[slug]/staff: Invite staff",
+      "/s/[slug]/staff: Full name",
+      "/s/[slug]/staff: Email",
+      "/s/[slug]/staff: Job title (optional)",
+      "/s/[slug]/staff: Send invitation",
+      "/s/[slug]/staff: Invitation link",
+      "/s/[slug]/staff: Done",
+      "/s/[slug]/staff: Pending invitations",
+      "/s/[slug]/staff: Cancel invitation",
+      "email: Staff invitation",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/staff`);
+      // Start clean: cancel an invitation left by an earlier take.
+      if (await p.getByText("ngozi.adeleke@demo.adalinschoolhub.ng").count()) {
+        await r.offCamera(async () => {
+          await p.getByRole("button", { name: "More actions" }).last().click();
+          await p.getByRole("menuitem", { name: "Cancel invitation" }).click();
+          await dialog.getByRole("button", { name: "Cancel invitation" }).click();
+          await p.getByText("ngozi.adeleke@demo.adalinschoolhub.ng").waitFor({ state: "detached" });
+        });
+      }
+      r.caption("Invite a new teacher");
+      await r.click(p.getByRole("button", { name: "Invite staff" }), 900);
+      await r.type(dialog.getByLabel("Full name"), "Mrs Ngozi Adeleke");
+      await r.type(dialog.getByLabel("Email"), "ngozi.adeleke@demo.adalinschoolhub.ng");
+      await r.type(dialog.getByLabel("Job title (optional)"), "English teacher");
+      r.caption("Choose her role: Subject teacher");
+      await r.click(dialog.getByLabel(/^Subject teacher/), 900);
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: "Send invitation" }), 1500);
+      r.caption("She gets an email invitation. You can also send her this link on WhatsApp.");
+      const link = dialog.getByRole("textbox").first();
+      await r.point(link);
+      ctx.invite = await link.inputValue();
+      await r.wait(3000);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      const pending = p.getByRole("heading", { name: "Pending invitations" });
+      await r.reveal(pending);
+      r.caption("Pending invitations: the link works once and expires in 7 days");
+      await r.wait(2400);
+      r.caption("Changed your mind? Cancel the invitation from its menu.");
+      await r.click(p.getByRole("button", { name: "More actions" }).last(), 700);
+      await r.point(p.getByRole("menuitem", { name: "Cancel invitation" }));
+      await r.wait(2200);
+      await p.keyboard.press("Escape");
+    },
+  },
+  {
+    id: "e8-3",
+    chapter: EPISODES.staff,
+    plan: "Free",
+    kind: "desktop",
+    title: "Joining the school",
+    covers: [
+      "/invite/[token]",
+      "/invite/[token]: Your full name",
+      "/invite/[token]: Create a password",
+      "/invite/[token]: Confirm password",
+      "/invite/[token]: Accept and join",
+      "journey: Invite a teacher, who joins and sees only their screens",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.invite) throw new Error("Record e8-2 first: it makes the invitation link.");
+      await r.go(new URL(ctx.invite).pathname);
+      r.caption("Mrs Adeleke opens the link from her email");
+      await r.wait(2400);
+      r.caption("Her name is filled in. She creates a password.");
+      await r.point(p.getByLabel("Your full name"));
+      await r.wait(1400);
+      await r.type(p.getByLabel("Create a password"), "Adeleke2026");
+      await r.type(p.getByLabel("Confirm password"), "Adeleke2026");
+      await r.click(p.getByRole("button", { name: "Accept and join" }), 1500);
+      await r.offCamera(() => p.waitForURL(/\/s\//, { timeout: 60_000 }));
+      r.caption("She's in. As a subject teacher she sees only what she needs: her classes, scores and lessons.");
+      await r.wait(3200);
+      r.caption("No fees, payroll or settings. Those belong to other roles.");
+      await r.point(p.locator("nav, aside").first());
+      await r.wait(2800);
+    },
+  },
+  {
+    id: "e8-4",
+    chapter: EPISODES.staff,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Roles & permissions",
+    as: "owner",
+    covers: [
+      "/s/[slug]/roles",
+      "/s/[slug]/roles: Staff roles",
+      "/s/[slug]/roles: Parent and student access",
+      "/s/[slug]/roles: New role",
+      "/s/[slug]/roles: Role name",
+      "/s/[slug]/roles: What this role is for (optional)",
+      "/s/[slug]/roles: Permissions",
+      "/s/[slug]/roles: Create role",
+      "/s/[slug]/roles: Edit",
+      "/s/[slug]/roles: Save role",
+      "/s/[slug]/roles: Delete",
+      "/s/[slug]/roles: Delete role",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/roles`);
+      // Start clean: delete an Exams officer role left by an earlier take.
+      const left = p.getByRole("heading", { name: "Exams officer" });
+      if (await left.count()) {
+        await r.offCamera(async () => {
+          await p.locator("section, div").filter({ has: left }).getByRole("button", { name: "Delete" }).last().click();
+          await dialog.getByRole("button", { name: "Delete role" }).click();
+          await left.waitFor({ state: "detached" });
+        });
+      }
+      r.caption("Roles & permissions: what each role can see and do");
+      await r.wait(2600);
+      r.caption("SchoolHub comes with the usual school roles, from Proprietor to Storekeeper");
+      await r.reveal(p.getByRole("heading", { name: "Storekeeper" }));
+      await r.wait(2200);
+      r.caption("Parents and students have their own apps, with only their child's or their own records");
+      await r.reveal(p.getByRole("heading", { name: "Parent and student access" }));
+      await r.wait(2400);
+      r.caption("Need a role that isn't there? Make your own.", "Premium");
+      await r.click(p.getByRole("button", { name: "New role" }), 900);
+      await r.type(dialog.getByLabel("Role name"), "Exams officer");
+      await r.type(dialog.getByLabel("What this role is for (optional)"), "Runs exams and publishes results");
+      r.caption("Tick exactly what it can do");
+      for (const name of ["View results", "Review results", "Publish results", "Manage result checker PINs"]) {
+        await r.click(dialog.getByLabel(name, { exact: true }), 500);
+      }
+      await r.wait(800);
+      r.caption("You can only give permissions you have yourself");
+      await r.wait(2000);
+      await r.click(dialog.getByRole("button", { name: "Create role" }), 1500);
+      await r.offCamera(async () => {
+        const close = dialog.getByRole("button", { name: /Done|Close/ }).first();
+        if (await close.isVisible().catch(() => false)) await close.click();
+      });
+      const role = p.getByRole("heading", { name: "Exams officer" });
+      await r.reveal(role);
+      r.caption("Exams officer is ready to give to any staff member");
+      await r.wait(2200);
+      const card = p.locator("section, div").filter({ has: role });
+      r.caption("Edit it any time. Everyone with the role gets the change straight away.");
+      await r.point(card.getByRole("button", { name: "Edit" }).last());
+      await r.wait(2200);
+      r.caption("Or delete it");
+      await r.click(card.getByRole("button", { name: "Delete" }).last(), 900);
+      await r.wait(1200);
+      await r.click(dialog.getByRole("button", { name: "Delete role" }), 1200);
+      await r.wait(1600);
+    },
+  },
 ];
 
 if (require.main === module) {
