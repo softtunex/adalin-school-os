@@ -9,9 +9,12 @@ import { renderEmailHtml } from "./email-html";
  */
 export type Email = { to: string; subject: string; text: string; action?: { label: string; url: string }; fromName?: string };
 
-/** Sends through Resend when RESEND_API_KEY is set, otherwise logs (local development). */
+/**
+ * Sends through Resend when RESEND_API_KEY is set, otherwise logs (local development). MAIL_LOG_ONLY
+ * forces logging even with a key, so the demo server never emails anyone.
+ */
 export async function sendEmail(email: Email): Promise<boolean> {
-  const key = process.env.RESEND_API_KEY;
+  const key = process.env.MAIL_LOG_ONLY ? undefined : process.env.RESEND_API_KEY;
   if (!key) {
     console.info(`[mail] to=${email.to} subject="${email.subject}"\n${email.text}`);
     return false;

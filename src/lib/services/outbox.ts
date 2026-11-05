@@ -90,7 +90,7 @@ export const defaultTransport: Transport = async (m) => {
     // Loaded on use: the mail module is server-only, and scripts that only queue messages never need it.
     const { sendEmail } = await import("../mail");
     const ok = await sendEmail({ to: m.to, subject: m.subject ?? "A message from your school", text: m.body, fromName: m.schoolName });
-    return { ok: ok || !process.env.RESEND_API_KEY };
+    return { ok: ok || !process.env.RESEND_API_KEY || !!process.env.MAIL_LOG_ONLY };
   }
   const key = process.env.TERMII_API_KEY;
   if (!key) {

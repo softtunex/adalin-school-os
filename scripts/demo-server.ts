@@ -41,6 +41,8 @@ const env = {
   ALLOW_LOCAL_DB: "1",
   PAYMENTS_TEST_MODE: "1",
   ALLOW_TEST_LOGIN_CODES: "1",
+  // Demo people have made-up addresses: log emails instead of sending them, even if a key is set.
+  MAIL_LOG_ONLY: "1",
   APP_URL: `http://localhost:${port}`,
   // Placeholder sign-in apps so the Google and Microsoft options show as they will once the real
   // credentials are added (checklist item 15). The recording never signs in through them.
