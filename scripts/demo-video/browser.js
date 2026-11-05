@@ -109,6 +109,11 @@
   }
 
   function start() {
+    // The recording browser has no GPU, so a blurred dialog backdrop is redrawn in software on every
+    // frame and slows each step to a crawl. The dimming stays; only the 2px blur goes.
+    const calm = document.createElement("style");
+    calm.textContent = "::backdrop{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}";
+    document.head.appendChild(calm);
     mount();
     tidy();
     new MutationObserver(tidy).observe(document.body, { childList: true, subtree: true, characterData: true });

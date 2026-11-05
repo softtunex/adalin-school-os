@@ -145,7 +145,8 @@ export class Recorder {
     await this.page.mouse.down();
     await this.page.waitForTimeout(90);
     await this.page.mouse.up();
-    await this.page.waitForLoadState("networkidle").catch(() => {});
+    // Capped: some pages keep a request open in the background, and an uncapped wait sits on camera.
+    await this.page.waitForLoadState("networkidle", { timeout: 4000 }).catch(() => {});
     await this.page.waitForTimeout(settle);
   }
 

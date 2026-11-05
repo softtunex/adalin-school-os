@@ -1382,6 +1382,324 @@ export const SCENES: Scene[] = [
       await r.wait(2600);
     },
   },
+
+  /* ---------------- Episode 7: Classes and subjects ---------------- */
+  {
+    id: "e7-1",
+    chapter: EPISODES.academics,
+    plan: "Free",
+    kind: "desktop",
+    title: "Classes",
+    as: "owner",
+    covers: [
+      "/s/[slug]/academics",
+      "/s/[slug]/academics: Classes",
+      "/s/[slug]/academics: Add class level",
+      "/s/[slug]/academics: Class level name",
+      "/s/[slug]/academics: Section",
+      "/s/[slug]/academics: Arms",
+      "/s/[slug]/academics: Add arm",
+      "/s/[slug]/academics: Arm name",
+      "/s/[slug]/academics: Add class",
+      "/s/[slug]/academics: Done",
+      "/s/[slug]/academics: Edit class",
+      "/s/[slug]/academics: Class teacher",
+      "/s/[slug]/academics: Capacity (optional)",
+      "/s/[slug]/academics: Save class",
+      "/s/[slug]/academics: Remove class",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/academics`);
+      // Start clean, so the scene can be re-recorded: remove an Emerald arm left by an earlier take.
+      const left = p.getByRole("button", { name: "Actions for JSS 1 Emerald" });
+      if (await left.count()) {
+        await r.offCamera(async () => {
+          await left.click();
+          await p.getByRole("menuitem", { name: "Remove class" }).click();
+          await dialog.getByRole("button", { name: "Remove class" }).click();
+          await left.waitFor({ state: "detached" });
+        });
+      }
+      r.caption("Academics: your classes, subjects, teachers and terms, all in one place");
+      await r.wait(2600);
+      r.caption("At a glance: how many classes, subjects and students, and the current term");
+      await r.wait(2400);
+      r.caption("Classes are grouped by level. Each level can have several arms, like Gold and Diamond.");
+      await r.wait(2600);
+
+      r.caption("Add a class level, like Primary 4 or Year 7");
+      await r.click(p.getByRole("button", { name: "Add class level" }), 900);
+      await tour(r, [
+        [dialog.getByLabel("Class level name"), "Its name"],
+        [dialog.getByLabel("Section"), "Which section it belongs to"],
+        [dialog.getByLabel("Arms"), "and its arms, separated by commas"],
+      ], 1700);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+
+      r.caption("Add an arm to a level that already exists");
+      await r.click(p.getByRole("button", { name: "Add arm" }).first(), 900);
+      await r.type(dialog.getByLabel("Arm name"), "Emerald");
+      await r.click(dialog.getByRole("button", { name: "Add class" }), 1200);
+      await r.wait(1000);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      r.caption("JSS 1 Emerald is ready for students");
+      await r.wait(1800);
+
+      r.caption("Each class has an actions menu");
+      await r.click(p.getByRole("button", { name: "Actions for JSS 1 Emerald" }), 700);
+      await r.click(p.getByRole("menuitem", { name: "Edit class" }), 900);
+      await tour(r, [
+        [dialog.getByRole("combobox").first(), "The class teacher takes the register and writes report card comments"],
+        [dialog.getByRole("spinbutton").first(), "and how many students the class can take"],
+        [dialog.getByRole("button", { name: "Save class" }), "Save class"],
+      ], 2000);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+
+      r.caption("Remove a class you don't need. A class with students must be emptied first.");
+      await r.click(p.getByRole("button", { name: "Actions for JSS 1 Emerald" }), 700);
+      await r.click(p.getByRole("menuitem", { name: "Remove class" }), 900);
+      await r.wait(1400);
+      await r.click(dialog.getByRole("button", { name: "Remove class" }), 1200);
+      await r.wait(1600);
+    },
+  },
+  {
+    id: "e7-2",
+    chapter: EPISODES.academics,
+    plan: "Free",
+    kind: "desktop",
+    title: "Subjects",
+    as: "owner",
+    covers: [
+      "/s/[slug]/academics#subjects",
+      "/s/[slug]/academics: Subjects",
+      "/s/[slug]/academics: All subjects",
+      "/s/[slug]/academics: Add subject",
+      "/s/[slug]/academics: Subject name",
+      "/s/[slug]/academics: Code",
+      "/s/[slug]/academics: Offered in",
+      "/s/[slug]/academics: Elective",
+      "/s/[slug]/academics: Edit subject",
+      "/s/[slug]/academics: Save subject",
+      "/s/[slug]/academics: Remove subject",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/academics?tab=subjects`);
+      r.caption("Subjects: every subject the school teaches, and the classes that take it");
+      await r.wait(2600);
+      r.caption("Add a subject");
+      await r.click(p.getByRole("button", { name: "Add subject" }), 900);
+      await r.type(dialog.getByLabel("Subject name"), "Robotics");
+      await r.type(dialog.getByLabel("Code"), "ROB");
+      r.caption("Tick the levels that offer it");
+      await r.click(dialog.getByLabel("JSS 1", { exact: true }), 600);
+      await r.click(dialog.getByLabel("JSS 2", { exact: true }), 600);
+      r.caption("Elective: only the students who choose it take it, and only they get a score for it");
+      await r.click(dialog.getByLabel("Elective").first(), 900);
+      await r.wait(1200);
+      await r.click(dialog.getByRole("button", { name: "Add subject" }), 1200);
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      const row = p.getByRole("button", { name: "Actions for Robotics" });
+      await r.reveal(row);
+      r.caption("Robotics is now on the list");
+      await r.wait(1600);
+      r.caption("Edit a subject to change its name, code or classes");
+      await r.click(row, 700);
+      await r.click(p.getByRole("menuitem", { name: "Edit subject" }), 900);
+      await r.point(dialog.getByRole("button", { name: "Save subject" }));
+      await r.wait(1800);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+      r.caption("Or remove it. It's taken off every class, with its teachers.");
+      await r.click(row, 700);
+      await r.click(p.getByRole("menuitem", { name: "Remove subject" }), 900);
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Remove subject" }), 1200);
+      await r.wait(1600);
+    },
+  },
+  {
+    id: "e7-3",
+    chapter: EPISODES.academics,
+    plan: "Free",
+    kind: "desktop",
+    title: "Subject teachers",
+    as: "owner",
+    covers: ["/s/[slug]/academics#teachers", "/s/[slug]/academics: Subject teachers", "/s/[slug]/academics: Class", "/s/[slug]/academics: Teacher", "/s/[slug]/academics: Not assigned"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/academics?tab=teachers`);
+      r.caption("Subject teachers: who teaches each subject in each class");
+      await r.wait(2400);
+      r.caption("Pick a class");
+      await r.select(p.getByRole("combobox", { name: /^Class/ }), { label: "JSS 2 Gold" });
+      await r.wait(1600);
+      r.caption("Each subject the class takes, and how many have a teacher");
+      await r.wait(2000);
+      const selects = p.getByRole("combobox", { name: "Teacher" });
+      const free = await r.offCamera(() => selects.evaluateAll((els) => els.findIndex((e) => (e as HTMLSelectElement).value === "")));
+      if (free >= 0) {
+        const target = selects.nth(free);
+        const name = await r.offCamera(() => target.evaluate((e) => (e as HTMLSelectElement).options[1].text));
+        r.caption("Choose a teacher. It saves straight away.");
+        await r.select(target, { label: name });
+        await r.wait(2000);
+        r.caption("That teacher now enters this subject's scores, and sees the class on their timetable");
+        await r.wait(2400);
+        await r.offCamera(() => target.selectOption(""));
+      }
+    },
+  },
+  {
+    id: "e7-4",
+    chapter: EPISODES.academics,
+    plan: "Free",
+    kind: "desktop",
+    title: "Electives",
+    as: "owner",
+    covers: ["/s/[slug]/academics#electives", "/s/[slug]/academics: Electives", "/s/[slug]/academics: All", "/s/[slug]/academics: None", "/s/[slug]/academics: Save electives"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/academics?tab=electives`);
+      r.caption("Electives: which students take which optional subjects");
+      await r.wait(2400);
+      r.caption("Every student in the class, with a tick for each elective they take");
+      await r.wait(2400);
+      r.caption("Tick one student at a time");
+      await r.click(p.getByRole("checkbox").first(), 900);
+      await r.wait(800);
+      await r.click(p.getByRole("checkbox").first(), 900);
+      await tour(r, [
+        [p.getByRole("button", { name: "All", exact: true }).first(), "or tick the whole class with All"],
+        [p.getByRole("button", { name: "None", exact: true }).first(), "and clear it with None"],
+        [p.getByRole("button", { name: "Save electives" }), "Save electives. Report cards only show the subjects each student takes."],
+      ], 2200);
+    },
+  },
+  {
+    id: "e7-5",
+    chapter: EPISODES.academics,
+    plan: "Free",
+    kind: "desktop",
+    title: "Sessions & terms",
+    as: "owner",
+    covers: [
+      "/s/[slug]/academics#terms",
+      "/s/[slug]/academics: Sessions & terms",
+      "/s/[slug]/academics: New session",
+      "/s/[slug]/academics: Session",
+      "/s/[slug]/academics: Create session",
+      "/s/[slug]/academics: Set dates",
+      "/s/[slug]/academics: Resumes",
+      "/s/[slug]/academics: Vacates",
+      "/s/[slug]/academics: Save dates",
+      "/s/[slug]/academics: Make current term",
+      "/s/[slug]/academics: Make current",
+      "/s/[slug]/academics: Promote students",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/academics?tab=terms`);
+      r.caption("Sessions & terms: the school year, and which term you're in");
+      await r.wait(2400);
+      r.caption("Set each term's dates");
+      await r.click(p.getByRole("button", { name: "Actions for First Term" }).first(), 700);
+      await r.click(p.getByRole("menuitem", { name: "Set dates" }), 900);
+      await tour(r, [
+        [dialog.getByLabel("Resumes"), "When it resumes"],
+        [dialog.getByLabel("Vacates"), "and when it vacates. Report cards and the calendar use them."],
+      ], 1900);
+      await r.click(dialog.getByRole("button", { name: "Save dates" }), 1200);
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      r.caption("When a term ends, make the next one current");
+      await r.click(p.getByRole("button", { name: "Actions for Second Term" }).first(), 700);
+      await r.click(p.getByRole("menuitem", { name: "Make current term" }), 900);
+      r.caption("From then on, attendance, scores and fees go against the new term");
+      await r.wait(2400);
+      await r.click(dialog.getByRole("button", { name: "Cancel" }), 700);
+      r.caption("At the end of the year, start a new session. Its three terms are made for you.");
+      await r.click(p.getByRole("button", { name: "New session" }), 900);
+      await r.point(dialog.getByLabel("Session"));
+      await r.wait(1800);
+      await r.point(dialog.getByRole("button", { name: "Create session" }));
+      await r.wait(1400);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+      r.caption("Then promote students to their next class. That's covered in the Students episode.");
+      await r.point(p.getByRole("link", { name: "Promote students" }));
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e7-6",
+    chapter: EPISODES.academics,
+    plan: "Free",
+    kind: "desktop",
+    title: "Assessment & grading",
+    as: "owner",
+    covers: [
+      "/s/[slug]/academics#assessment",
+      "/s/[slug]/academics: Assessment & grading",
+      "/s/[slug]/academics: Continuous assessment and exam",
+      "/s/[slug]/academics: 20 / 20 / 60",
+      "/s/[slug]/academics: 40 / 60",
+      "/s/[slug]/academics: 30 / 70",
+      "/s/[slug]/academics: 10 / 10 / 20 / 60",
+      "/s/[slug]/academics: Add column",
+      "/s/[slug]/academics: Save assessment",
+      "/s/[slug]/academics: Grading scale",
+      "/s/[slug]/academics: WAEC (A1 to F9)",
+      "/s/[slug]/academics: A to F (A from 70)",
+      "/s/[slug]/academics: British (A* to U)",
+      "/s/[slug]/academics: Grade",
+      "/s/[slug]/academics: Minimum score",
+      "/s/[slug]/academics: Remark",
+      "/s/[slug]/academics: Counts as pass",
+      "/s/[slug]/academics: Add grade",
+      "/s/[slug]/academics: Save grading scale",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/academics?tab=assessment`);
+      r.caption("Assessment & grading: how each subject's score is made up, and the grades");
+      await r.wait(2400);
+      r.caption("The columns teachers fill in: here two CAs of 20 and an exam of 60");
+      await r.point(p.getByLabel("Component 1 name"));
+      await r.wait(2200);
+      r.caption("Or start from a common split");
+      await tour(r, [
+        [p.getByRole("button", { name: "40 / 60" }), "40 / 60"],
+        [p.getByRole("button", { name: "30 / 70" }), "30 / 70"],
+        [p.getByRole("button", { name: "10 / 10 / 20 / 60" }), "or four columns"],
+      ], 1300);
+      r.caption("Add a column, like a project or a test");
+      await r.click(p.getByRole("button", { name: "Add column" }), 900);
+      await r.wait(1400);
+      await r.offCamera(() => p.reload());
+      r.caption("Save assessment. If scores already exist, SchoolHub warns you before anything is lost.");
+      await r.point(p.getByRole("button", { name: "Save assessment" }));
+      await r.wait(2600);
+      await r.reveal(p.getByRole("heading", { name: "Grading scale" }));
+      r.caption("Grading scale: the grade for each score");
+      await r.wait(1800);
+      await tour(r, [
+        [p.getByRole("button", { name: "WAEC (A1 to F9)" }), "Use WAEC grades"],
+        [p.getByRole("button", { name: "A to F (A from 70)" }), "A to F"],
+        [p.getByRole("button", { name: "British (A* to U)" }), "or British grades"],
+        [p.getByLabel("Grade").first(), "Or set your own: the grade"],
+        [p.getByLabel("Minimum score").first(), "the lowest score that earns it"],
+        [p.getByLabel("Remark").first(), "the remark printed on the report card"],
+        [p.getByLabel("Counts as pass").first(), "and whether it counts as a pass"],
+        [p.getByRole("button", { name: "Add grade" }), "Add a grade"],
+        [p.getByRole("button", { name: "Save grading scale" }), "Save grading scale"],
+      ], 1600);
+    },
+  },
 ];
 
 if (require.main === module) {
