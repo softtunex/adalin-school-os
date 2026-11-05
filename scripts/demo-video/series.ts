@@ -2333,6 +2333,210 @@ export const SCENES: Scene[] = [
       await r.wait(3200);
     },
   },
+
+  /* ---------------- Episode 10: Online admissions ---------------- */
+  {
+    id: "e10-1",
+    chapter: EPISODES.admissions,
+    plan: "Standard",
+    kind: "phone",
+    title: "Parents",
+    covers: [
+      "/apply/[slug]",
+      "/apply/[slug]: Class applying for",
+      "/apply/[slug]: First name",
+      "/apply/[slug]: Surname",
+      "/apply/[slug]: Boy or girl",
+      "/apply/[slug]: Date of birth",
+      "/apply/[slug]: Current or last school (optional)",
+      "/apply/[slug]: Your full name",
+      "/apply/[slug]: Relationship",
+      "/apply/[slug]: Phone number",
+      "/apply/[slug]: Email (optional)",
+      "/apply/[slug]: privacy notice",
+      "/apply/[slug]: Send application",
+      "/apply/[slug]/status/[token]",
+      "/apply/[slug]/status/[token]: Application received",
+      "/apply/[slug]/status/[token]: Email for the receipt",
+      "/apply/[slug]/status/[token]: Pay",
+      "/apply/[slug]/status/[token]/test-checkout",
+      "email: Application received",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go(`/apply/adalin-college`);
+      r.caption("Mr Adigun opens the school's admission link on his phone");
+      await r.wait(2200);
+      r.caption("The form shows the school's name, the fee and the exam details");
+      await r.wait(2200);
+      await r.select(p.getByLabel("Class applying for"), { label: "JSS 1" });
+      await r.type(p.getByLabel("First name"), "Ifeoluwa");
+      await r.type(p.getByLabel("Surname"), "Adigun");
+      await r.select(p.getByLabel("Boy or girl"), { label: "Girl" });
+      await r.point(p.getByLabel("Date of birth"));
+      await p.getByLabel("Date of birth").fill("2014-03-21");
+      await r.type(p.getByLabel("Current or last school (optional)"), "Bright Stars Primary School");
+      r.caption("Then his own details");
+      await r.type(p.getByLabel("Your full name"), "Mr Segun Adigun");
+      await r.select(p.getByLabel("Relationship"), "Father");
+      await r.type(p.getByLabel("Phone number"), "0803 555 0119");
+      await r.type(p.getByLabel("Email (optional)"), "segun.adigun@example.com");
+      r.caption("He agrees to the school keeping these details, and sends it");
+      await r.click(p.locator("input[name=consent]"), 600);
+      await r.click(p.getByRole("button", { name: "Send application" }), 1500);
+      await r.offCamera(() => p.waitForURL(/\/status\//, { timeout: 30_000 }));
+      ctx.applyStatus = new URL(p.url()).pathname;
+      r.caption("Application received. This page keeps him updated, and he gets the link by email.");
+      await r.wait(3000);
+      const pay = p.getByRole("button", { name: /^Pay ₦/ });
+      if (await pay.count()) {
+        await r.reveal(pay);
+        r.caption("He pays the form fee online. It goes straight to the school.");
+        await r.wait(1600);
+        await r.click(pay, 1200);
+        await r.offCamera(() => p.waitForURL(/test-checkout/, { timeout: 30_000 }));
+        r.caption("Card, transfer or USSD, through Paystack");
+        await r.wait(1600);
+        await r.click(p.getByRole("button", { name: /^Pay ₦/ }), 1200);
+        await r.offCamera(() => p.waitForURL(/paid=1/, { timeout: 30_000 }));
+        r.caption("Paid. The school sees it straight away.");
+        await r.wait(2600);
+      }
+    },
+  },
+  {
+    id: "e10-2",
+    chapter: EPISODES.admissions,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Applicants",
+    as: "owner",
+    covers: [
+      "/s/[slug]/admissions",
+      "/s/[slug]/admissions: Applicants",
+      "/s/[slug]/admissions: Name, reference or phone…",
+      "/s/[slug]/admissions: Class",
+      "/s/[slug]/admissions: Form fee",
+      "/s/[slug]/admissions: Paid",
+      "/s/[slug]/admissions: Not paid",
+      "/s/[slug]/admissions: Export",
+      "/s/[slug]/admissions: Form and settings",
+      "/s/[slug]/admissions/[id]",
+      "/s/[slug]/admissions/[id]: Invite to entrance exam",
+      "/s/[slug]/admissions/[id]: Invite to interview",
+      "/s/[slug]/admissions/[id]: Tell the parent",
+      "/s/[slug]/admissions/[id]: Entrance exam score",
+      "/s/[slug]/admissions/[id]: Interview notes",
+      "/s/[slug]/admissions/[id]: Save assessment",
+      "/s/[slug]/admissions/[id]: Offer admission",
+      "/s/[slug]/admissions/[id]: Not successful",
+      "/s/[slug]/admissions/[id]: Withdrawn",
+      "/s/[slug]/admissions/[id]: Offer letter",
+      "/s/[slug]/admissions/[id]: Parent's page",
+      "email: Application update",
+      "pdf: Admission offer letter",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/admissions`);
+      r.caption("Admissions: every application, as it comes in");
+      await r.wait(2600);
+      await tour(r, [
+        [p.getByPlaceholder("Name, reference or phone…"), "Search by name, reference or phone"],
+        [p.getByRole("combobox", { name: /^Class/ }), "Filter by class"],
+        [p.getByRole("combobox", { name: /^Form fee/ }), "or by who has paid the form fee"],
+        [p.getByRole("link", { name: "Export" }), "Export the list"],
+        [p.getByRole("link", { name: "Form and settings" }), "The form itself is set up here, as shown in the Settings episode"],
+      ], 1800);
+      r.caption("Ifeoluwa's application is in, with the fee paid");
+      await r.click(p.getByRole("link", { name: "Ifeoluwa Adigun" }), 1200);
+      await r.wait(2400);
+      r.caption("Next step: invite her to the entrance exam. The parent is told by email.");
+      await r.point(p.getByLabel(/^Tell the parent/).first());
+      await r.wait(1600);
+      await r.click(p.getByRole("button", { name: "Invite to entrance exam" }), 1500);
+      await r.wait(1600);
+      r.caption("After the exam, record the score and any interview notes");
+      await r.type(p.getByLabel("Entrance exam score"), "78");
+      await r.type(p.getByLabel("Interview notes"), "Confident and well prepared. Strong in maths.");
+      await r.click(p.getByRole("button", { name: "Save assessment" }), 1500);
+      await r.wait(1200);
+      await tour(r, [
+        [p.getByRole("button", { name: "Not successful" }), "If it's a no, mark the application not successful"],
+        [p.getByRole("button", { name: "Withdrawn" }), "or withdrawn if the family pulls out"],
+      ], 1900);
+      r.caption("It's a yes: offer admission");
+      await r.click(p.getByRole("button", { name: "Offer admission" }), 1500);
+      await r.wait(1600);
+      await tour(r, [
+        [p.getByRole("link", { name: /Offer letter/ }).first(), "An offer letter is made for you, with the school's logo and signature"],
+        [p.getByRole("link", { name: /Parent's page/ }).first(), "and the parent sees the offer on their page"],
+      ], 2400);
+    },
+  },
+  {
+    id: "e10-3",
+    chapter: EPISODES.admissions,
+    plan: "Standard",
+    kind: "phone",
+    title: "Parents",
+    covers: [
+      "/apply/[slug]/status/[token]: Offer of admission",
+      "/apply/[slug]/status/[token]: Offer letter (PDF)",
+      "/apply/[slug]/status/[token]: Accept the offer",
+      "/apply/[slug]/status/[token]: Decline",
+      "/apply/[slug]/status/[token]: Offer accepted",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.applyStatus) throw new Error("Record e10-1 first: it makes the application.");
+      await r.go(ctx.applyStatus);
+      r.caption("Mr Adigun gets an email: Ifeoluwa has been offered a place");
+      await r.wait(2600);
+      await r.reveal(p.getByRole("link", { name: /Offer letter \(PDF\)/ }).first());
+      r.caption("He can download the offer letter");
+      await r.wait(2200);
+      const accept = p.getByRole("button", { name: "Accept the offer" });
+      await r.reveal(accept);
+      r.caption("and accept the offer, or decline it");
+      await r.wait(1600);
+      await r.click(accept, 1500);
+      await r.offCamera(() => p.waitForURL(/accepted=1/, { timeout: 30_000 }));
+      r.caption("Offer accepted. The school is told straight away.");
+      await r.wait(2800);
+    },
+  },
+  {
+    id: "e10-4",
+    chapter: EPISODES.admissions,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Enrolment",
+    as: "owner",
+    covers: [
+      "/s/[slug]/admissions/[id]: Enrol as a student",
+      "/s/[slug]/admissions/[id]: Enrol",
+      "/s/[slug]/admissions/[id]: Open the student record",
+      "journey: An applicant applies online, sits the exam, gets an offer and is enrolled",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/admissions`);
+      await r.offCamera(() => p.getByRole("link", { name: "Ifeoluwa Adigun" }).click());
+      await r.offCamera(() => p.waitForURL(/admissions\/[0-9a-f-]{36}/));
+      r.caption("The offer was accepted. Time to enrol Ifeoluwa as a student.");
+      await r.wait(2600);
+      await r.reveal(p.getByRole("heading", { name: "Enrol as a student" }));
+      r.caption("Choose her class");
+      await r.select(p.getByLabel("Class", { exact: true }), { label: "JSS 1 Gold" });
+      await r.wait(800);
+      r.caption("Enrol: her student record is made, with an admission number, and her father linked");
+      await r.click(p.getByRole("button", { name: "Enrol" }), 1500);
+      await r.offCamera(() => p.waitForURL(/students\/[0-9a-f-]{36}/, { timeout: 30_000 }));
+      r.caption("From application to student, without typing anything twice");
+      await r.wait(3200);
+    },
+  },
 ];
 
 if (require.main === module) {

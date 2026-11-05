@@ -43,6 +43,32 @@ const env = {
   ALLOW_TEST_LOGIN_CODES: "1",
   // Demo people have made-up addresses: log emails instead of sending them, even if a key is set.
   MAIL_LOG_ONLY: "1",
+  // `next start` runs in production mode, so Next would also load .env.production.local with the live
+  // keys. A variable already set (even to "") is never overwritten by an env file, so blank every live
+  // service here: the demo uses its own database, the test checkout, local files and no SMS.
+  ...Object.fromEntries(
+    [
+      "DATABASE_URL",
+      "PAYSTACK_SECRET_KEY",
+      "RESEND_API_KEY",
+      "TERMII_API_KEY",
+      "CLOUDINARY_CLOUD_NAME",
+      "CLOUDINARY_API_KEY",
+      "CLOUDINARY_API_SECRET",
+      "STORAGE_ENDPOINT",
+      "STORAGE_ACCESS_KEY_ID",
+      "STORAGE_SECRET_ACCESS_KEY",
+      "STORAGE_BUCKET",
+      "R2_ACCOUNT_ID",
+      "R2_ACCESS_KEY_ID",
+      "R2_SECRET_ACCESS_KEY",
+      "R2_BUCKET",
+      "SENTRY_DSN",
+      "VERCEL_TOKEN",
+      "CRON_SECRET",
+    ].map((key) => [key, ""]),
+  ),
+  SESSION_SECRET: "adalin-schoolhub-demo-only-session-secret-not-for-live-use",
   APP_URL: `http://localhost:${port}`,
   // Placeholder sign-in apps so the Google and Microsoft options show as they will once the real
   // credentials are added (checklist item 15). The recording never signs in through them.
