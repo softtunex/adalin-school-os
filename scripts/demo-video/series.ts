@@ -2537,6 +2537,145 @@ export const SCENES: Scene[] = [
       await r.wait(3200);
     },
   },
+
+  /* ---------------- Episode 11: Attendance ---------------- */
+  {
+    id: "e11-1",
+    chapter: EPISODES.attendance,
+    plan: "Free",
+    kind: "phone",
+    title: "Teachers",
+    as: "teacher",
+    covers: [
+      "/s/[slug]/attendance",
+      "/s/[slug]/attendance: Take register",
+      "/s/[slug]/attendance/[classId]",
+      "/s/[slug]/attendance/[classId]: Present",
+      "/s/[slug]/attendance/[classId]: Absent",
+      "/s/[slug]/attendance/[classId]: Late",
+      "/s/[slug]/attendance/[classId]: Excused",
+      "/s/[slug]/attendance/[classId]: Reason (optional)",
+      "/s/[slug]/attendance/[classId]: Mark all present",
+      "/s/[slug]/attendance/[classId]: Save register",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/attendance`);
+      r.caption("8 a.m. Mrs Adeyemi takes the register for her class, on her phone");
+      await r.wait(2400);
+      await r.click(p.getByRole("link", { name: /Take register|View or edit register/ }).first(), 1200);
+      await r.offCamera(() => p.getByRole("radiogroup").first().waitFor());
+      r.caption("Everyone starts as present. She taps only the few who aren't.");
+      await r.wait(2600);
+      const groups = p.getByRole("radiogroup");
+      const names = await r.offCamera(() => groups.evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")!.replace("Attendance for ", ""))));
+      const absent = names.find((n) => n === "Oluwaseun Lawal") ?? names[0];
+      const late = names.find((n) => n !== absent)!;
+      const excused = names.filter((n) => n !== absent && n !== late)[1] ?? names[names.length - 1];
+      const row = (n: string) => p.getByRole("radiogroup", { name: `Attendance for ${n}` });
+      await r.reveal(row(absent));
+      r.caption(`${absent.split(" ")[0]} is absent`);
+      await r.click(row(absent).getByRole("radio", { name: "Absent" }), 800);
+      await r.wait(1000);
+      r.caption(`${late.split(" ")[0]} came in late. Late still counts as present.`);
+      await r.reveal(row(late));
+      await r.click(row(late).getByRole("radio", { name: "Late" }), 800);
+      await r.wait(1200);
+      r.caption(`${excused.split(" ")[0]} is excused, with a reason`);
+      await r.reveal(row(excused));
+      await r.click(row(excused).getByRole("radio", { name: "Excused" }), 800);
+      await r.type(p.getByLabel(`Reason for ${excused}`), "Hospital appointment");
+      await r.wait(1000);
+      r.caption("Made a mistake? Mark all present starts again.");
+      await r.reveal(p.getByRole("button", { name: "Mark all present" }));
+      await r.point(p.getByRole("button", { name: "Mark all present" }));
+      await r.wait(1800);
+      r.caption("Save register. Parents of absent children are told straight away.");
+      await r.click(p.getByRole("button", { name: /^Save register/ }), 1500);
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e11-2",
+    chapter: EPISODES.attendance,
+    plan: "Free",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: ["email: Absence alert", "journey: Take the morning register, and the parent is told about an absence"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p/notifications");
+      r.caption("Minutes later, Mrs Lawal gets an alert, by email and in the parent app");
+      await r.wait(2600);
+      const alert = p.getByText(/was marked absent today/).first();
+      if (await alert.count()) {
+        await r.reveal(alert);
+        await r.point(alert);
+      }
+      r.caption("If it's unexpected, she can contact the school straight away");
+      await r.wait(2800);
+    },
+  },
+  {
+    id: "e11-3",
+    chapter: EPISODES.attendance,
+    plan: "Free",
+    kind: "desktop",
+    title: "The whole school",
+    as: "owner",
+    covers: [
+      "/s/[slug]/attendance: Registers taken",
+      "/s/[slug]/attendance: In school",
+      "/s/[slug]/attendance: Absent",
+      "/s/[slug]/attendance: Late",
+      "/s/[slug]/attendance: Date",
+      "/s/[slug]/attendance: Back to today",
+      "/s/[slug]/attendance: View or edit register",
+      "/s/[slug]/attendance/[classId]: Save register again",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/attendance`);
+      r.caption("The principal sees every class at once");
+      await r.wait(2400);
+      r.caption("How many registers are in, who's in school, absent or late");
+      await r.wait(2600);
+      r.caption("Classes still to take their register are easy to spot");
+      await r.wait(2400);
+      const date = p.getByLabel("Date");
+      r.caption("Look back at any school day");
+      await r.point(date);
+      const d = await date.inputValue();
+      const prev = new Date(`${d}T12:00:00Z`);
+      prev.setUTCDate(prev.getUTCDate() - (prev.getUTCDay() === 1 ? 3 : 1));
+      await date.fill(prev.toISOString().slice(0, 10));
+      await date.dispatchEvent("change");
+      await r.offCamera(() => p.waitForURL(/date=/, { timeout: 15_000 }).catch(() => {}));
+      await r.wait(2400);
+      const back = p.getByRole("link", { name: "Back to today" });
+      if (await back.count()) {
+        r.caption("Back to today");
+        await r.point(back);
+        await r.offCamera(async () => {
+          await back.click();
+          await p.waitForURL((u) => !u.search.includes("date="), { timeout: 15_000 });
+        });
+      } else await r.go(`${S}/attendance`);
+      const view = p.getByRole("link", { name: "View or edit register" }).first();
+      r.caption("Open a register that's been taken to check it, or correct it");
+      await r.point(view);
+      await r.offCamera(async () => {
+        await view.click();
+        await p.getByRole("radiogroup").first().waitFor({ timeout: 20_000 });
+      });
+      await r.wait(2400);
+      await r.reveal(p.getByRole("button", { name: /^Save register/ }));
+      r.caption("Changes save over the earlier register");
+      await r.point(p.getByRole("button", { name: /^Save register/ }));
+      await r.wait(2200);
+    },
+  },
 ];
 
 if (require.main === module) {
