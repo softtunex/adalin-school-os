@@ -4023,6 +4023,222 @@ export const SCENES: Scene[] = [
       await r.wait(2200);
     },
   },
+
+  /* ---------------- Episode 19: Transport, boarding and the sick bay ---------------- */
+  {
+    id: "e19-1",
+    chapter: EPISODES.care,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Transport",
+    as: "transport",
+    covers: [
+      "/s/[slug]/transport",
+      "/s/[slug]/transport#routes",
+      "/s/[slug]/transport: Routes",
+      "/s/[slug]/transport: Add route",
+      "/s/[slug]/transport#riders",
+      "/s/[slug]/transport: Students",
+      "/s/[slug]/transport: Add student",
+      "/s/[slug]/transport: Student",
+      "/s/[slug]/transport: Route",
+      "/s/[slug]/transport: Stop",
+      "/s/[slug]/transport: Rides",
+      "/s/[slug]/transport: Put on the bus",
+      "/s/[slug]/transport#buses",
+      "/s/[slug]/transport: Buses",
+      "/s/[slug]/transport: Add bus",
+      "/s/[slug]/transport#register",
+      "/s/[slug]/transport: Bus register",
+      "journey: Assign students to a bus route",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/transport`);
+      r.caption("Transport: the school's bus routes, each with its stops, times and bus");
+      await r.wait(2800);
+      await tour(r, [
+        [p.getByRole("button", { name: "Add route" }), "Add a route with its stops and pick-up times"],
+      ], 2000);
+      await r.go(`${S}/transport?tab=riders`);
+      r.caption("Students: who rides which bus. Put Ifeoluwa on the Lekki – Ajah bus.");
+      await r.click(p.getByRole("button", { name: "Add student" }), 900);
+      await r.type(dialog.getByLabel("Student"), "Ifeoluwa");
+      await r.click(dialog.getByRole("option", { name: /Ifeoluwa/ }).first(), 700);
+      await r.select(dialog.getByLabel("Route"), { label: "Lekki – Ajah" });
+      r.caption("Her stop, with its pick-up and drop-off times");
+      await r.offCamera(() => p.waitForTimeout(400));
+      await r.point(dialog.getByLabel("Stop"));
+      await dialog.getByLabel("Stop").selectOption({ index: 1 });
+      await r.wait(1000);
+      await tour(r, [[dialog.getByLabel("Rides"), "Mornings, afternoons, or both"]], 1500);
+      await r.click(dialog.getByRole("button", { name: "Put on the bus" }), 1500);
+      await r.wait(1600);
+      await r.go(`${S}/transport?tab=buses`);
+      r.caption("Buses: each bus, its driver and attendant, and how many seats are free");
+      await r.point(p.getByRole("button", { name: "Add bus" }));
+      await r.wait(2400);
+      await r.go(`${S}/transport?tab=register`);
+      r.caption("The bus register: the attendant ticks who got on. Parents are told in the app.");
+      await r.wait(3000);
+    },
+  },
+  {
+    id: "e19-2",
+    chapter: EPISODES.care,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Boarding",
+    as: "warden",
+    covers: [
+      "/s/[slug]/hostel",
+      "/s/[slug]/hostel#rooms",
+      "/s/[slug]/hostel: Rooms",
+      "/s/[slug]/hostel: Add hostel",
+      "/s/[slug]/hostel#boarders",
+      "/s/[slug]/hostel: Boarders",
+      "/s/[slug]/hostel: Give a bed",
+      "/s/[slug]/hostel: Room",
+      "/s/[slug]/hostel: Bed number",
+      "/s/[slug]/hostel#exeats",
+      "/s/[slug]/hostel: Exeats",
+      "/s/[slug]/hostel: Approved",
+      "/s/[slug]/hostel: New exeat",
+      "/s/[slug]/hostel: Kind of exeat",
+      "/s/[slug]/hostel: Collected by",
+      "/s/[slug]/hostel: Leaves",
+      "/s/[slug]/hostel: Back by",
+      "/s/[slug]/hostel: Reason",
+      "/s/[slug]/hostel: Approve exeat",
+      "journey: Give a boarder a room and record an exeat",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/hostel`);
+      r.caption("Boarding: each hostel, its rooms, and how many beds are free");
+      await r.wait(2800);
+      await tour(r, [
+        [p.getByRole("button", { name: "Add hostel" }), "Add a hostel and its rooms"],
+      ], 2000);
+      await r.go(`${S}/hostel?tab=boarders`);
+      r.caption("Boarders. Give Ifeoluwa a bed in Queen Amina House.");
+      await r.click(p.getByRole("button", { name: "Give a bed" }), 900);
+      await r.type(dialog.getByLabel("Student"), "Ifeoluwa");
+      await r.click(dialog.getByRole("option", { name: /Ifeoluwa/ }).first(), 700);
+      const room = dialog.getByLabel("Room");
+      await r.point(room);
+      const amina = await room.locator("option", { hasText: "Queen Amina" }).first().getAttribute("value");
+      if (amina) await room.selectOption(amina);
+      r.caption("Leave the bed number blank and SchoolHub picks the first free bed");
+      await r.point(dialog.getByLabel("Bed number"));
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Give a bed" }), 1500);
+      await r.wait(1600);
+      await r.go(`${S}/hostel?tab=exeats`);
+      r.caption("Exeats: permission to leave school. Parents can ask in the app.");
+      await r.wait(2400);
+      const approve = p.getByRole("button", { name: /^Approve/ }).first();
+      if (await approve.count()) {
+        r.caption("A parent has asked. The warden approves it, or declines with a note.");
+        await r.point(p.getByRole("button", { name: "Decline" }).first());
+        await r.wait(1400);
+        await r.click(approve, 1500);
+        await r.wait(1600);
+      }
+      r.caption("Or the warden records one: a weekend at home for Chukwuemeka");
+      await r.click(p.getByRole("button", { name: "New exeat" }), 900);
+      await r.type(dialog.getByLabel("Student"), "Chukwuemeka Uche");
+      await r.click(dialog.getByRole("option", { name: /Chukwuemeka Uche/ }).first(), 700);
+      await r.select(dialog.getByLabel(/Kind of exeat|For/).first(), "Weekend");
+      await r.type(dialog.getByLabel("Collected by"), "Mr Uche (father)");
+      await tour(r, [
+        [dialog.getByLabel("Leaves"), "When they leave"],
+        [dialog.getByLabel("Back by"), "and when they must be back. Late returns are flagged."],
+      ], 1500);
+      await r.type(dialog.getByLabel("Reason"), "Family wedding in Enugu");
+      await r.click(dialog.getByRole("button", { name: "Approve exeat" }), 1500);
+      r.caption("Parents are told when a boarder signs out, and when they're back");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e19-3",
+    chapter: EPISODES.care,
+    plan: "Premium",
+    kind: "desktop",
+    title: "The sick bay",
+    as: "nurse",
+    covers: [
+      "/s/[slug]/sick-bay",
+      "/s/[slug]/sick-bay#today",
+      "/s/[slug]/sick-bay: Today",
+      "/s/[slug]/sick-bay: New visit",
+      "/s/[slug]/sick-bay: Student",
+      "/s/[slug]/sick-bay: What's wrong?",
+      "/s/[slug]/sick-bay: Temperature (°C)",
+      "/s/[slug]/sick-bay: What you saw",
+      "/s/[slug]/sick-bay: What you did",
+      "/s/[slug]/sick-bay: Medicine",
+      "/s/[slug]/sick-bay: Dose",
+      "/s/[slug]/sick-bay: Add",
+      "/s/[slug]/sick-bay: How they left",
+      "/s/[slug]/sick-bay: Save visit",
+      "/s/[slug]/sick-bay#visits",
+      "/s/[slug]/sick-bay: All visits",
+      "/s/[slug]/sick-bay#records",
+      "/s/[slug]/sick-bay: Health records",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/sick-bay`);
+      r.caption("The sick bay: who's resting now, and today's visits");
+      await r.wait(2600);
+      r.caption("Oluwaseun comes in with a headache");
+      await r.click(p.getByRole("button", { name: "New visit" }), 900);
+      await r.type(dialog.getByLabel("Student"), "Oluwaseun");
+      await r.click(dialog.getByRole("option", { name: /Oluwaseun Lawal/ }).first(), 700);
+      r.caption("Her allergies and conditions show here, before anything is given");
+      await r.wait(2000);
+      await r.type(dialog.getByLabel("What's wrong?"), "Headache and fever");
+      await r.type(dialog.getByLabel("Temperature (°C)"), "38.4");
+      await r.type(dialog.getByLabel("What you saw"), "Warm to the touch, tired, no rash.");
+      await r.type(dialog.getByLabel("What you did"), "Rested, cold compress, gave paracetamol.");
+      r.caption("Any medicine given, from the school's list, with the dose");
+      await r.type(dialog.getByLabel("Medicine"), "Paracetamol");
+      await r.type(dialog.getByLabel("Dose"), "500mg");
+      await r.click(dialog.getByRole("button", { name: "Add", exact: true }), 700);
+      r.caption("How she left: back to class, still resting, sent home or referred");
+      await r.select(dialog.getByLabel("How they left"), { label: "Sent home" });
+      await r.click(dialog.getByRole("button", { name: "Save visit" }), 1500);
+      await r.wait(1600);
+      await r.go(`${S}/sick-bay?tab=visits`);
+      r.caption("All visits, open and closed");
+      await r.wait(2200);
+      await r.go(`${S}/sick-bay?tab=records`);
+      r.caption("Health records: allergies, conditions, medication and who to call in an emergency");
+      await r.wait(2800);
+    },
+  },
+  {
+    id: "e19-4",
+    chapter: EPISODES.care,
+    plan: "Premium",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: ["email: Sick bay visit", "journey: A student visits the sick bay and the parent is told"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p/notifications");
+      r.caption("Mrs Lawal is told straight away, with what the nurse saw and did");
+      const alert = p.getByText(/is being sent home|visited the sick bay/).first();
+      if (await alert.count()) await r.point(alert);
+      await r.wait(3400);
+    },
+  },
 ];
 
 if (require.main === module) {
