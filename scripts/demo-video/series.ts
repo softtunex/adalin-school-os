@@ -4239,6 +4239,235 @@ export const SCENES: Scene[] = [
       await r.wait(3400);
     },
   },
+
+  /* ---------------- Episode 20: Announcements, calendar and messages ---------------- */
+  {
+    id: "e20-1",
+    chapter: EPISODES.comms,
+    plan: "Free",
+    kind: "desktop",
+    title: "Announcements",
+    as: "owner",
+    covers: [
+      "/s/[slug]/announcements",
+      "/s/[slug]/announcements: New announcement",
+      "/s/[slug]/announcements: Title",
+      "/s/[slug]/announcements: Message",
+      "/s/[slug]/announcements: Who it's for",
+      "/s/[slug]/announcements: All parents",
+      "/s/[slug]/announcements: Parents and students of some classes",
+      "/s/[slug]/announcements: Staff only",
+      "/s/[slug]/announcements: Also email it",
+      "/s/[slug]/announcements: Also send by SMS",
+      "/s/[slug]/announcements: Pin to the top",
+      "/s/[slug]/announcements: Post announcement",
+      "/s/[slug]/announcements: Read by",
+      "/s/[slug]/announcements: Parent app link",
+      "email: Announcement",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/announcements`);
+      // Start clean: delete announcements posted by earlier takes (matched by their own text, so the
+      // demo school's seeded announcements are never touched).
+      for (let i = 0; i < 4; i++) {
+        const mine = p.getByText(/^(School closes on Thursday 12 November|Inter-house sports day is on Saturday 21 November)/).first();
+        if (!(await mine.count())) break;
+        await r.offCamera(async () => {
+          await mine.locator("xpath=ancestor::*[.//button][1]").getByRole("button").first().click();
+          await p.getByRole("menuitem", { name: "Delete" }).click();
+          await dialog.getByRole("button", { name: "Delete" }).click();
+          await p.waitForTimeout(1500);
+        });
+      }
+      r.caption("Announcements: news for parents, students and staff, in the app and by email");
+      await r.wait(2600);
+      r.caption("Each one shows how many parents have read it");
+      await r.point(p.getByText(/Read by/).first());
+      await r.wait(2000);
+      r.caption("Post a new one");
+      await r.click(p.getByRole("button", { name: "New announcement" }), 900);
+      await r.type(dialog.getByLabel("Title"), "Inter-house sports day");
+      await r.type(dialog.getByLabel("Message"), "Inter-house sports day is on Saturday 21 November from 9am. Children should wear their house colours.");
+      r.caption("Who it's for: everyone, all parents, students, some classes, or staff only");
+      await r.select(dialog.getByLabel("Who it's for"), { label: "All parents" });
+      await r.wait(1200);
+      r.caption("Email it too, to every family with an email on file");
+      const email = dialog.getByLabel(/^Also email it/);
+      // Ticked already for parents; only tick it if it isn't.
+      if (await email.isChecked()) await r.point(email);
+      else await r.click(email, 700);
+      await r.wait(900);
+      await tour(r, [
+        [dialog.getByLabel(/^Also send by SMS/), "Or by text message, using credits"],
+        [dialog.getByLabel(/^Pin to the top/), "Pin it so it stays first"],
+      ], 1700);
+      await r.click(dialog.getByRole("button", { name: "Post announcement" }), 1500);
+      await r.offCamera(() => dialog.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => {}));
+      r.caption("Posted. Parents see it in the app straight away.");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e20-2",
+    chapter: EPISODES.comms,
+    plan: "Free",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: ["journey: Send an announcement to parents"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p/notifications");
+      r.caption("Mrs Lawal sees it in her updates, and in her email");
+      const news = p.getByText("Inter-house sports day").first();
+      if (await news.count()) await r.point(news);
+      await r.wait(3200);
+    },
+  },
+  {
+    id: "e20-3",
+    chapter: EPISODES.comms,
+    plan: "Free",
+    kind: "desktop",
+    title: "The calendar",
+    as: "owner",
+    covers: [
+      "/s/[slug]/calendar",
+      "/s/[slug]/calendar: Previous month",
+      "/s/[slug]/calendar: Next month",
+      "/s/[slug]/calendar: This month",
+      "/s/[slug]/calendar: Add event",
+      "/s/[slug]/calendar: What's happening",
+      "/s/[slug]/calendar: Type",
+      "/s/[slug]/calendar: From",
+      "/s/[slug]/calendar: To (optional)",
+      "/s/[slug]/calendar: Details (optional)",
+      "/s/[slug]/calendar: Show parents",
+      "/s/[slug]/calendar: Add to calendar",
+      "journey: Add a school event to the calendar",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/calendar`);
+      r.caption("The calendar: term dates, holidays, exams and events, for staff and parents");
+      await r.wait(2600);
+      r.caption("Move between months");
+      await r.point(p.getByLabel("Next month"));
+      await r.wait(800);
+      await r.point(p.getByLabel("Previous month"));
+      await r.wait(800);
+      r.caption("Add an event");
+      await r.click(p.getByRole("button", { name: "Add event" }), 900);
+      await r.type(dialog.getByLabel("What's happening"), "Prize-giving day");
+      await r.select(dialog.getByLabel("Type"), { label: "Event" });
+      const today = await p.evaluate(() => { const d = new Date(Date.now() + 9 * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
+      await r.point(dialog.getByLabel("From"));
+      await dialog.getByLabel("From").fill(today);
+      await r.wait(600);
+      await r.type(dialog.getByLabel("Details (optional)"), "10am in the school hall. Parents of prize winners are invited.");
+      r.caption("Show it to parents, or keep it for staff");
+      await r.point(dialog.getByLabel(/^Show parents/));
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Add to calendar" }), 1500);
+      await r.offCamera(() => dialog.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => {}));
+      r.caption("It's on the calendar, and in the parent app");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e20-4",
+    chapter: EPISODES.comms,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Messages",
+    as: "teacher",
+    covers: [
+      "/s/[slug]/messages",
+      "/s/[slug]/messages: New message",
+      "/s/[slug]/messages/new",
+      "/s/[slug]/messages/new: Whose parents",
+      "/s/[slug]/messages/new: Subject",
+      "/s/[slug]/messages/new: Message",
+      "/s/[slug]/messages/new: Send",
+      "/s/[slug]/messages/[id]",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/messages`);
+      r.caption("Messages: private conversations between teachers and parents");
+      await r.wait(2400);
+      await r.point(p.getByRole("link", { name: "New message" }).first());
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: "New message" }).first().click();
+        await p.getByLabel("Subject").waitFor({ timeout: 20_000 });
+      });
+      r.caption("Mrs Adeyemi writes to Oluwaseun's parents");
+      const whose = p.getByLabel("Whose parents");
+      await r.point(whose);
+      const v = await whose.locator("option", { hasText: "Oluwaseun Lawal" }).first().getAttribute("value");
+      if (v) await whose.selectOption(v);
+      await r.wait(800);
+      await r.type(p.getByLabel("Subject"), "Oluwaseun's lateness");
+      await r.type(p.getByLabel("Message"), "Good morning. Oluwaseun has been late three times this week. Is everything alright at home? We'd like to help.");
+      await r.click(p.getByRole("button", { name: "Send" }), 1500);
+      await r.offCamera(() => p.waitForURL(/messages\/[0-9a-f-]{36}/, { timeout: 20_000 }));
+      r.caption("Sent. The parent gets it in the app, and by email.");
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e20-5",
+    chapter: EPISODES.comms,
+    plan: "Basic",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: ["email: New message"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p/messages");
+      r.caption("Mrs Lawal opens the message");
+      const thread = p.getByRole("link", { name: /Oluwaseun's lateness/ }).first();
+      await r.point(thread);
+      await r.offCamera(async () => {
+        await thread.click();
+        await p.getByPlaceholder("Write a reply…").waitFor({ timeout: 20_000 });
+      });
+      await r.wait(2000);
+      r.caption("and replies");
+      await r.type(p.getByPlaceholder("Write a reply…"), "Thank you. The school bus has been late. We'll drop her ourselves from Monday.");
+      await r.click(p.getByRole("button", { name: "Send" }), 1500);
+      await r.wait(2200);
+    },
+  },
+  {
+    id: "e20-6",
+    chapter: EPISODES.comms,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Messages",
+    as: "teacher",
+    covers: ["/s/[slug]/messages: Unread", "journey: A teacher and a parent message each other"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/messages`);
+      r.caption("Mrs Adeyemi sees the reply waiting");
+      const thread = p.getByRole("link", { name: /Oluwaseun's lateness/ }).first();
+      await r.point(thread);
+      await r.offCamera(async () => {
+        await thread.click();
+        await p.getByPlaceholder("Write a reply…").waitFor({ timeout: 20_000 });
+      });
+      r.caption("The whole conversation in one place. Parents can only message during the hours you set.");
+      await r.wait(3000);
+      await r.type(p.getByPlaceholder("Write a reply…"), "Thank you for letting me know.");
+      await r.click(p.getByRole("button", { name: "Send" }), 1500);
+      await r.wait(1800);
+    },
+  },
 ];
 
 if (require.main === module) {
