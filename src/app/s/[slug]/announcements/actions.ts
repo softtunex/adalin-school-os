@@ -41,7 +41,10 @@ export async function postAnnouncementAction(slug: string, _prev: FormState, for
     deliverSoon();
     revalidatePath(`/s/${slug}`, "layout");
     const parts = [`Posted to ${r.families} ${r.families === 1 ? "family" : "families"}.`];
-    if (r.queued) parts.push(`${r.queued} email${r.queued === 1 ? "" : "s"} and texts on their way${r.credits ? ` (${r.credits} credits)` : ""}.`);
+    if (r.queued) {
+      const what = parsed.data.email && parsed.data.sms ? "emails and texts" : parsed.data.sms ? (r.queued === 1 ? "text" : "texts") : r.queued === 1 ? "email" : "emails";
+      parts.push(`${r.queued} ${what} on their way${r.credits ? ` (${r.credits} credits)` : ""}.`);
+    }
     if (r.unpaid) parts.push(`${r.unpaid} SMS couldn't go: not enough credits.`);
     return { success: parts.join(" ") };
   } catch (error) {
