@@ -2126,7 +2126,7 @@ export const SCENES: Scene[] = [
     plan: "Free",
     kind: "phone",
     title: "Parents",
-    covers: ["journey: Add a student with a parent, then the parent signs in", "email: Parent sign-in code"],
+    covers: ["/parent", "/parent: Send me a code", "/parent: Continue", "journey: Add a student with a parent, then the parent signs in", "email: Parent sign-in code"],
     async run(r) {
       const p = r.page;
       await r.go("/parent");
