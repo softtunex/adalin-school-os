@@ -3191,6 +3191,276 @@ export const SCENES: Scene[] = [
       );
     },
   },
+
+  /* ---------------- Episode 15: Assignments and lesson notes ---------------- */
+  {
+    id: "e15-1",
+    chapter: EPISODES.homework,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Setting homework",
+    as: "maths",
+    covers: [
+      "/s/[slug]/assignments",
+      "/s/[slug]/assignments: Open now",
+      "/s/[slug]/assignments: Due this week",
+      "/s/[slug]/assignments: Waiting to be marked",
+      "/s/[slug]/assignments: Handed in on time",
+      "/s/[slug]/assignments: This term's work",
+      "/s/[slug]/assignments: Search by title…",
+      "/s/[slug]/assignments: Class",
+      "/s/[slug]/assignments: Subject",
+      "/s/[slug]/assignments: Status",
+      "/s/[slug]/assignments: New assignment",
+      "/s/[slug]/assignments: Title",
+      "/s/[slug]/assignments: Instructions",
+      "/s/[slug]/assignments: Due",
+      "/s/[slug]/assignments: Marked out of (optional)",
+      "/s/[slug]/assignments: Counts towards (optional)",
+      "/s/[slug]/assignments: Accept late work",
+      "/s/[slug]/assignments: Attach worksheets",
+      "/s/[slug]/assignments: Save as draft",
+      "/s/[slug]/assignments: Set assignment",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/assignments`);
+      r.caption("Assignments: homework and classwork for every class you teach");
+      await r.wait(2600);
+      r.caption("What's open, what's due this week, and what's waiting to be marked");
+      await r.wait(2600);
+      await tour(r, [
+        [p.getByPlaceholder("Search by title…"), "Search, or filter by class, subject and status"],
+      ], 1800);
+      r.caption("Set a new assignment");
+      await r.click(p.getByRole("button", { name: "New assignment" }), 900);
+      await r.select(dialog.getByLabel("Class", { exact: true }), { label: "JSS 1 Gold" });
+      const subject = dialog.getByLabel("Subject", { exact: true });
+      if (await subject.isEnabled()) await r.select(subject, { label: "Mathematics" });
+      const title = `Fractions: exercise ${4 + Math.floor(Math.random() * 5)}B`;
+      ctx.assignment = title;
+      await r.type(dialog.getByLabel("Title"), title);
+      await r.type(dialog.getByLabel("Instructions"), "Do questions 1 to 10 on page 42. Show your working.");
+      r.caption("When it's due");
+      await r.point(dialog.getByLabel("Due"));
+      await r.wait(1400);
+      r.caption("Mark it out of 20, and count it towards a CA if you like");
+      await r.type(dialog.getByLabel("Marked out of (optional)"), "20");
+      await r.point(dialog.getByLabel("Counts towards (optional)"));
+      await r.wait(1800);
+      await tour(r, [
+        [dialog.getByLabel(/^Accept late work/).first(), "Accept late work, flagged as late"],
+        [dialog.getByText("Attach worksheets").first(), "Attach worksheets or pictures"],
+        [dialog.getByRole("button", { name: "Save as draft" }), "Save as a draft to finish later"],
+      ], 1800);
+      r.caption("Set assignment. Students see it straight away, and parents can see it too.");
+      await r.click(dialog.getByRole("button", { name: "Set assignment" }), 1500);
+      await r.offCamera(() => dialog.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => {}));
+      await r.wait(2200);
+    },
+  },
+  {
+    id: "e15-2",
+    chapter: EPISODES.homework,
+    plan: "Standard",
+    kind: "phone",
+    title: "Students",
+    as: "student",
+    covers: [
+      "/learn/assignments",
+      "/learn/assignments: To do",
+      "/learn/assignments/[id]",
+      "/learn/assignments/[id]: Answer",
+      "/learn/assignments/[id]: Attach your work",
+      "/learn/assignments/[id]: Hand in",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.assignment) throw new Error("Record e15-1 first.");
+      await r.go("/learn/assignments");
+      r.caption("Oluwaseun sees the new homework in her student app");
+      await r.wait(2400);
+      const item = p.getByRole("link", { name: new RegExp(ctx.assignment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }).first();
+      await r.point(item);
+      await r.offCamera(async () => {
+        await item.click();
+        await p.getByLabel("Answer").waitFor({ timeout: 20_000 });
+      });
+      r.caption("The instructions, and when it's due");
+      await r.wait(2400);
+      await r.type(p.getByLabel("Answer"), "1) 3/4  2) 5/8  3) 1 1/2  4) 7/10  5) 2/3. Working in my exercise book.");
+      await r.reveal(p.getByText("Attach your work").first());
+      r.caption("She can attach a photo of her exercise book too");
+      await r.wait(1800);
+      r.caption("Hand in");
+      await r.click(p.getByRole("button", { name: /^Hand in/ }), 1500);
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e15-3",
+    chapter: EPISODES.homework,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Marking",
+    as: "maths",
+    covers: [
+      "/s/[slug]/assignments/[id]",
+      "/s/[slug]/assignments/[id]: Handed in",
+      "/s/[slug]/assignments/[id]: Late",
+      "/s/[slug]/assignments/[id]: Marked",
+      "/s/[slug]/assignments/[id]: Class average",
+      "/s/[slug]/assignments/[id]: Students' work",
+      "/s/[slug]/assignments/[id]: Everyone",
+      "/s/[slug]/assignments/[id]: To mark",
+      "/s/[slug]/assignments/[id]: Not handed in",
+      "/s/[slug]/assignments/[id]: Save marks",
+      "/s/[slug]/assignments/[id]: Delete assignment",
+      "/s/[slug]/assignments: Edit",
+      "journey: Set homework, a student submits it, the teacher marks it",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.assignment) throw new Error("Record e15-1 first.");
+      await r.go(`${S}/assignments`);
+      const link = p.getByRole("link", { name: ctx.assignment }).first();
+      await r.point(link);
+      await r.offCamera(async () => {
+        await link.click();
+        await p.waitForURL(/assignments\/[0-9a-f-]{36}/, { timeout: 20_000 });
+      });
+      r.caption("Back with Mr Obi: who has handed in, who's late, and the class average");
+      await r.wait(2800);
+      await r.reveal(p.getByRole("heading", { name: "Students' work" }));
+      await tour(r, [
+        [p.getByRole("button", { name: /^Handed in/ }).first(), "See who has handed in"],
+        [p.getByRole("button", { name: /^To mark/ }).first(), "what's left to mark"],
+        [p.getByRole("button", { name: /^Not handed in/ }).first(), "and who hasn't handed in yet"],
+      ], 1700);
+      await r.click(p.getByRole("button", { name: /^Handed in/ }).first(), 800);
+      const row = p.getByRole("listitem").filter({ hasText: "Oluwaseun Lawal" }).getByRole("button", { name: /View work/ });
+      r.caption("Open Oluwaseun's work to read her answer");
+      await r.click(row, 1000);
+      await r.wait(2000);
+      r.caption("Give a mark and a comment");
+      await r.type(p.getByLabel("Mark for Oluwaseun Lawal"), "17");
+      await r.type(p.getByLabel("Feedback for Oluwaseun Lawal"), "Well done. Check question 4 again.");
+      await r.click(p.getByRole("button", { name: "Save marks" }), 1500);
+      r.caption("Saved. She sees her mark and comment in her app.");
+      await r.wait(2400);
+      await r.offCamera(() => p.evaluate(() => window.scrollTo(0, 0)));
+      const ca = p.getByRole("button", { name: /^Send marks to/ });
+      if (await ca.count()) await tour(r, [[ca, "Send everyone's marks to the CA column on the score sheet, scaled for you"]], 2400);
+      await tour(r, [[p.getByRole("button", { name: "Delete assignment" }), "Or delete an assignment set by mistake"]], 1800);
+    },
+  },
+  {
+    id: "e15-4",
+    chapter: EPISODES.homework,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Lesson notes",
+    as: "maths",
+    covers: [
+      "/s/[slug]/lesson-notes",
+      "/s/[slug]/lesson-notes#mine",
+      "/s/[slug]/lesson-notes: My notes",
+      "/s/[slug]/lesson-notes#scheme",
+      "/s/[slug]/lesson-notes: Scheme of work",
+      "/s/[slug]/lesson-notes: Plan for",
+      "/s/[slug]/lesson-notes: This week",
+      "/s/[slug]/lesson-notes/new",
+      "/s/[slug]/lesson-notes/new: New lesson note",
+      "/s/[slug]/lesson-notes: Class and subject",
+      "/s/[slug]/lesson-notes: Week",
+      "/s/[slug]/lesson-notes: Topic",
+      "/s/[slug]/lesson-notes: Objectives",
+      "/s/[slug]/lesson-notes: Lesson note",
+      "/s/[slug]/lesson-notes: Attach a scanned or typed note",
+      "/s/[slug]/lesson-notes: Save draft",
+      "/s/[slug]/lesson-notes: Send for approval",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go(`${S}/lesson-notes?view=scheme`);
+      r.caption("Lesson notes. First, the scheme of work: the topic for each week of the term.");
+      await r.wait(2800);
+      await r.point(p.getByLabel("Plan for"));
+      r.caption("Plan each subject and class level, week by week");
+      await r.wait(2200);
+      await r.go(`${S}/lesson-notes?view=mine`);
+      r.caption("My notes: every lesson note Mr Obi has written, and where each one stands");
+      await r.wait(2600);
+      await r.point(p.getByRole("link", { name: "New lesson note" }).first());
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: "New lesson note" }).first().click();
+        await p.getByLabel("Topic").waitFor({ timeout: 20_000 });
+      });
+      r.caption("A new lesson note. The class, subject and week come from his timetable.");
+      await r.point(p.getByLabel("Class and subject"));
+      await r.wait(1600);
+      await r.point(p.getByLabel("Week"));
+      await r.wait(1200);
+      const topic = p.getByLabel("Topic");
+      await r.type(topic, "Fractions: adding and subtracting");
+      ctx.note = "Fractions: adding and subtracting";
+      await r.type(p.getByLabel("Objectives"), "Add and subtract fractions with different denominators.");
+      await r.type(p.getByLabel("Lesson note"), "Introduction: recap equivalent fractions. Teach finding a common denominator with three worked examples. Class practice, then exercise 4B for homework.");
+      await tour(r, [
+        [p.getByText("Attach a scanned or typed note").first(), "Or attach a note written by hand, scanned or photographed"],
+        [p.getByRole("button", { name: "Save draft" }), "Save a draft"],
+      ], 1800);
+      r.caption("Send for approval");
+      await r.click(p.getByRole("button", { name: /Send for approval/ }), 1500);
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e15-5",
+    chapter: EPISODES.homework,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Approving lesson notes",
+    as: "principal",
+    covers: [
+      "/s/[slug]/lesson-notes#review",
+      "/s/[slug]/lesson-notes: For approval",
+      "/s/[slug]/lesson-notes#all",
+      "/s/[slug]/lesson-notes: All notes",
+      "/s/[slug]/lesson-notes: Awaiting approval",
+      "/s/[slug]/lesson-notes: Approved",
+      "/s/[slug]/lesson-notes: Returned",
+      "/s/[slug]/lesson-notes: Teachers submitting",
+      "/s/[slug]/lesson-notes/[id]",
+      "/s/[slug]/lesson-notes: Comment for the teacher",
+      "/s/[slug]/lesson-notes: Return for changes",
+      "/s/[slug]/lesson-notes: Approve",
+      "journey: Submit a lesson note and have it approved",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go(`${S}/lesson-notes?view=all`);
+      r.caption("The principal sees every teacher's notes: approved, waiting, returned");
+      await r.wait(2800);
+      await r.go(`${S}/lesson-notes?view=review`);
+      r.caption("For approval: notes waiting for a decision");
+      await r.wait(2200);
+      const note = p.getByRole("link", { name: new RegExp(ctx.note ?? "Fractions") }).first();
+      await r.point(note);
+      await r.offCamera(async () => {
+        await note.click();
+        await p.getByLabel("Comment for the teacher").waitFor({ timeout: 20_000 });
+      });
+      r.caption("Read the note, and leave a comment");
+      await r.wait(2200);
+      await r.type(p.getByLabel("Comment for the teacher"), "Good plan. Add a quick starter quiz.");
+      await tour(r, [[p.getByRole("button", { name: "Return for changes" }), "Send it back for changes"]], 1800);
+      r.caption("or approve it. The teacher is told either way.");
+      await r.click(p.getByRole("button", { name: "Approve" }), 1500);
+      await r.wait(2600);
+    },
+  },
 ];
 
 if (require.main === module) {
