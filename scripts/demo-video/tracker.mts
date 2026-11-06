@@ -78,9 +78,9 @@ const checks = (items: { name: string; done: boolean }[]) =>
   `<ul class="checks">${items.map((i) => `<li class="${i.done ? "done" : ""}"><span class="box" aria-hidden="true">${i.done ? "✓" : ""}</span>${esc(i.name)}</li>`).join("")}</ul>`;
 
 const updated = new Date().toLocaleString("en-NG", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" });
-const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SchoolHub Video Series</title>
+const html = `<title>SchoolHub Video Series</title>
+
+
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f6f4;--card:#fff;--ink:#1d1b19;--body:#45413c;--muted:#7a746d;--line:#e6e2dc;--brand:#fe6007;--brand-wash:#fff0e6;--ok:#1b7a30;--ok-wash:#e7f4ea;color-scheme:light}
@@ -111,7 +111,7 @@ td.n{font-variant-numeric:tabular-nums;color:var(--muted);width:44px}td.t{color:
 .checks li.done{color:var(--muted)}.checks li.done .box{background:var(--ok);border-color:var(--ok);color:#fff}
 .pages{columns:3 220px;font-size:13.5px;font-family:ui-monospace,Menlo,monospace;color:var(--body);margin:0;padding:0;list-style:none}.pages li{break-inside:avoid;padding:2px 0}
 footer{font-size:13px;color:var(--muted)}
-</style></head><body><main>
+</style><main>
 <header><h1 class="word">adalin <b>schoolhub</b> video series</h1>
 <p class="lede">Every page, tab, button and flow, one episode at a time. Updated ${esc(updated)}.</p></header>
 
@@ -143,7 +143,7 @@ ${episodes
 <section><h2>Pages still to show (${pagesLeft.length})</h2><div class="panel"><ul class="pages">${pagesLeft.map((p) => `<li>${esc(p)}</li>`).join("")}</ul></div></section>
 
 <footer>Counts come from the storyboard: a button only counts when a scene names it word for word, so the buttons figure runs low. Built by scripts/demo-video/tracker.mts.</footer>
-</main></body></html>`;
+</main>`;
 
 writeFileSync(".data/demo-video/tracker.html", html);
 console.log(`tracker: ${doneEps}/${episodes.length} episodes, pages ${counts.page.join("/")}, tabs ${counts.tab.join("/")}, buttons ${counts.cta.join("/")}`);
