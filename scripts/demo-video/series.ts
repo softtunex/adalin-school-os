@@ -55,6 +55,51 @@ async function tour(r: Recorder, stops: [import("@playwright/test").Locator, str
   }
 }
 
+/**
+ * Show a PDF the app makes (report card, receipt, payslip…). The recording browser can't display PDFs,
+ * so the file is fetched with the signed-in session and drawn with PDF.js, then scrolled through.
+ */
+async function showPdf(r: Recorder, href: string, caption: string, hold = 3000) {
+  const p = r.page;
+  const back = p.url();
+  await r.offCamera(async () => {
+    const res = await p.request.get(href);
+    if (!res.ok()) throw new Error(`PDF ${href} returned ${res.status()}`);
+    const b64 = (await res.body()).toString("base64");
+    await p.setContent(`<!doctype html><html><head><style>
+      html,body{margin:0;background:#e9e7e4}#pages{display:flex;flex-direction:column;align-items:center;gap:24px;padding:32px 0 64px}
+      canvas{box-shadow:0 8px 28px rgba(0,0,0,.18);background:#fff}</style>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script></head>
+      <body><div id="pages"></div><script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      (async () => {
+        const data = Uint8Array.from(atob("${b64}"), (c) => c.charCodeAt(0));
+        const pdf = await pdfjsLib.getDocument({ data }).promise;
+        for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
+          const page = await pdf.getPage(i);
+          const base = page.getViewport({ scale: 1 });
+          const scale = Math.min(1100 / base.width, (innerHeight - 64) / base.height) * devicePixelRatio;
+          const vp = page.getViewport({ scale });
+          const c = document.createElement("canvas");
+          c.width = vp.width; c.height = vp.height;
+          c.style.width = vp.width / devicePixelRatio + "px"; c.style.height = vp.height / devicePixelRatio + "px";
+          document.getElementById("pages").appendChild(c);
+          await page.render({ canvasContext: c.getContext("2d"), viewport: vp }).promise;
+        }
+        document.body.dataset.ready = "1";
+      })();</script></body></html>`);
+    await p.waitForSelector("body[data-ready]", { timeout: 30_000 });
+  });
+  r.caption(caption);
+  await r.wait(hold);
+  const tall = await p.evaluate(() => document.body.scrollHeight > innerHeight + 40);
+  if (tall) {
+    await p.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+    await r.wait(2200);
+  }
+  await r.offCamera(() => p.goto(back));
+}
+
 export const SCENES: Scene[] = [
   /* ---------------- Episode 1: Getting started ---------------- */
   {
@@ -2838,6 +2883,213 @@ export const SCENES: Scene[] = [
       await r.wait(2200);
       r.caption("Teachers see their own timetable when they sign in, and students see their class's");
       await r.wait(2800);
+    },
+  },
+
+  /* ---------------- Episode 13: Results and report cards ---------------- */
+  {
+    id: "e13-1",
+    chapter: EPISODES.results,
+    plan: "Free",
+    kind: "desktop",
+    title: "Results",
+    as: "owner",
+    covers: ["/s/[slug]/results", "/s/[slug]/results: Class results", "/s/[slug]/results: Open results", "/s/[slug]/results: Result PINs"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/results`);
+      r.caption("Results: every class's scores and report cards for the term");
+      await r.wait(2600);
+      r.caption("Score sheets submitted, classes ready to publish, and classes already published");
+      await r.wait(2800);
+      r.caption("Each class moves through four steps: scores in, reviewed, approved, published");
+      await r.reveal(p.getByRole("heading", { name: "Class results" }));
+      await r.wait(3000);
+      r.caption("Let's follow JSS 1 Diamond from scores to parents");
+      await r.point(p.getByRole("row").filter({ hasText: "JSS 1 Diamond" }).getByRole("link").last());
+      await r.wait(2000);
+      r.caption("Result PINs, for parents checking results online, have their own episode");
+      await r.point(p.getByRole("link", { name: "Result PINs" }));
+      await r.wait(2000);
+    },
+  },
+  {
+    id: "e13-2",
+    chapter: EPISODES.results,
+    plan: "Free",
+    kind: "desktop",
+    title: "Entering scores",
+    as: "maths",
+    covers: [
+      "/s/[slug]/results/sheet",
+      "/s/[slug]/results: Your score sheets",
+      "/s/[slug]/results: Enter scores",
+      "/s/[slug]/results: View scores",
+      "/s/[slug]/results/sheet: Submit scores",
+      "/s/[slug]/results/sheet: Reopen for teacher",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/results`);
+      r.caption("Mr Obi teaches maths. His score sheets are at the top.");
+      await r.wait(2400);
+      await r.point(p.getByRole("link", { name: "Enter scores" }).first());
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: "Enter scores" }).first().click();
+        await p.waitForURL(/results\/sheet/, { timeout: 20_000 });
+        await p.locator("main table input[aria-label*=' for ']").first().waitFor();
+      });
+      r.caption("Each student, with a box for each CA and the exam");
+      await r.wait(2600);
+      const first = p.locator("main table input[aria-label*=' for ']").first();
+      const value = await first.inputValue();
+      r.caption("Type a score. It saves by itself, even if the internet drops for a moment.");
+      await r.type(first, String(Math.min(20, Number(value || 15) + 1)));
+      await p.keyboard.press("Tab");
+      await r.wait(2200);
+      r.caption("Totals, grades and positions work themselves out");
+      await r.wait(2600);
+      r.caption("Maths is done for the whole class. Submit the sheet to the class teacher.");
+      await r.click(p.getByRole("button", { name: "Submit scores" }), 900);
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Submit scores" }), 1500);
+      await r.wait(1400);
+      r.caption("Submitted. Only the class teacher or principal can reopen it now.");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e13-3",
+    chapter: EPISODES.results,
+    plan: "Free",
+    kind: "desktop",
+    title: "The class teacher",
+    as: "teacher",
+    covers: [
+      "/s/[slug]/results/class/[classId]",
+      "/s/[slug]/results/class/[classId]#subjects",
+      "/s/[slug]/results/class/[classId]: Subject sheets",
+      "/s/[slug]/results/class/[classId]: Open sheet",
+      "/s/[slug]/results/class/[classId]#broadsheet",
+      "/s/[slug]/results/class/[classId]: Broadsheet",
+      "/s/[slug]/results/class/[classId]: Export CSV",
+      "/s/[slug]/results/class/[classId]#reports",
+      "/s/[slug]/results/class/[classId]: Report cards",
+      "/s/[slug]/results/class/[classId]: Class teacher's comment",
+      "/s/[slug]/results/class/[classId]: Suggest with AI",
+      "/s/[slug]/results/class/[classId]: Save",
+      "/s/[slug]/results/class/[classId]: Preview report card",
+      "/s/[slug]/results/class/[classId]: Mark as reviewed",
+      "pdf: Report card",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/results`);
+      await r.offCamera(async () => {
+        await p.getByRole("row").filter({ hasText: "JSS 1 Diamond" }).getByRole("link").last().click();
+        await p.waitForURL(/results\/class\//, { timeout: 20_000 });
+      });
+      const base = p.url().split("?")[0];
+      ctx.resultsClass = new URL(base).pathname;
+      r.caption("Mrs Adeyemi is the class teacher. She checks the class before it goes to the principal.");
+      await r.wait(2600);
+      await r.go(`${base}?tab=subjects`);
+      r.caption("Subject sheets: which teachers have submitted their scores");
+      await r.point(p.getByRole("link", { name: "Open sheet" }).first());
+      await r.wait(2400);
+      await r.go(`${base}?tab=broadsheet`);
+      r.caption("The broadsheet: every student and every subject on one page");
+      await r.wait(2800);
+      await r.point(p.getByRole("link", { name: "Export CSV" }));
+      r.caption("Export it to Excel if you need to");
+      await r.wait(1800);
+      await r.go(`${base}?tab=reports`);
+      r.caption("Report cards: each student's position, average and comments");
+      await r.wait(2400);
+      const student = p.getByRole("button", { name: /Halima Danjuma/ });
+      await r.click(student, 1000);
+      const comment = p.getByLabel("Class teacher's comment");
+      await r.reveal(comment);
+      r.caption("Her comment for each child. Stuck for words? Kola can suggest one from the child's results.");
+      await r.wait(1600);
+      await r.click(p.getByRole("button", { name: "Suggest with AI" }).first(), 900);
+      await r.offCamera(() => p.getByRole("button", { name: "Suggest with AI" }).first().waitFor({ timeout: 45_000 }));
+      r.caption("She reads it and changes anything she likes");
+      await r.wait(3000);
+      r.caption("Then rates behaviour and skills, and saves");
+      await r.click(p.getByRole("radiogroup", { name: "Punctuality" }).getByRole("radio").nth(3), 700);
+      await r.click(p.getByRole("button", { name: "Save", exact: true }), 1500);
+      await r.wait(1200);
+      const preview = p.getByRole("link", { name: "Preview report card" });
+      const href = await preview.getAttribute("href");
+      await r.point(preview);
+      r.caption("Preview the report card");
+      await r.wait(1200);
+      if (href) await showPdf(r, href, "The report card, with the school's logo, every subject, the comments and the ratings", 4200);
+      r.caption("All done: mark the class as reviewed for the principal");
+      await r.click(p.getByRole("button", { name: "Mark as reviewed" }), 900);
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Mark as reviewed" }), 1500);
+      await r.wait(2200);
+    },
+  },
+  {
+    id: "e13-4",
+    chapter: EPISODES.results,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Approve and publish",
+    as: "principal",
+    covers: [
+      "/s/[slug]/results/class/[classId]: Approve and lock",
+      "/s/[slug]/results/class/[classId]: Send back",
+      "/s/[slug]/results/class/[classId]: Principal's comment",
+      "/s/[slug]/results/class/[classId]: Publish to parents",
+      "/s/[slug]/results/class/[classId]: Next term begins (printed on report cards)",
+      "/s/[slug]/results/class/[classId]: Publish",
+      "/s/[slug]/results/class/[classId]: Report cards (PDF)",
+      "/s/[slug]/results/class/[classId]: Unlock",
+      "email: Results are ready",
+      "journey: Teachers enter scores, the class teacher comments, the principal approves and publishes",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      if (!ctx.resultsClass) throw new Error("Record e13-3 first.");
+      await r.go(`${ctx.resultsClass}?tab=reports`);
+      r.caption("Dr Ogunleye, the principal, sees JSS 1 Diamond is reviewed");
+      await r.wait(2600);
+      await r.click(p.getByRole("button", { name: /Oluwadamilare Okoro/ }), 1000);
+      const pc = p.getByLabel("Principal's comment");
+      await r.reveal(pc);
+      r.caption("The principal adds a comment too");
+      await r.type(pc, "An excellent term. Keep it up.");
+      await r.click(p.getByRole("button", { name: "Save", exact: true }), 1500);
+      await r.wait(1000);
+      await r.offCamera(() => p.evaluate(() => window.scrollTo(0, 0)));
+      await tour(r, [[p.getByRole("button", { name: "Send back" }), "Something wrong? Send it back to the teachers."]], 2200);
+      r.caption("Happy with it? Approve and lock. Scores can't be changed after this.");
+      await r.click(p.getByRole("button", { name: "Approve and lock" }), 900);
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Approve and lock" }), 1500);
+      await r.wait(1600);
+      r.caption("Then publish to parents");
+      await r.click(p.getByRole("button", { name: "Publish to parents" }), 900);
+      r.caption("Add the date next term begins, printed on every report card");
+      const resumes = dialog.getByLabel("Next term begins (printed on report cards)");
+      await r.point(resumes);
+      await resumes.fill("2027-01-11");
+      await r.wait(1800);
+      await r.click(dialog.getByRole("button", { name: "Publish", exact: true }), 1500);
+      await r.wait(1600);
+      r.caption("Published. Parents get an email and see the report card in the app.");
+      await r.wait(2800);
+      await tour(r, [
+        [p.getByRole("link", { name: "Report cards (PDF)" }), "Print the whole class's report cards in one file"],
+        [p.getByRole("button", { name: "Unlock" }), "Found a mistake later? Unlock, fix it, and publish again."],
+      ], 2400);
     },
   },
 ];
