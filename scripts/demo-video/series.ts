@@ -3762,6 +3762,95 @@ export const SCENES: Scene[] = [
       }
     },
   },
+
+  /* ---------------- Episode 17: Learning materials ---------------- */
+  {
+    id: "e17-1",
+    chapter: EPISODES.materials,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Sharing materials",
+    as: "maths",
+    covers: [
+      "/s/[slug]/materials",
+      "/s/[slug]/materials: Shared",
+      "/s/[slug]/materials: Files",
+      "/s/[slug]/materials: Links and videos",
+      "/s/[slug]/materials: Notes",
+      "/s/[slug]/materials: Search materials…",
+      "/s/[slug]/materials: Class",
+      "/s/[slug]/materials: Subject",
+      "/s/[slug]/materials: Type",
+      "/s/[slug]/materials: Share material",
+      "/s/[slug]/materials: File",
+      "/s/[slug]/materials: Link",
+      "/s/[slug]/materials: Note",
+      "/s/[slug]/materials: Class and subject",
+      "/s/[slug]/materials: Title",
+      "/s/[slug]/materials: Description (optional)",
+      "/s/[slug]/materials: Share with students",
+      "/s/[slug]/materials: Edit",
+      "/s/[slug]/materials: Remove",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/materials`);
+      r.caption("Learning materials: notes, worksheets and videos for your classes");
+      await r.wait(2600);
+      r.caption("Files, links and videos (YouTube plays inside the app), and typed notes");
+      await r.wait(2400);
+      await tour(r, [[p.getByPlaceholder("Search materials…"), "Search, or filter by class, subject and type"]], 1800);
+      r.caption("Share something new");
+      await r.click(p.getByRole("button", { name: "Share material" }), 900);
+      await tour(r, [
+        [dialog.getByRole("radio", { name: /^File/ }), "A file: slides, PDFs, worksheets, attached straight from your computer"],
+        [dialog.getByRole("radio", { name: /^Link/ }), "a link: YouTube or a website"],
+      ], 1700);
+      r.caption("or a typed note");
+      await r.click(dialog.getByRole("radio", { name: /^Note/ }), 800);
+      await r.point(dialog.getByLabel("Class and subject"));
+      await r.wait(1200);
+      await r.type(dialog.getByLabel("Title"), "Adding fractions: a quick guide");
+      await r.type(dialog.getByLabel("Description (optional)"), "Read this before doing exercise 4B");
+      await r.type(dialog.getByLabel("Note", { exact: true }), "To add fractions, the bottom numbers must match. Find a common denominator, change each fraction, then add the top numbers. Example: 1/2 + 1/3 = 3/6 + 2/6 = 5/6.");
+      r.caption("Share with students. Every student in the class can open it.");
+      await r.click(dialog.getByRole("button", { name: "Share with students" }), 1500);
+      await r.offCamera(() => dialog.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => {}));
+      await r.wait(1800);
+      r.caption("Each one can be edited or removed");
+      await r.click(p.getByRole("button", { name: /^(More actions|Actions)/ }).first(), 700);
+      await tour(r, [
+        [p.getByRole("menuitem", { name: "Edit" }), "Edit"],
+        [p.getByRole("menuitem", { name: "Remove" }), "Remove"],
+      ], 1300);
+      await p.keyboard.press("Escape");
+      await r.wait(600);
+    },
+  },
+  {
+    id: "e17-2",
+    chapter: EPISODES.materials,
+    plan: "Premium",
+    kind: "phone",
+    title: "Students",
+    as: "student",
+    covers: ["/learn/materials", "/learn/materials/[id]", "/learn/materials: File", "/learn/materials: Link", "/learn/materials: Note", "/learn/materials: Video"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/learn/materials");
+      r.caption("Oluwaseun finds everything her teachers have shared, by subject");
+      await r.wait(2600);
+      const item = p.getByRole("link", { name: /Adding fractions: a quick guide/ }).first();
+      await r.point(item);
+      await r.offCamera(async () => {
+        await item.click();
+        await p.waitForURL(/learn\/materials\/[^/]+$/, { timeout: 20_000 });
+      });
+      r.caption("She opens the note and reads it, at school or at home");
+      await r.wait(3400);
+    },
+  },
 ];
 
 if (require.main === module) {
