@@ -3851,6 +3851,178 @@ export const SCENES: Scene[] = [
       await r.wait(3400);
     },
   },
+
+  /* ---------------- Episode 18: Behaviour and the library ---------------- */
+  {
+    id: "e18-1",
+    chapter: EPISODES.behaviour,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Behaviour",
+    as: "principal",
+    covers: [
+      "/s/[slug]/discipline",
+      "/s/[slug]/discipline#log",
+      "/s/[slug]/discipline: Log",
+      "/s/[slug]/discipline: Merits this term",
+      "/s/[slug]/discipline: Incidents this term",
+      "/s/[slug]/discipline: Open serious cases",
+      "/s/[slug]/discipline: Parents told",
+      "/s/[slug]/discipline: Record",
+      "/s/[slug]/discipline: Merit",
+      "/s/[slug]/discipline: Incident",
+      "/s/[slug]/discipline: Student",
+      "/s/[slug]/discipline: Category",
+      "/s/[slug]/discipline: How serious",
+      "/s/[slug]/discipline: Minor",
+      "/s/[slug]/discipline: Moderate",
+      "/s/[slug]/discipline: Serious",
+      "/s/[slug]/discipline: What happened",
+      "/s/[slug]/discipline: Action taken (optional)",
+      "/s/[slug]/discipline: Save",
+      "/s/[slug]/discipline: Record another",
+      "/s/[slug]/discipline: Done",
+      "/s/[slug]/discipline#board",
+      "/s/[slug]/discipline: Leaderboard",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/discipline`);
+      r.caption("Behaviour: merits for good behaviour, and incidents when something goes wrong");
+      await r.wait(2600);
+      r.caption("This term's merits and incidents, open serious cases, and how many parents were told");
+      await r.wait(2600);
+      r.caption("Record something");
+      await r.click(p.getByRole("button", { name: /^Record/ }).first(), 900);
+      await tour(r, [[dialog.getByRole("radio", { name: /^Merit/ }), "A merit for good behaviour"]], 1500);
+      r.caption("or an incident");
+      await r.click(dialog.getByRole("radio", { name: /^Incident/ }), 800);
+      await r.type(dialog.getByPlaceholder("Type a name or admission number"), "Oluwaseun");
+      await r.click(dialog.getByRole("option", { name: /Oluwaseun Lawal/ }).first(), 700);
+      r.caption("What kind of incident, and how serious");
+      await r.point(dialog.getByLabel("Category"));
+      await r.wait(1000);
+      const sev = dialog.getByLabel("How serious");
+      const moderate = await sev.locator("option", { hasText: "Moderate" }).first().getAttribute("value");
+      await r.point(sev);
+      if (moderate) await sev.selectOption(moderate);
+      // Changing how serious it is clears the category, so it's chosen after.
+      await r.select(dialog.getByLabel("Category"), { label: "Lateness" });
+      await r.wait(800);
+      await r.type(dialog.getByLabel("What happened"), "Came in 25 minutes after assembly, for the third time this week.");
+      await r.type(dialog.getByLabel("Action taken (optional)"), "Warning");
+      r.caption("Save. For moderate and serious incidents, parents are told automatically.");
+      await r.click(dialog.getByRole("button", { name: "Save", exact: true }), 1500);
+      await r.wait(1600);
+      await tour(r, [[dialog.getByRole("button", { name: "Record another" }), "Record another"]], 1300);
+      await r.click(dialog.getByRole("button", { name: "Done" }), 900);
+      r.caption("The log: everything recorded, newest first");
+      await r.wait(2400);
+      await r.go(`${S}/discipline?tab=board`);
+      r.caption("The leaderboard: students and classes with the most merits this term");
+      await r.wait(3000);
+    },
+  },
+  {
+    id: "e18-2",
+    chapter: EPISODES.behaviour,
+    plan: "Basic",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: ["journey: Log a behaviour incident and tell the parent"],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p/notifications");
+      r.caption("Mrs Lawal is told straight away, with what happened and what the school did");
+      const alert = p.getByText(/reported$/).first();
+      if (await alert.count()) await r.point(alert);
+      await r.wait(3200);
+    },
+  },
+  {
+    id: "e18-3",
+    chapter: EPISODES.behaviour,
+    plan: "Premium",
+    kind: "desktop",
+    title: "The library",
+    as: "librarian",
+    covers: [
+      "/s/[slug]/library",
+      "/s/[slug]/library#books",
+      "/s/[slug]/library: Catalogue",
+      "/s/[slug]/library: Add book",
+      "/s/[slug]/library: Title",
+      "/s/[slug]/library: Author",
+      "/s/[slug]/library: ISBN",
+      "/s/[slug]/library: Look up",
+      "/s/[slug]/library: Category",
+      "/s/[slug]/library: Copies",
+      "/s/[slug]/library: Shelf",
+      "/s/[slug]/library: Save book",
+      "/s/[slug]/library: Lend a book",
+      "/s/[slug]/library: Who is borrowing",
+      "/s/[slug]/library: Borrower",
+      "/s/[slug]/library: Books",
+      "/s/[slug]/library: Due back",
+      "/s/[slug]/library: Lend",
+      "/s/[slug]/library#loans",
+      "/s/[slug]/library: Loans",
+      "/s/[slug]/library: Returned",
+      "/s/[slug]/library: Edit",
+      "/s/[slug]/library: Remove",
+      "journey: Lend a library book and get it back",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/library`);
+      r.caption("The library: every book, how many copies are on the shelf, and who has them");
+      await r.wait(2800);
+      r.caption("Add a book");
+      await r.click(p.getByRole("button", { name: "Add book" }), 900);
+      await tour(r, [
+        [dialog.getByLabel("ISBN"), "Type the ISBN and look it up, and the details fill in"],
+      ], 1800);
+      await r.type(dialog.getByLabel("Title"), "Things Fall Apart");
+      await r.type(dialog.getByLabel("Author"), "Chinua Achebe");
+      await tour(r, [
+        [dialog.getByLabel("Category"), "Its category"],
+        [dialog.getByLabel("Copies"), "how many copies"],
+        [dialog.getByLabel("Shelf"), "and which shelf"],
+      ], 1300);
+      await dialog.getByLabel("Shelf").fill("B3");
+      await r.click(dialog.getByRole("button", { name: /^Save book|^Add book/ }).first(), 1500);
+      await r.offCamera(async () => {
+        const close = dialog.getByRole("button", { name: /Close|Done/ }).first();
+        if (await close.isVisible().catch(() => false)) await close.click();
+      });
+      r.caption("Lend a book");
+      await r.click(p.getByRole("button", { name: "Lend a book" }), 900);
+      await tour(r, [[dialog.getByRole("radiogroup", { name: "Who is borrowing" }), "To a student or a member of staff"]], 1500);
+      await r.type(dialog.getByPlaceholder("Type a name or admission number"), "Oluwaseun");
+      await r.click(dialog.getByRole("option", { name: /Oluwaseun Lawal/ }).first(), 700);
+      await r.type(dialog.getByPlaceholder("Type the title or author"), "Things Fall");
+      await r.click(dialog.getByRole("option", { name: /Things Fall Apart/ }).first(), 700);
+      r.caption("When it's due back. Late books build up a fine, if you've set one.");
+      await r.point(dialog.getByLabel("Due back"));
+      await r.wait(1400);
+      await r.click(dialog.getByRole("button", { name: /^Lend/ }).last(), 1500);
+      await r.wait(1200);
+      await r.offCamera(async () => {
+        const close = dialog.getByRole("button", { name: /Close|Done/ }).first();
+        if (await close.isVisible().catch(() => false)) await close.click();
+      });
+      await r.go(`${S}/library?tab=loans`);
+      r.caption("Loans: who has what, and when it's due. Overdue books stand out.");
+      await r.wait(2600);
+      const row = p.getByRole("row").filter({ hasText: "Things Fall Apart" }).first();
+      r.caption("When the book comes back, press Returned");
+      await r.click(row.getByRole("button", { name: /Returned/ }), 1500);
+      await r.wait(2200);
+    },
+  },
 ];
 
 if (require.main === module) {
