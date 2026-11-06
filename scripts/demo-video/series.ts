@@ -58,13 +58,14 @@ async function tour(r: Recorder, stops: [import("@playwright/test").Locator, str
 /**
  * Show a PDF the app makes (report card, receipt, payslip…). The recording browser can't display PDFs,
  * so the file is fetched with the signed-in session and drawn with PDF.js, then scrolled through.
+ * `source` is the PDF's link, or a function that fetches it (e.g. a form post).
  */
-async function showPdf(r: Recorder, href: string, caption: string, hold = 3000) {
+async function showPdf(r: Recorder, source: string | (() => Promise<import("@playwright/test").APIResponse>), caption: string, hold = 3000) {
   const p = r.page;
   const back = p.url();
   await r.offCamera(async () => {
-    const res = await p.request.get(href);
-    if (!res.ok()) throw new Error(`PDF ${href} returned ${res.status()}`);
+    const res = typeof source === "string" ? await p.request.get(source) : await source();
+    if (!res.ok() || !(res.headers()["content-type"] ?? "").includes("pdf")) throw new Error(`PDF request returned ${res.status()} ${res.headers()["content-type"]}`);
     const b64 = (await res.body()).toString("base64");
     await p.setContent(`<!doctype html><html><head><style>
       html,body{margin:0;background:#e9e7e4}#pages{display:flex;flex-direction:column;align-items:center;gap:24px;padding:32px 0 64px}
@@ -78,7 +79,9 @@ async function showPdf(r: Recorder, href: string, caption: string, hold = 3000) 
         for (let i = 1; i <= Math.min(pdf.numPages, 3); i++) {
           const page = await pdf.getPage(i);
           const base = page.getViewport({ scale: 1 });
-          const scale = Math.min(1100 / base.width, (innerHeight - 64) / base.height) * devicePixelRatio;
+          // A computer screen shows the whole page; a phone fits its width and scrolls.
+          const fitW = Math.min(1100, innerWidth - 24) / base.width;
+          const scale = (innerWidth < 700 ? fitW : Math.min(fitW, (innerHeight - 64) / base.height)) * devicePixelRatio;
           const vp = page.getViewport({ scale });
           const c = document.createElement("canvas");
           c.width = vp.width; c.height = vp.height;
@@ -3090,6 +3093,102 @@ export const SCENES: Scene[] = [
         [p.getByRole("link", { name: "Report cards (PDF)" }), "Print the whole class's report cards in one file"],
         [p.getByRole("button", { name: "Unlock" }), "Found a mistake later? Unlock, fix it, and publish again."],
       ], 2400);
+    },
+  },
+
+  /* ---------------- Episode 14: Result PINs and the result checker ---------------- */
+  {
+    id: "e14-1",
+    chapter: EPISODES.pins,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Result PINs",
+    as: "owner",
+    covers: [
+      "/s/[slug]/results/pins",
+      "/s/[slug]/results/pins: Result checker PINs",
+      "/s/[slug]/results/pins: Where parents check results",
+      "/s/[slug]/results/pins: Result checker link",
+      "/s/[slug]/results/pins: PIN batches",
+      "/s/[slug]/results/pins: How many PINs",
+      "/s/[slug]/results/pins: Checks allowed per PIN",
+      "/s/[slug]/results/pins: Generate PINs",
+      "/s/[slug]/results/pins: Download CSV",
+      "/s/[slug]/results/pins: Print cards",
+      "pdf: Result PIN cards",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go(`${S}/results/pins`);
+      r.caption("Result PINs: like a scratch card, so parents can check results online without an account");
+      await r.wait(2800);
+      r.caption("This is where parents check results. Share the link, or print it on the PIN cards.");
+      await r.point(p.getByLabel("Result checker link"));
+      await r.wait(2400);
+      r.caption("How many PINs, and how many times each one can be used");
+      const count = p.getByLabel("How many PINs");
+      await r.click(count, 300);
+      // A number box can't be emptied (it falls back to 0), so the new value replaces the old in one go.
+      await count.fill("6");
+      await r.point(p.getByLabel("Checks allowed per PIN"));
+      await r.wait(1400);
+      r.caption("Each PIN locks to the first student it's used for, so it can't be passed around");
+      await r.click(p.getByRole("button", { name: /^Generate \d+ PINs/ }), 1500);
+      await r.offCamera(() => p.getByRole("button", { name: "Print cards" }).waitFor({ timeout: 20_000 }));
+      r.caption("PINs are shown only once. Download them, or print the cards.");
+      await r.reveal(p.getByRole("button", { name: "Print cards" }));
+      await tour(r, [
+        [p.getByRole("button", { name: "Download CSV" }), "Download them as a spreadsheet"],
+        [p.getByRole("button", { name: "Print cards" }), "or print cards to sell or hand out with the report"],
+      ], 2000);
+      const card = p.getByText(/^\d{4}-\d{4}-\d{4}$/).first();
+      await r.reveal(card);
+      r.caption("Each card has the school's name, the term, the PIN, a serial number and the link");
+      await r.point(card);
+      ctx.pin = (await card.innerText()).trim();
+      await r.wait(3000);
+      await r.offCamera(() => p.goto(`${S}/results/pins`));
+      await r.reveal(p.getByText("PIN batches").first());
+      r.caption("PIN batches: every batch you've made, and how many have been used");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e14-2",
+    chapter: EPISODES.pins,
+    plan: "Basic",
+    kind: "phone",
+    title: "Parents",
+    covers: [
+      "/r/[slug]",
+      "/r/[slug]: Admission number",
+      "/r/[slug]: PIN",
+      "/r/[slug]: Check result",
+      "journey: Generate result PINs, and a parent checks a result with one",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.pin) throw new Error("Record e14-1 first: it makes the PINs.");
+      const admissionNo = "ADC/2026/0009";
+      await r.go("/r/adalin-college");
+      r.caption("A parent opens the result checker on their phone");
+      await r.wait(2400);
+      await r.type(p.getByLabel("Admission number"), admissionNo);
+      r.caption("Their child's admission number, and the PIN from the card");
+      await r.type(p.getByLabel("PIN"), "1234-5678-0000");
+      await r.click(p.getByRole("button", { name: "Check result" }), 1500);
+      await r.offCamera(() => p.waitForURL(/[?&]e=/, { timeout: 15_000 }).catch(() => {}));
+      r.caption("A mistyped PIN gets a clear message");
+      await r.wait(2600);
+      await r.type(p.getByLabel("Admission number"), admissionNo);
+      await r.type(p.getByLabel("PIN"), ctx.pin);
+      await r.point(p.getByRole("button", { name: "Check result" }));
+      await showPdf(
+        r,
+        () => p.request.post("/r/adalin-college/check", { form: { admissionNo, pin: ctx.pin } }),
+        "The report card opens straight away, ready to save or print",
+        3600,
+      );
     },
   },
 ];
