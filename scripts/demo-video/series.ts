@@ -2676,6 +2676,170 @@ export const SCENES: Scene[] = [
       await r.wait(2200);
     },
   },
+
+  /* ---------------- Episode 12: Timetable ---------------- */
+  {
+    id: "e12-1",
+    chapter: EPISODES.timetable,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Bell schedule",
+    as: "owner",
+    covers: [
+      "/s/[slug]/timetable#setup",
+      "/s/[slug]/timetable: Bell schedule",
+      "/s/[slug]/timetable: Schedule name",
+      "/s/[slug]/timetable: School days",
+      "/s/[slug]/timetable: Period label",
+      "/s/[slug]/timetable: Start time",
+      "/s/[slug]/timetable: End time",
+      "/s/[slug]/timetable: Period type",
+      "/s/[slug]/timetable: Add period",
+      "/s/[slug]/timetable: Save schedule",
+      "/s/[slug]/timetable: + Add another bell schedule (e.g. a shorter nursery day)",
+      "/s/[slug]/timetable: Which classes follow which schedule",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/timetable?view=setup`);
+      r.caption("Timetable. Start with the bell schedule: when each period starts and ends.");
+      await r.wait(2600);
+      await tour(r, [
+        [p.getByLabel("Schedule name").first(), "Its name"],
+        [p.getByText("School days").first(), "the school days"],
+        [p.getByLabel("Period label").first(), "and every period: its label"],
+        [p.getByLabel("Start time").first(), "start time"],
+        [p.getByLabel("End time").first(), "end time"],
+        [p.getByLabel("Period type").nth(2), "and type: lesson, break or assembly"],
+      ], 1600);
+      r.caption("Add a period at the end of the day");
+      await r.click(p.getByRole("button", { name: "Add period" }).first(), 900);
+      await r.wait(1400);
+      await r.point(p.getByRole("button", { name: "Save schedule" }).first());
+      r.caption("Save schedule");
+      await r.wait(1400);
+      await r.offCamera(() => p.reload());
+      const another = p.getByText("+ Add another bell schedule (e.g. a shorter nursery day)");
+      await r.reveal(another);
+      r.caption("Nursery finishing earlier? Add another bell schedule.");
+      await r.point(another);
+      await r.wait(2200);
+      const which = p.getByRole("heading", { name: "Which classes follow which schedule" });
+      await r.reveal(which);
+      r.caption("Then choose which classes follow which schedule");
+      await r.point(p.getByRole("combobox", { name: "Bell schedule" }).first());
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e12-2",
+    chapter: EPISODES.timetable,
+    plan: "Basic",
+    kind: "desktop",
+    title: "A class's timetable",
+    as: "owner",
+    covers: [
+      "/s/[slug]/timetable",
+      "/s/[slug]/timetable: Classes",
+      "/s/[slug]/timetable: Class",
+      "/s/[slug]/timetable: Term",
+      "/s/[slug]/timetable: Lessons a week",
+      "/s/[slug]/timetable: Subject",
+      "/s/[slug]/timetable: Teacher",
+      "/s/[slug]/timetable: Room (optional)",
+      "/s/[slug]/timetable: Note (optional)",
+      "/s/[slug]/timetable: Save",
+      "/s/[slug]/timetable: Clear",
+      "/s/[slug]/timetable: Print",
+      "journey: Set the timetable and swap two lessons",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/timetable`);
+      r.caption("Each class's week");
+      await r.select(p.getByRole("combobox", { name: /^Class/ }), { label: "JSS 1 Gold" });
+      await r.offCamera(() => p.waitForURL(/class=/, { timeout: 15_000 }).catch(() => {}));
+      await r.wait(2000);
+      r.caption("Lessons a week: how many periods each subject has so far");
+      await r.reveal(p.getByRole("heading", { name: "Lessons a week" }));
+      await r.wait(2400);
+      r.caption("40 of 40 lessons placed: the week is full");
+      await r.offCamera(() => p.evaluate(() => window.scrollTo(0, 0)));
+      await r.point(p.getByText(/lessons placed/));
+      await r.wait(1800);
+      const lesson = p.getByRole("button", { name: /^Fri period 1: / });
+      r.caption("Click any period to set or change its lesson");
+      await r.click(lesson, 900);
+      await r.point(dialog.getByLabel("Subject"));
+      await r.wait(1400);
+      r.caption("The teacher fills in by itself when the subject has one in Subject teachers");
+      await r.point(dialog.getByLabel("Teacher"));
+      await r.wait(1800);
+      r.caption("Add a room, or a note like Library period");
+      await r.type(dialog.getByLabel("Room (optional)"), "Language lab");
+      await r.point(dialog.getByLabel("Note (optional)"));
+      r.caption("If the teacher is already teaching another class then, SchoolHub warns you before saving");
+      await r.wait(2400);
+      await r.click(dialog.getByRole("button", { name: "Save", exact: true }), 1500);
+      await r.offCamera(() => dialog.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => {}));
+      await r.wait(1400);
+
+      r.caption("To swap two lessons, drag one onto the other");
+      const filled = p.getByRole("button", { name: /^Tue period \d+: (?!free)/ });
+      const a = filled.nth(0);
+      const b = filled.nth(1);
+      await r.reveal(a);
+      await r.point(a);
+      const from = (await a.boundingBox())!;
+      const to = (await b.boundingBox())!;
+      await p.mouse.down();
+      await p.mouse.move(from.x + from.width / 2 + 6, from.y + from.height / 2, { steps: 4 });
+      await p.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 30 });
+      await p.waitForTimeout(300);
+      await p.mouse.up();
+      await r.offCamera(() => p.waitForLoadState("networkidle", { timeout: 6000 }).catch(() => {}));
+      await r.wait(1600);
+      const clash = dialog.getByRole("button", { name: "Swap anyway" });
+      if (await clash.isVisible().catch(() => false)) {
+        r.caption("That swap would clash with another class. Cancel, or swap anyway.");
+        await r.wait(2400);
+        await r.click(dialog.getByRole("button", { name: "Cancel" }), 900);
+      } else {
+        r.caption("Swapped. If a swap would clash with another class, you're asked first.");
+        await r.wait(2400);
+      }
+      r.caption("Click any lesson to change it or clear it");
+      await r.click(a, 900);
+      await r.point(dialog.getByRole("button", { name: "Clear" }));
+      await r.wait(1800);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+      await tour(r, [
+        [p.getByRole("combobox", { name: /^Term/ }), "Each term can have its own timetable"],
+        [p.getByRole("link", { name: "Print" }), "Print it for the classroom wall"],
+      ], 2000);
+    },
+  },
+  {
+    id: "e12-3",
+    chapter: EPISODES.timetable,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Teachers' timetables",
+    as: "owner",
+    covers: ["/s/[slug]/timetable#teacher", "/s/[slug]/timetable: Teachers", "/print/[slug]/timetable"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/timetable?view=teacher`);
+      r.caption("Teachers: each teacher's week, built from the class timetables");
+      await r.wait(2600);
+      r.caption("Pick a teacher to see where they need to be, and when");
+      await r.point(p.getByRole("combobox", { name: /^Teacher/ }));
+      await r.wait(2200);
+      r.caption("Teachers see their own timetable when they sign in, and students see their class's");
+      await r.wait(2800);
+    },
+  },
 ];
 
 if (require.main === module) {
