@@ -3461,6 +3461,307 @@ export const SCENES: Scene[] = [
       await r.wait(2600);
     },
   },
+
+  /* ---------------- Episode 16: CBT exams ---------------- */
+  {
+    id: "e16-1",
+    chapter: EPISODES.cbt,
+    plan: "Standard",
+    kind: "desktop",
+    title: "The question bank",
+    as: "maths",
+    covers: [
+      "/s/[slug]/cbt",
+      "/s/[slug]/cbt#bank",
+      "/s/[slug]/cbt: Question bank",
+      "/s/[slug]/cbt: Add question",
+      "/s/[slug]/cbt: Question",
+      "/s/[slug]/cbt: Marks",
+      "/s/[slug]/cbt: Save question",
+      "/s/[slug]/cbt: Save and add another",
+      "/s/[slug]/cbt: Objective",
+      "/s/[slug]/cbt: Theory",
+      "/s/[slug]/cbt: Write with AI",
+      "/s/[slug]/cbt: Topic",
+      "/s/[slug]/cbt: How many",
+      "/s/[slug]/cbt: Difficulty",
+      "/s/[slug]/cbt: Write questions",
+      "/s/[slug]/cbt: Add to the bank",
+      "/s/[slug]/cbt: Paste questions",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/cbt?tab=bank`);
+      r.caption("CBT exams start with the question bank: questions you write once and use again");
+      await r.wait(2800);
+      r.caption("Add a question by hand");
+      await r.click(p.getByRole("button", { name: "Add question" }), 900);
+      await tour(r, [
+        [dialog.getByLabel("Question", { exact: true }), "The question"],
+        [dialog.getByLabel("Option A", { exact: true }), "Four options"],
+        [dialog.getByLabel("Option A is correct", { exact: true }), "tick the right answer"],
+        [dialog.getByLabel("Marks"), "and how many marks it's worth. Theory questions get marked by the teacher."],
+        [dialog.getByRole("button", { name: "Save question" }), "Save, or save and add another"],
+      ], 1700);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+      await tour(r, [
+        [p.getByRole("button", { name: "Paste questions" }), "Paste a list of questions from Word, or from a photo of a past paper"],
+      ], 2200);
+      r.caption("Or let Kola write some. Give it a topic.");
+      await r.click(p.getByRole("button", { name: "Write with AI" }), 900);
+      await r.type(dialog.getByLabel("Topic"), "Adding fractions");
+      const count = dialog.getByLabel("How many");
+      await r.point(count);
+      await count.fill("5");
+      await r.point(dialog.getByLabel("Difficulty"));
+      await r.wait(1000);
+      await r.click(dialog.getByRole("button", { name: "Write questions" }), 900);
+      await r.offCamera(() => dialog.getByText(/AI wrote \d+ questions/).waitFor({ timeout: 60_000 }));
+      r.caption("Five questions, with answers marked. Read them, change anything, then add them.");
+      await r.reveal(dialog.getByLabel("Questions", { exact: true }));
+      await r.wait(3600);
+      await r.click(dialog.getByRole("button", { name: "Add to the bank" }), 1500);
+      await r.wait(1800);
+      // The pop-up closes itself once the questions are in.
+      const close = dialog.getByRole("button", { name: "Close" });
+      if (await close.isVisible().catch(() => false)) await r.click(close, 700);
+      r.caption("They're in the bank, ready for any test");
+      await r.wait(2200);
+    },
+  },
+  {
+    id: "e16-2",
+    chapter: EPISODES.cbt,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Building a test",
+    as: "maths",
+    covers: [
+      "/s/[slug]/cbt#exams",
+      "/s/[slug]/cbt: Exams",
+      "/s/[slug]/cbt: New exam",
+      "/s/[slug]/cbt/exams/new",
+      "/s/[slug]/cbt/exams: Classes",
+      "/s/[slug]/cbt/exams: Title",
+      "/s/[slug]/cbt/exams: Instructions",
+      "/s/[slug]/cbt/exams: Time allowed (min)",
+      "/s/[slug]/cbt/exams: Opens",
+      "/s/[slug]/cbt/exams: Closes",
+      "/s/[slug]/cbt/exams: Counts towards (optional)",
+      "/s/[slug]/cbt/exams: Shuffle questions and options",
+      "/s/[slug]/cbt/exams: Show students their score",
+      "/s/[slug]/cbt/exams: Save draft",
+      "/s/[slug]/cbt/exams: Schedule exam",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go(`${S}/cbt?tab=exams`);
+      // Start clean: delete a test of the same name left by an earlier take.
+      for (let i = 0; i < 3; i++) {
+        const old = p.getByRole("link", { name: /Fractions quick test/ }).first();
+        if (!(await old.count())) break;
+        await r.offCamera(async () => {
+          await old.click();
+          await p.waitForURL(/cbt\/exams\/[0-9a-f-]{36}/, { timeout: 20_000 });
+          await p.getByRole("button", { name: "Delete exam" }).click();
+          await p.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
+          await p.waitForURL(/\/cbt(\?|$)/, { timeout: 20_000 }).catch(() => {});
+          await p.goto(`${S}/cbt?tab=exams`);
+        });
+      }
+      r.caption("Exams: every test, when it opens, and how many have finished");
+      await r.wait(2600);
+      await r.point(p.getByRole("link", { name: "New exam" }).first());
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: "New exam" }).first().click();
+        await p.getByLabel("Title").waitFor({ timeout: 20_000 });
+      });
+      r.caption("A new test: the class it's for");
+      await r.click(p.getByRole("button", { name: "JSS 1 Gold", exact: true }), 700);
+      const title = "Fractions quick test";
+      ctx.cbt = title;
+      await r.type(p.getByLabel("Title"), title);
+      await r.point(p.getByLabel("Instructions"));
+      r.caption("Instructions, and how long students get");
+      const mins = p.getByLabel("Time allowed (min)");
+      await r.point(mins);
+      await mins.fill("15");
+      await r.wait(800);
+      r.caption("When it opens and closes. Students can only start within that window.");
+      const opens = p.getByLabel("Opens");
+      await r.point(opens);
+      // Today on the demo clock (the form suggests tomorrow), so the class can sit it straight away.
+      const today = await p.evaluate(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
+      await opens.fill(`${today}T07:00`);
+      await p.getByLabel("Closes").fill(`${today}T18:00`);
+      await r.point(p.getByLabel("Closes"));
+      await r.wait(1600);
+      await tour(r, [
+        [p.getByLabel("Counts towards (optional)"), "Count it towards a CA if you like"],
+        [p.getByLabel(/^Shuffle questions and options/).first(), "Shuffle the questions, so copying from a neighbour doesn't help"],
+        [p.getByLabel(/^Show students their score/).first(), "and show students their score when they finish"],
+      ], 1900);
+      r.caption("Pick the questions from the bank");
+      const boxes = p.locator("label").filter({ hasText: /fraction/i }).locator("input[type=checkbox]");
+      const n = Math.min(5, await boxes.count());
+      if (n) await r.reveal(boxes.first());
+      for (let i = 0; i < n; i++) await r.click(boxes.nth(i), 350);
+      if (!n) {
+        const any = p.locator("main input[type=checkbox]").filter({ hasNot: p.locator("[disabled]") });
+        for (let i = 2; i < 7; i++) await r.click(any.nth(i), 350);
+      }
+      await r.wait(1200);
+      await tour(r, [[p.getByRole("button", { name: "Save draft" }), "Save a draft"]], 1400);
+      r.caption("or schedule it");
+      await r.click(p.getByRole("button", { name: "Schedule exam" }), 1500);
+      await r.offCamera(() => p.waitForURL(/cbt\/exams\/[0-9a-f-]{36}/, { timeout: 20_000 }).catch(() => {}));
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e16-3",
+    chapter: EPISODES.cbt,
+    plan: "Standard",
+    kind: "phone",
+    title: "Students",
+    as: "student",
+    covers: [
+      "/learn/exams",
+      "/learn/exams: Now",
+      "/learn/exams/[id]",
+      "/learn/exams/[id]: Start the exam",
+      "/exam/[id]",
+      "/exam/[id]: Next",
+      "/exam/[id]: All questions",
+      "/exam/[id]: Submit",
+      "/exam/[id]: Submit exam",
+      "/exam/[id]: Keep working",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go("/learn/exams");
+      r.caption("Oluwaseun's test is open now");
+      await r.wait(2200);
+      const item = p.getByRole("link", { name: new RegExp(ctx.cbt ?? "Fractions quick test") }).first();
+      await r.point(item);
+      await r.offCamera(async () => {
+        await item.click();
+        await p.getByRole("button", { name: /Start the exam|Continue the exam/ }).waitFor({ timeout: 20_000 });
+      });
+      r.caption("How many questions, how long, and the rules");
+      await r.wait(2400);
+      await r.point(p.getByRole("button", { name: /Start the exam|Continue the exam/ }));
+      await r.offCamera(async () => {
+        await p.getByRole("button", { name: /Start the exam|Continue the exam/ }).click();
+        await p.waitForURL(/\/exam\//, { timeout: 20_000 });
+        await p.getByRole("group").first().waitFor({ timeout: 20_000 }).catch(() => {});
+      });
+      r.caption("One question at a time, with the clock counting down. Answers save as she goes.");
+      await r.wait(2000);
+      for (let i = 0; i < 8; i++) {
+        // Every question stays in the page; only the one on screen is visible.
+        const opts = p.locator("[aria-label$=' options']:visible").first();
+        const written = p.locator("textarea[aria-label^='Answer to question']:visible").first();
+        if (await opts.count()) await r.click(opts.getByRole("radio").nth(i % 3), 500);
+        else if (await written.count()) await r.type(written, "Find a common denominator, change both fractions, then add the tops: 1/2 + 1/3 = 3/6 + 2/6 = 5/6.");
+        const next = p.getByRole("button", { name: /^Next/ });
+        if (!(await next.count())) break;
+        await r.click(next, 500);
+      }
+      r.caption("All questions shows what's answered and what's left");
+      await r.click(p.getByRole("button", { name: "All questions" }), 900);
+      await r.wait(2000);
+      await r.click(p.getByRole("dialog").getByRole("button", { name: "Close" }), 600);
+      r.caption("Submit");
+      await r.click(p.getByRole("button", { name: /^Submit$/ }), 900);
+      await r.point(p.getByRole("button", { name: "Keep working" }));
+      await r.wait(1200);
+      await r.click(p.getByRole("dialog").getByRole("button", { name: "Submit", exact: true }), 1500);
+      await r.offCamera(() => p.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {}));
+      r.caption("Marked straight away. She sees her score as soon as she submits.");
+      await r.wait(3400);
+    },
+  },
+  {
+    id: "e16-4",
+    chapter: EPISODES.cbt,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Results and marking",
+    as: "maths",
+    covers: [
+      "/s/[slug]/cbt/exams/[id]",
+      "/s/[slug]/cbt/exams/[id]#results",
+      "/s/[slug]/cbt/exams/[id]: Results",
+      "/s/[slug]/cbt/exams/[id]#questions",
+      "/s/[slug]/cbt/exams/[id]: Questions",
+      "/s/[slug]/cbt/exams/[id]: More time",
+      "/s/[slug]/cbt/exams/[id]: Change closing time",
+      "/s/[slug]/cbt/exams/[id]: Close now",
+      "/s/[slug]/cbt/exams/[id]: Edit",
+      "/s/[slug]/cbt/exams/[id]: Delete exam",
+      "/s/[slug]/cbt/scripts/[attemptId]",
+      "/s/[slug]/cbt/scripts/[attemptId]: Mark script",
+      "journey: Set a CBT test from the question bank, a student sits it, it marks itself",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go(`${S}/cbt?tab=exams`);
+      const link = p.getByRole("link", { name: new RegExp(ctx.cbt ?? "Fractions quick test") }).first();
+      await r.point(link);
+      await r.offCamera(async () => {
+        await link.click();
+        await p.waitForURL(/cbt\/exams\/[0-9a-f-]{36}/, { timeout: 20_000 });
+      });
+      const base = p.url().split("?")[0];
+      await r.go(`${base}?tab=results`);
+      r.caption("Mr Obi sees every student's score as they finish. No marking for objective questions.");
+      await r.wait(3000);
+      const more = p.getByRole("button", { name: "More time" }).first();
+      if (await more.count()) await tour(r, [[more, "A student needs more time? Give it to them alone."]], 2000);
+      await tour(r, [
+        [p.getByRole("button", { name: "Change closing time" }), "Change the closing time for everyone"],
+        [p.getByRole("button", { name: "Close now" }), "or close it now"],
+      ], 2000);
+      const ca = p.getByRole("button", { name: /^Send scores to/ });
+      if (await ca.count()) await tour(r, [[ca, "Send the scores to the CA column, scaled for you"]], 2000);
+      // Edit is only offered before a test opens.
+      const edit = p.getByText("Edit", { exact: true }).first();
+      if (await edit.count()) await tour(r, [[edit, "Edit the test before it opens"]], 1600);
+      await tour(r, [[p.getByRole("button", { name: "Delete exam" }), "Delete a test set by mistake"]], 1600);
+      await r.go(`${base}?tab=questions`);
+      r.caption("Questions: each question, and how many students got it right");
+      await r.wait(2800);
+      // A test with theory answers, so the teacher marks them.
+      await r.go(`${S}/cbt?tab=exams`);
+      const ca2 = p.getByRole("link", { name: /Second CA test/ }).first();
+      if (await ca2.count()) {
+        await r.offCamera(async () => {
+          await ca2.click();
+          await p.waitForURL(/cbt\/exams\/[0-9a-f-]{36}/, { timeout: 20_000 });
+          await p.goto(`${p.url().split("?")[0]}?tab=results`);
+        });
+        r.caption("Tests with written answers: open each script to mark the theory questions");
+        const script = p.getByRole("link", { name: /Mark|To mark/ }).first();
+        await r.point(script);
+        await r.offCamera(async () => {
+          await script.click();
+          await p.waitForURL(/cbt\/scripts\//, { timeout: 20_000 });
+        });
+        r.caption("The student's answer, the marks it's worth, and a box for your mark");
+        await r.wait(2400);
+        const mark = p.getByLabel(/^Mark for question/).first();
+        if (await mark.count()) {
+          await r.type(mark, "4");
+          const save = p.getByRole("button", { name: /^Mark script|^Save/ }).first();
+          r.caption("Save, and the total updates");
+          await r.click(save, 1500);
+          await r.wait(2000);
+        }
+      }
+    },
+  },
 ];
 
 if (require.main === module) {
