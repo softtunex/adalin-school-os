@@ -5354,6 +5354,162 @@ export const SCENES: Scene[] = [
       await r.wait(3400);
     },
   },
+
+  /* ---------------- Episode 25: Inventory and the audit log ---------------- */
+  {
+    id: "e25-1",
+    chapter: EPISODES.records,
+    plan: "Premium",
+    kind: "desktop",
+    title: "The store",
+    as: "storekeeper",
+    covers: [
+      "/s/[slug]/inventory",
+      "/s/[slug]/inventory#items",
+      "/s/[slug]/inventory: Store",
+      "/s/[slug]/inventory: Add item",
+      "/s/[slug]/inventory: Kind of item",
+      "/s/[slug]/inventory: Name",
+      "/s/[slug]/inventory: Category",
+      "/s/[slug]/inventory: Counted in",
+      "/s/[slug]/inventory: How many now",
+      "/s/[slug]/inventory: Cost each (₦)",
+      "/s/[slug]/inventory: Reorder at",
+      "/s/[slug]/inventory: Kept in",
+      "/s/[slug]/inventory: Add to store",
+      "/s/[slug]/inventory: Issue",
+      "/s/[slug]/inventory: Sign out",
+      "/s/[slug]/inventory: Stock in",
+      "/s/[slug]/inventory: Count",
+      "/s/[slug]/inventory: Edit",
+      "/s/[slug]/inventory: Remove",
+      "/s/[slug]/inventory: Running low",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/inventory`);
+      // Start clean: remove markers added by an earlier take.
+      const old = p.getByRole("button", { name: "More for Whiteboard markers" });
+      if (await old.count()) {
+        await r.offCamera(async () => {
+          await old.first().click();
+          await p.getByRole("menuitem", { name: "Remove" }).click();
+          await dialog.getByRole("button", { name: "Remove" }).click();
+          await p.waitForTimeout(1200);
+        });
+      }
+      r.caption("Inventory: everything the school owns, from chalk to projectors");
+      await r.wait(2800);
+      r.caption("What's in the store, what's running low, and what's signed out to staff");
+      await r.wait(2600);
+      r.caption("Add something new");
+      await r.click(p.getByRole("button", { name: "Add item" }), 900);
+      await tour(r, [
+        [dialog.getByRole("radio", { name: /^Used up/ }), "Things that get used up, like chalk and paper"],
+        [dialog.getByRole("radio", { name: /^Kept/ }), "or things the school keeps, like projectors, signed out and back"],
+      ], 1800);
+      await r.type(dialog.getByLabel("Name"), "Whiteboard markers");
+      await r.select(dialog.getByLabel("Category"), { label: "Stationery" });
+      await r.type(dialog.getByLabel("Counted in"), "boxes");
+      const n = dialog.getByLabel("How many now");
+      await r.click(n, 300);
+      await n.fill("20");
+      await r.type(dialog.getByLabel("Cost each (₦)"), "3500");
+      r.caption("When to reorder. It shows as running low at this number.");
+      await r.type(dialog.getByLabel("Reorder at"), "5");
+      await r.select(dialog.getByLabel("Kept in"), { label: "Main store" });
+      await r.click(dialog.getByRole("button", { name: "Add to store" }), 1500);
+      await r.offCamera(async () => {
+        const done = dialog.getByRole("button", { name: /Done|Close/ }).first();
+        if (await done.isVisible().catch(() => false)) await done.click();
+      });
+      await r.wait(1200);
+      const row = p.getByText("Whiteboard markers", { exact: true }).locator("visible=true").first();
+      await r.reveal(row);
+      r.caption("Issue some to a teacher or a room. The count goes down by itself.");
+      const box = row.locator("xpath=ancestor::*[.//button][1]");
+      await r.click(box.getByRole("button", { name: "Issue" }).first(), 900);
+      await r.wait(1200);
+      const how = dialog.getByLabel(/How many/).first();
+      if (await how.count()) { await r.click(how, 300); await how.fill("2"); }
+      const to = dialog.getByRole("combobox").first();
+      if (await to.count()) await to.selectOption({ index: 1 }).catch(() => {});
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: /^(Issue|Save)/ }).last(), 1500);
+      await r.wait(1400);
+      await r.click(p.getByRole("button", { name: "More for Whiteboard markers" }).first(), 700);
+      await tour(r, [
+        [p.getByRole("menuitem", { name: "Stock in" }), "Stock in when a delivery arrives. Its cost can go straight to Expenses."],
+        [p.getByRole("menuitem", { name: "Count" }), "Count it, and note why the number is different"],
+        [p.getByRole("menuitem", { name: "Edit" }), "Edit or remove it"],
+      ], 2000);
+      await p.keyboard.press("Escape");
+      await r.wait(600);
+    },
+  },
+  {
+    id: "e25-2",
+    chapter: EPISODES.records,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Signed out, and history",
+    as: "storekeeper",
+    covers: [
+      "/s/[slug]/inventory#out",
+      "/s/[slug]/inventory: Signed out",
+      "/s/[slug]/inventory: Back in store",
+      "/s/[slug]/inventory#history",
+      "/s/[slug]/inventory: History",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/inventory?tab=out`);
+      r.caption("Signed out: projectors, laptops and tools with staff or in rooms");
+      await r.wait(2800);
+      const back = p.getByRole("button", { name: /Back in store/ }).first();
+      if (await back.count()) await tour(r, [[back, "When it comes back, check it in and note its condition"]], 2200);
+      await r.go(`${S}/inventory?tab=history`);
+      r.caption("History: every move in and out of the store, who did it and when");
+      await r.wait(3000);
+    },
+  },
+  {
+    id: "e25-3",
+    chapter: EPISODES.records,
+    plan: "Standard",
+    kind: "desktop",
+    title: "The audit log",
+    as: "owner",
+    covers: [
+      "/s/[slug]/audit",
+      "/s/[slug]/audit: Events",
+      "/s/[slug]/audit: Needs review",
+      "/s/[slug]/audit: Access & security",
+      "/s/[slug]/audit: People involved",
+      "/s/[slug]/audit: Search person, action or detail…",
+      "/s/[slug]/audit: Category",
+      "/s/[slug]/audit: Severity",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/audit`);
+      r.caption("The audit log: who did what, and when, across the whole school");
+      await r.wait(2800);
+      r.caption("Changes that need a second look are flagged, like access changes and removals");
+      await r.wait(2600);
+      await tour(r, [[p.getByPlaceholder("Search person, action or detail…"), "Search for a person, an action or a detail"]], 1800);
+      await r.type(p.getByPlaceholder("Search person, action or detail…"), "Whiteboard markers");
+      await r.offCamera(() => p.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {}));
+      r.caption("The storekeeper adding markers a moment ago is already here");
+      await r.wait(3000);
+      await r.offCamera(() => p.goto(`${S}/audit`));
+      const cat = p.getByRole("combobox", { name: /^Category/ });
+      if (await cat.count()) await tour(r, [[cat, "Filter by area: fees, results, staff, students and more"]], 2000);
+      r.caption("Nothing can be edited or deleted here. Premium keeps a year of history.");
+      await r.wait(2800);
+    },
+  },
 ];
 
 if (require.main === module) {
