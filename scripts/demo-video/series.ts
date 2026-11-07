@@ -4447,7 +4447,7 @@ export const SCENES: Scene[] = [
     kind: "phone",
     title: "Parents",
     as: "parent",
-    covers: ["email: New message"],
+    covers: ["email: New message", "/p/messages/[id]"],
     async run(r) {
       const p = r.page;
       await r.go("/p/messages");
