@@ -5346,7 +5346,6 @@ export const SCENES: Scene[] = [
     title: "Anyone",
     covers: ["/verify/[slug]/[token]", "journey: Issue an ID card, and someone verifies it with the QR code"],
     async run(r, ctx) {
-      const p = r.page;
       if (!ctx.verify) throw new Error("Record e24-4 first.");
       await r.go(ctx.verify);
       r.caption("Anyone can scan the QR code with their phone camera");
