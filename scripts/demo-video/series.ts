@@ -5134,6 +5134,227 @@ export const SCENES: Scene[] = [
       await r.wait(3200);
     },
   },
+
+  /* ---------------- Episode 24: ID cards, certificates and verification ---------------- */
+  {
+    id: "e24-1",
+    chapter: EPISODES.documents,
+    plan: "Premium",
+    kind: "desktop",
+    title: "ID cards",
+    as: "owner",
+    covers: [
+      "/s/[slug]/documents",
+      "/s/[slug]/documents#issue",
+      "/s/[slug]/documents: Make a document",
+      "/s/[slug]/documents: ID cards",
+      "/s/[slug]/documents: Print cards",
+      "/s/[slug]/documents: Students",
+      "/s/[slug]/documents: Staff",
+      "/s/[slug]/documents: Make the cards",
+      "/s/[slug]/documents: Open the PDF",
+      "pdf: Student ID card",
+      "pdf: Staff ID card",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      const open = async (caption: string) => {
+        const link = p.getByRole("link", { name: "Open the PDF" }).first();
+        await link.waitFor({ timeout: 30_000 });
+        await r.point(link);
+        const href = await link.getAttribute("href");
+        if (href) await showPdf(r, href, caption, 4000);
+      };
+      await r.go(`${S}/documents`);
+      r.caption("Documents: ID cards, testimonials, transcripts, certificates and letters, each with a QR code");
+      await r.wait(3000);
+      r.caption("Student ID cards for a whole class");
+      await r.click(p.getByRole("button", { name: "Print cards" }), 900);
+      await r.select(dialog.getByRole("combobox").first(), { label: "JSS 1 Gold" });
+      await r.click(dialog.getByRole("button", { name: "Make the cards" }), 1500);
+      await open("Every card has the photo, class, admission number, and a QR code to check it's real");
+      r.caption("Staff cards work the same way");
+      await r.click(p.getByRole("button", { name: "Print cards" }), 900);
+      await r.click(dialog.getByRole("radio", { name: "Staff" }), 700);
+      await r.click(dialog.getByText(/^Everyone \(\d+\)$/).first(), 700);
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: "Make the cards" }), 1500);
+      await open("Staff ID cards, ready to print");
+    },
+  },
+  {
+    id: "e24-2",
+    chapter: EPISODES.documents,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Testimonials and transcripts",
+    as: "owner",
+    covers: [
+      "/s/[slug]/documents: Testimonials",
+      "/s/[slug]/documents: Issue testimonial",
+      "/s/[slug]/documents: About them",
+      "/s/[slug]/documents: Offices held",
+      "/s/[slug]/documents: Clubs and activities",
+      "/s/[slug]/documents: Transcripts",
+      "/s/[slug]/documents: Issue transcript",
+      "pdf: Testimonial",
+      "pdf: Transcript",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      const open = async (caption: string) => {
+        const link = p.getByRole("link", { name: "Open the PDF" }).first();
+        await link.waitFor({ timeout: 30_000 });
+        await r.point(link);
+        const href = await link.getAttribute("href");
+        if (href) await showPdf(r, href, caption, 4000);
+      };
+      await r.go(`${S}/documents`);
+      r.caption("A testimonial for a student who's leaving");
+      await r.click(p.getByRole("button", { name: "Issue testimonial" }), 900);
+      await r.type(dialog.getByPlaceholder("Type a name or admission number"), "Chidi Ogunleye");
+      await r.click(dialog.getByRole("option", { name: /Chidi Ogunleye/ }).first(), 900);
+      r.caption("Their years at the school fill in. Add what you'd like to say.");
+      await r.wait(1600);
+      const about = dialog.getByLabel("About them");
+      if (await about.count()) await r.type(about, "A diligent and respectful student who led the debate team to the state finals.");
+      const offices = dialog.getByLabel("Offices held");
+      if (await offices.count()) await r.type(offices, "Senior prefect");
+      const clubs = dialog.getByLabel("Clubs and activities");
+      if (await clubs.count()) await r.type(clubs, "Debate club, JETS club");
+      await r.click(dialog.getByRole("button", { name: "Issue testimonial" }), 1500);
+      await open("The testimonial, signed and numbered");
+      r.caption("A transcript: every term's results, from published report cards");
+      await r.click(p.getByRole("button", { name: "Issue transcript" }), 900);
+      await r.type(dialog.getByPlaceholder("Type a name or admission number"), "Oluwaseun Lawal");
+      await r.click(dialog.getByRole("option", { name: /Oluwaseun Lawal/ }).first(), 900);
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: "Issue transcript" }), 1500);
+      await open("The transcript, ready for another school or university");
+    },
+  },
+  {
+    id: "e24-3",
+    chapter: EPISODES.documents,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Certificates and letters",
+    as: "owner",
+    covers: [
+      "/s/[slug]/documents: Certificates",
+      "/s/[slug]/documents: Issue certificate",
+      "/s/[slug]/documents: Make the certificates",
+      "/s/[slug]/documents: Letters",
+      "/s/[slug]/documents: Issue letter",
+      "/s/[slug]/documents: Make the letters",
+      "pdf: Certificate",
+      "pdf: Letter",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      const open = async (caption: string) => {
+        const link = p.getByRole("link", { name: "Open the PDF" }).first();
+        await link.waitFor({ timeout: 30_000 });
+        await r.point(link);
+        const href = await link.getAttribute("href");
+        if (href) await showPdf(r, href, caption, 4000);
+      };
+      await r.go(`${S}/documents`);
+      r.caption("Certificates, from your own templates");
+      await r.click(p.getByRole("button", { name: "Issue certificate" }), 900);
+      await r.select(dialog.getByRole("combobox").first(), { label: "Award of excellence" });
+      r.caption("For a whole class, or chosen students");
+      await r.select(dialog.getByRole("combobox").nth(1), { label: "JSS 1 Gold" });
+      await r.click(dialog.getByRole("button", { name: "Make the certificates" }), 1500);
+      await open("One certificate per student, each with its own serial number");
+      r.caption("Letters to parents: a resumption notice, an invitation, or your own");
+      await r.click(p.getByRole("button", { name: "Issue letter" }), 900);
+      await r.select(dialog.getByRole("combobox").first(), { label: "Resumption notice" });
+      await r.select(dialog.getByRole("combobox").nth(1), { label: "JSS 1 Gold" });
+      await r.click(dialog.getByRole("button", { name: "Make the letters" }), 1500);
+      await open("Each letter addressed to the child's parents, on the school's letterhead");
+    },
+  },
+  {
+    id: "e24-4",
+    chapter: EPISODES.documents,
+    plan: "Premium",
+    kind: "desktop",
+    title: "The register and templates",
+    as: "owner",
+    covers: [
+      "/s/[slug]/documents#issued",
+      "/s/[slug]/documents: Register",
+      "/s/[slug]/documents: Revoke",
+      "/s/[slug]/documents#templates",
+      "/s/[slug]/documents: Templates",
+      "/s/[slug]/documents: New template",
+      "/s/[slug]/documents: Template name",
+      "/s/[slug]/documents: Wording",
+      "/s/[slug]/documents: Preview with sample details",
+      "/s/[slug]/documents: Save template",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/documents?tab=issued`);
+      r.caption("The register: every document the school has issued, with its serial number");
+      await r.wait(2800);
+      // Show only ID cards, so the QR check below is for a card.
+      const kind = p.getByRole("combobox", { name: /^Kind/ });
+      const idValue = await kind.locator("option", { hasText: /ID card/i }).first().getAttribute("value").catch(() => null);
+      if (idValue) {
+        r.caption("Filter by kind: ID cards");
+        await r.point(kind);
+        await kind.selectOption(idValue);
+        await r.offCamera(() => p.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {}));
+        await r.wait(1400);
+      }
+      const verify = p.locator("a[href*='/verify/']").first();
+      ctx.verify = new URL((await verify.getAttribute("href"))!, "http://x").pathname;
+      await tour(r, [
+        [p.getByText("Reprint").first(), "Reprint a lost card. It keeps the same code."],
+        [verify, "Check: the page its QR code opens"],
+      ], 2200);
+      r.caption("Revoke a document, say a stolen card, and its QR code shows it's no longer valid");
+      await r.click(p.getByRole("button", { name: /^More for / }).first(), 700);
+      await r.point(p.getByRole("menuitem", { name: "Revoke" }));
+      await r.wait(2000);
+      await p.keyboard.press("Escape");
+      await r.go(`${S}/documents?tab=templates`);
+      r.caption("Templates: write your own certificates and letters");
+      await r.wait(2200);
+      await r.click(p.getByRole("button", { name: "New template" }), 900);
+      await tour(r, [
+        [dialog.getByLabel("Template name"), "Name it"],
+        [dialog.getByLabel("Wording"), "and write the wording. The student's name and class fill in by themselves."],
+      ], 2200);
+      const preview = dialog.getByText("Preview with sample details").first();
+      if (await preview.count()) await tour(r, [[preview, "Preview it with sample details"]], 1600);
+      await tour(r, [[dialog.getByRole("button", { name: "Save template" }), "Save template"]], 1400);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+    },
+  },
+  {
+    id: "e24-5",
+    chapter: EPISODES.documents,
+    plan: "Premium",
+    kind: "phone",
+    title: "Anyone",
+    covers: ["/verify/[slug]/[token]", "journey: Issue an ID card, and someone verifies it with the QR code"],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.verify) throw new Error("Record e24-4 first.");
+      await r.go(ctx.verify);
+      r.caption("Anyone can scan the QR code with their phone camera");
+      await r.wait(2400);
+      r.caption("This document is genuine: who it's for, when it was issued, and by which school");
+      await r.wait(3400);
+    },
+  },
 ];
 
 if (require.main === module) {
