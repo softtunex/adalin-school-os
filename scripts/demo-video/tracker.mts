@@ -6,8 +6,8 @@
  *   npx tsx scripts/demo-video/tracker.mts
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { SCENES, EPISODES } from "./series.ts";
-import { PDFS, EMAILS, JOURNEYS } from "./checklist.ts";
+import { SCENES, EPISODES } from "./series";
+import { PDFS, EMAILS, JOURNEYS } from "./checklist";
 
 const inv = JSON.parse(readFileSync(".data/demo-video/inventory.json", "utf8"));
 const takes: { id: string; length: number }[] = existsSync(".data/demo-video/series/takes.json") ? JSON.parse(readFileSync(".data/demo-video/series/takes.json", "utf8")) : [];
