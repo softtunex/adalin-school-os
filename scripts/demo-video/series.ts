@@ -5850,6 +5850,99 @@ export const SCENES: Scene[] = [
       if (await wa.count()) await tour(r, [[wa, "Text messages, or WhatsApp instead"]], 2000);
     },
   },
+
+  /* ---------------- Episode 28: The student app ---------------- */
+  {
+    id: "e28-1",
+    chapter: EPISODES.student,
+    plan: "Standard",
+    kind: "phone",
+    title: "Students",
+    covers: [
+      "/student",
+      "/student: School code",
+      "/student: Admission number",
+      "/student: Password",
+      "/student: Sign in",
+      "/learn",
+      "/learn: Today",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go("/student?school=adalin-college");
+      r.caption("Students sign in with the slip their school gave them");
+      await r.wait(2000);
+      await tour(r, [[p.getByLabel("School code"), "The school code is filled in from the school's link"]], 1800);
+      await r.type(p.getByLabel("Admission number"), "ADC/2026/0009");
+      await r.type(p.getByLabel("Password"), "Student2026");
+      await r.click(p.getByRole("button", { name: "Sign in" }), 1500);
+      await r.offCamera(() => p.waitForURL(/\/learn/, { timeout: 60_000 }));
+      r.caption("Today: attendance, and the day's lessons");
+      await r.wait(3000);
+      await r.scroll(500);
+      r.caption("And news from the school, like the mid-term break");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e28-2",
+    chapter: EPISODES.student,
+    plan: "Standard",
+    kind: "phone",
+    title: "Students",
+    as: "student",
+    covers: [
+      "/learn/timetable",
+      "/learn/assignments",
+      "/learn/assignments: To do",
+      "/learn/assignments: Handed in",
+      "/learn/assignments: Marked",
+      "/learn/assignments: Missed",
+      "/learn/exams",
+      "/learn/exams: Now",
+      "/learn/exams: Coming up",
+      "/learn/exams: Done",
+      "/learn/results",
+      "/learn/library",
+      "/learn/library: Search the library",
+      "/learn/account",
+      "/learn/account: New password",
+      "/learn/account: Save password",
+      "/learn/account: Sign out",
+    ],
+    async run(r) {
+      const p = r.page;
+      for (const [url, caption] of [
+        ["/learn/timetable", "Timetable: the week, with each teacher and room"],
+        ["/learn/assignments", "Homework: to do, handed in, marked, or missed. Covered in the Assignments episode."],
+        ["/learn/exams", "Exams: open now, coming up, and done. Covered in the CBT episode."],
+        ["/learn/materials", "Materials from her teachers"],
+      ] as const) {
+        await r.go(url);
+        r.caption(caption);
+        await r.wait(2600);
+      }
+      await r.go("/learn/results");
+      r.caption("Results: her published report cards, if the school allows it");
+      await r.wait(1600);
+      const card = p.getByRole("link", { name: /Report card/ }).first();
+      const href = await card.getAttribute("href");
+      await r.point(card);
+      if (href) await showPdf(r, href, "Her report card", 3400);
+      await r.go("/learn/library");
+      r.caption("Library: the books she has, when they're due, and a search of the whole library");
+      await r.wait(2600);
+      await r.type(p.getByLabel("Search the library"), "Achebe");
+      await r.offCamera(() => p.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {}));
+      await r.wait(2000);
+      await r.go("/learn/account");
+      r.caption("Account: her details, a new password whenever she likes, and sign out");
+      await tour(r, [
+        [p.getByLabel("New password"), "Change her password"],
+        [p.getByRole("button", { name: "Sign out" }), "and sign out on a shared phone"],
+      ], 1800);
+    },
+  },
 ];
 
 if (require.main === module) {
