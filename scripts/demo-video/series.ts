@@ -4468,6 +4468,337 @@ export const SCENES: Scene[] = [
       await r.wait(1800);
     },
   },
+
+  /* ---------------- Episode 21: Fees and online payments ---------------- */
+  {
+    id: "e21-1",
+    chapter: EPISODES.fees,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Fees overview",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/fees",
+      "/s/[slug]/fees#overview",
+      "/s/[slug]/fees: Overview",
+      "/s/[slug]/fees: See debtors",
+      "/s/[slug]/fees: View all",
+      "/s/[slug]/fees: Raise term invoices",
+      "/s/[slug]/fees: All classes",
+      "/s/[slug]/fees: Choose classes",
+      "/s/[slug]/fees: Payment due by (optional)",
+      "/s/[slug]/fees: Raise invoices",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/fees`);
+      r.caption("Fees: what's been billed this term, what's been paid, and what's still owed");
+      await r.wait(2800);
+      r.caption("Collections week by week, and the latest payments");
+      await r.reveal(p.locator("svg").first());
+      await r.wait(2600);
+      await r.offCamera(() => p.evaluate(() => window.scrollTo(0, 0)));
+      r.caption("At the start of term, raise everyone's invoices in one go, from the fee structure");
+      await r.click(p.getByRole("button", { name: "Raise term invoices" }), 900);
+      await tour(r, [[dialog.getByRole("button", { name: "All classes" }), "Every class"]], 1300);
+      r.caption("or only some. JSS 1 Gold has a new student without an invoice yet.");
+      await r.click(dialog.getByRole("button", { name: "Choose classes" }), 800);
+      await r.click(dialog.getByText("JSS 1 Gold", { exact: true }).first(), 700);
+      await r.point(dialog.getByLabel("Payment due by (optional)"));
+      await r.wait(1200);
+      r.caption("Students who already have an invoice are skipped, so nobody is billed twice");
+      await r.click(dialog.getByRole("button", { name: "Raise invoices" }), 1800);
+      await r.wait(2400);
+      const done = dialog.getByRole("button", { name: /Done|Close/ }).first();
+      if (await done.isVisible().catch(() => false)) await r.click(done, 800);
+    },
+  },
+  {
+    id: "e21-2",
+    chapter: EPISODES.fees,
+    plan: "Basic",
+    kind: "desktop",
+    title: "The fee structure",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/fees/structure",
+      "/s/[slug]/fees#structure",
+      "/s/[slug]/fees: Fee structure",
+      "/s/[slug]/fees/structure: Add item",
+      "/s/[slug]/fees/structure: Copy",
+      "/s/[slug]/fees/structure: Make optional",
+      "/s/[slug]/fees/structure: Save fee structure",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/fees/structure`);
+      r.caption("The fee structure: each fee item, and how much each class level pays this term");
+      await r.wait(3000);
+      await tour(r, [
+        [p.getByLabel("New fee item"), "Add a fee item, like a development levy"],
+        [p.getByLabel("Copy fees from"), "Copy last term's amounts to save typing"],
+        [p.getByRole("button", { name: /^Make (optional|compulsory)/ }).first(), "Make an item optional, like the bus or boarding"],
+        [p.getByRole("button", { name: "Save fee structure" }), "Save fee structure"],
+      ], 2000);
+    },
+  },
+  {
+    id: "e21-3",
+    chapter: EPISODES.fees,
+    plan: "Basic",
+    kind: "desktop",
+    title: "An invoice, and a cash payment",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/fees/invoices",
+      "/s/[slug]/fees#invoices",
+      "/s/[slug]/fees: Invoices",
+      "/s/[slug]/fees/invoices: Paid",
+      "/s/[slug]/fees/invoices: Part paid",
+      "/s/[slug]/fees/invoices: Unpaid",
+      "/s/[slug]/fees/invoices: Overdue",
+      "/s/[slug]/fees/invoices: Export CSV",
+      "/s/[slug]/fees/invoices/[id]",
+      "/s/[slug]/fees/invoices/[id]: Download PDF",
+      "/s/[slug]/fees/invoices/[id]: Add charge",
+      "/s/[slug]/fees/invoices/[id]: Give discount",
+      "/s/[slug]/fees/invoices/[id]: Email a reminder",
+      "/s/[slug]/fees/invoices/[id]: Void invoice",
+      "/s/[slug]/fees/invoices/[id]: Pay link",
+      "/s/[slug]/fees: Record payment",
+      "/s/[slug]/fees: Amount (₦)",
+      "/s/[slug]/fees: How they paid",
+      "/s/[slug]/fees: Paid by (optional)",
+      "/s/[slug]/fees: Date paid",
+      "/s/[slug]/fees: Download receipt",
+      "/s/[slug]/fees/invoices/[id]: Receipt",
+      "pdf: Fee invoice",
+      "pdf: Payment receipt",
+      "journey: Record a cash payment and print the receipt",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/fees/invoices`);
+      r.caption("Invoices: every student's bill for the term");
+      await r.wait(2400);
+      await tour(r, [
+        [p.getByRole("combobox", { name: /^Status/ }), "Filter by unpaid, part paid, paid or overdue"],
+        [p.getByText("Export CSV").first(), "and export to Excel"],
+      ], 1700);
+      const inv = p.getByRole("link", { name: /Ifeoluwa Adigun/ }).first();
+      r.caption("Ifeoluwa's new invoice");
+      await r.point(inv);
+      await r.offCamera(async () => {
+        await inv.click();
+        await p.waitForURL(/invoices\/[0-9a-f-]{36}/, { timeout: 20_000 });
+      });
+      r.caption("Each fee item, any discount, and what's left to pay");
+      await r.wait(2800);
+      await tour(r, [
+        [p.getByRole("button", { name: "Add charge" }), "Add a one-off charge, like a lost book"],
+        [p.getByRole("button", { name: "Give discount" }), "or give a discount"],
+        [p.getByRole("button", { name: "Email a reminder" }), "Email the parent a reminder from here"],
+      ], 1800);
+      const pay = p.getByLabel("Pay link");
+      if (await pay.count()) {
+        ctx.payUrl = new URL(await pay.inputValue()).pathname;
+        r.caption("The parent's payment link. It's in the invoice email, and you can send it on WhatsApp too.");
+        await r.reveal(pay);
+        await r.point(pay);
+        await r.wait(2600);
+      }
+      const pdf = p.getByRole("link", { name: "Download PDF" });
+      const pdfHref = await pdf.getAttribute("href");
+      await r.point(pdf);
+      if (pdfHref) await showPdf(r, pdfHref, "The invoice as a PDF, with the school's logo and bank details", 3600);
+      r.caption("Her father paid part of it in cash at the school. Record payment.");
+      await r.click(p.getByRole("button", { name: "Record payment" }).first(), 900);
+      const amount = dialog.getByLabel("Amount (₦)");
+      await r.click(amount, 300);
+      await amount.fill("100000");
+      await r.wait(600);
+      await r.select(dialog.getByLabel("How they paid"), { label: "Cash" });
+      await r.type(dialog.getByLabel("Paid by (optional)"), "Mr Segun Adigun");
+      await r.point(dialog.getByLabel("Date paid"));
+      await r.wait(800);
+      await r.click(dialog.getByRole("button", { name: /^Record/ }).last(), 1800);
+      r.caption("Recorded, with a numbered receipt. The parent gets it by email too.");
+      await r.wait(2400);
+      const receipt = dialog.getByRole("link", { name: "Download receipt" });
+      if (await receipt.count()) {
+        const href = await receipt.getAttribute("href");
+        await r.point(receipt);
+        if (href) {
+          await r.offCamera(() => p.keyboard.press("Escape"));
+          await showPdf(r, href, "The receipt, ready to print and hand over", 3400);
+        }
+      }
+      await r.offCamera(() => p.reload());
+      await tour(r, [[p.getByRole("button", { name: "Void invoice" }), "Raised by mistake? Void it. Nothing is ever deleted."]], 2200);
+    },
+  },
+  {
+    id: "e21-4",
+    chapter: EPISODES.fees,
+    plan: "Standard",
+    kind: "phone",
+    title: "Parents",
+    covers: [
+      "/pay/[token]",
+      "/pay/[token]: Download invoice (PDF)",
+      "/pay/[token]: Amount to pay (₦)",
+      "/pay/[token]: Your email",
+      "/pay/[token]: Pay now",
+      "/pay/[token]/test-checkout",
+      "/pay/[token]/test-checkout: Pay",
+      "email: Payment receipt",
+      "journey: Raise term invoices, a parent pays online, the receipt goes out",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.payUrl) throw new Error("Record e21-3 first: it gets the payment link.");
+      await r.go(ctx.payUrl);
+      r.caption("Mr Adigun opens the payment link on his phone. No account needed.");
+      await r.wait(2600);
+      r.caption("What's owed, what's been paid, and the invoice to download");
+      await r.wait(2400);
+      const amount = p.getByLabel("Amount to pay (₦)");
+      await r.reveal(amount);
+      r.caption("Pay it all, or part of it");
+      await r.point(amount);
+      await r.wait(1400);
+      await r.type(p.getByLabel("Your email"), "segun.adigun@example.com");
+      r.caption("Card, bank transfer or USSD, through Paystack. The money goes straight to the school.");
+      await r.click(p.getByRole("button", { name: /^Pay now|^Pay ₦/ }).first(), 1500);
+      await r.offCamera(() => p.waitForURL(/test-checkout/, { timeout: 30_000 }));
+      await r.wait(1400);
+      await r.click(p.getByRole("button", { name: /^Pay ₦/ }), 1500);
+      await r.offCamera(() => p.waitForURL(/\/pay\/[^/]+(\?|$)/, { timeout: 30_000 }));
+      r.caption("Paid. The receipt is emailed, and the school sees it straight away.");
+      await r.wait(3200);
+    },
+  },
+  {
+    id: "e21-5",
+    chapter: EPISODES.fees,
+    plan: "Basic",
+    kind: "desktop",
+    title: "Payments",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/fees/payments",
+      "/s/[slug]/fees#payments",
+      "/s/[slug]/fees: Payments",
+      "/s/[slug]/fees/payments: Any status",
+      "/s/[slug]/fees/payments: Reversed",
+      "/s/[slug]/fees/payments: Export CSV",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/fees/payments`);
+      r.caption("Payments: every payment, cash or online, with its receipt number");
+      await r.wait(2800);
+      r.caption("Mr Adigun's online payment is already here");
+      const row = p.getByText("Online (Paystack)").locator("visible=true").first();
+      if (await row.count()) await r.point(row);
+      await r.wait(2200);
+      await tour(r, [[p.getByRole("link", { name: "Export CSV" }), "Filter by date or method, and export for the accountant"]], 2200);
+    },
+  },
+  {
+    id: "e21-6",
+    chapter: EPISODES.fees,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Debtors",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/fees/debtors",
+      "/s/[slug]/fees#debtors",
+      "/s/[slug]/fees: Debtors",
+      "/s/[slug]/fees/debtors: Overdue only",
+      "/s/[slug]/fees/debtors: Export CSV",
+      "/s/[slug]/fees/debtors: Select everyone with an email",
+      "/s/[slug]/fees/debtors: Remind everyone",
+      "/s/[slug]/fees: Send reminders",
+      "email: Fees reminder",
+      "journey: Chase debtors with reminders",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/fees/debtors`);
+      r.caption("Debtors: who still owes, how much, and when they were last reminded");
+      await r.wait(2800);
+      await tour(r, [[p.getByRole("combobox", { name: /^Show/ }), "Show only overdue invoices"]], 1600);
+      r.caption("Tick the families to remind");
+      const boxes = p.getByRole("checkbox", { name: /^Select (?!everyone)/ });
+      await r.click(boxes.nth(0), 500);
+      await r.click(boxes.nth(1), 500);
+      await r.click(boxes.nth(2), 500);
+      await r.wait(800);
+      const send = p.getByRole("button", { name: /Send reminders|Email reminders|Remind/ }).filter({ hasNotText: "everyone" }).first();
+      r.caption("and send a reminder by email, with their balance and payment link");
+      if (await send.count()) await r.click(send, 1800);
+      await r.wait(2200);
+      await tour(r, [[p.getByRole("button", { name: "Remind everyone" }), "Or remind everyone who owes. Automatic reminders can be switched on in Settings."]], 2600);
+    },
+  },
+  {
+    id: "e21-7",
+    chapter: EPISODES.fees,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Discounts and scholarships",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/fees/discounts",
+      "/s/[slug]/fees#discounts",
+      "/s/[slug]/fees: Discounts",
+      "/s/[slug]/fees/discounts: New discount",
+      "/s/[slug]/fees/discounts: Name",
+      "/s/[slug]/fees/discounts: Percentage",
+      "/s/[slug]/fees/discounts: Fixed amount",
+      "/s/[slug]/fees/discounts: Percentage off",
+      "/s/[slug]/fees/discounts: Applies to",
+      "/s/[slug]/fees/discounts: Create discount",
+      "/s/[slug]/fees/discounts: Edit",
+      "/s/[slug]/fees/discounts: Delete",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/fees/discounts`);
+      // Start clean: remove a scheme left by an earlier take.
+      if (await p.getByText("Staff children", { exact: true }).count()) {
+        await r.offCamera(async () => {
+          const card = p.getByText("Staff children", { exact: true }).first().locator("xpath=ancestor::*[.//button][1]");
+          await card.getByRole("button", { name: "Delete" }).first().click();
+          await dialog.getByRole("button", { name: "Delete discount" }).click();
+          await p.waitForTimeout(1200);
+        });
+      }
+      r.caption("Discounts and scholarships, used again every term");
+      await r.wait(2400);
+      await r.click(p.getByRole("button", { name: "New discount" }), 900);
+      await r.type(dialog.getByLabel("Name"), "Staff children");
+      await tour(r, [
+        [dialog.getByRole("button", { name: "Percentage" }), "A percentage off"],
+        [dialog.getByRole("button", { name: "Fixed amount" }), "or a fixed amount"],
+      ], 1300);
+      await r.type(dialog.getByLabel("Percentage off"), "50");
+      r.caption("On all compulsory fees, or just one item like tuition");
+      await r.point(dialog.getByLabel("Applies to"));
+      await r.wait(1600);
+      await r.click(dialog.getByRole("button", { name: "Create discount" }), 1500);
+      await r.wait(1200);
+      const done = dialog.getByRole("button", { name: /Done|Close/ }).first();
+      if (await done.isVisible().catch(() => false)) await r.click(done, 700);
+      r.caption("Give it to a student from their profile's Fees tab. Their invoices update.");
+      await r.wait(2800);
+    },
+  },
 ];
 
 if (require.main === module) {
