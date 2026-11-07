@@ -5943,6 +5943,133 @@ export const SCENES: Scene[] = [
       ], 1800);
     },
   },
+
+  /* ---------------- Episode 29: Enterprise ---------------- */
+  {
+    id: "e29-1",
+    chapter: EPISODES.enterprise,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "A group of schools",
+    as: "enterprise",
+    covers: [
+      "/g/[id]",
+      "/g/[id]: Campuses",
+      "/g/[id]: Students",
+      "/g/[id]: Staff",
+      "/g/[id]: In school today",
+      "/g/[id]: Fees collected",
+      "journey: Add a second campus and see the group dashboard",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      const settings = "/s/adalin-heights-school-ikoyi/settings?tab=campuses";
+      await r.go(settings);
+      // Start clean: remove a Lekki campus added by an earlier take.
+      const old = p.getByText("Adalin Heights School, Lekki").first();
+      if (await old.count()) {
+        await r.offCamera(async () => {
+          await old.locator("xpath=ancestor::*[.//button][1]").getByRole("button", { name: "Remove" }).first().click();
+          await dialog.getByRole("button", { name: /Remove/ }).last().click();
+          await p.waitForTimeout(1500);
+          await p.goto(settings);
+        });
+      }
+      r.caption("Enterprise: Adalin Heights runs two campuses, Ikoyi and Abuja. Now a third is opening in Lekki.");
+      await r.wait(3000);
+      await r.type(p.getByLabel("New campus"), "Adalin Heights School, Lekki");
+      r.caption("Add campus. It's set up with the group's plan, ready for its own staff and students.");
+      await r.click(p.getByRole("button", { name: "Add campus" }), 1800);
+      await r.wait(2200);
+      const dash = p.getByRole("link", { name: "Open the group dashboard" });
+      await r.point(dash);
+      await r.offCamera(async () => {
+        await dash.click();
+        await p.waitForURL(/\/g\//, { timeout: 20_000 });
+      });
+      r.caption("The group dashboard: every campus side by side");
+      await r.wait(3000);
+      r.caption("Students, staff, who's in school today, and fees collected, across the whole group");
+      await r.wait(3200);
+      r.caption("Lekki is there already, ready for its own staff and students");
+      const lekki = p.getByText(/Lekki/).first();
+      if (await lekki.count()) await r.point(lekki);
+      await r.wait(3200);
+    },
+  },
+  {
+    id: "e29-2",
+    chapter: EPISODES.enterprise,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "Staff sign-in rule",
+    as: "enterprise",
+    covers: [],
+    async run(r) {
+      const p = r.page;
+      await r.go("/s/adalin-heights-school-ikoyi/settings?tab=signin");
+      r.caption("Staff sign-in: make every member of staff use their school Google or Microsoft account");
+      const must = p.getByLabel(/^Staff must log in with their work account/).first();
+      if (!(await must.isChecked())) await r.click(must, 800);
+      const google = p.getByLabel("Google", { exact: true });
+      if (!(await google.isChecked())) await r.click(google, 700);
+      await r.click(p.getByRole("button", { name: "Save sign-in rule" }), 1500);
+      r.caption("Saved. When someone leaves, turning off their work account locks them out of SchoolHub too.");
+      await r.wait(3000);
+    },
+  },
+  {
+    id: "e29-3",
+    chapter: EPISODES.enterprise,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "What staff see",
+    as: "enterprise",
+    covers: ["/sso-required/[slug]"],
+    async run(r) {
+      await r.go("/sso-required/adalin-heights-school-ikoyi");
+      r.caption("Staff who sign in with a password are sent here: use your school's Google account");
+      await r.wait(3600);
+    },
+  },
+  {
+    id: "e29-4",
+    chapter: EPISODES.enterprise,
+    plan: "Enterprise",
+    kind: "desktop",
+    title: "The API",
+    as: "enterprise",
+    covers: ["/developers", "/developers: Signing in", "/developers: Endpoints", "/developers: Errors and limits", "/developers: Webhooks"],
+    async run(r) {
+      const p = r.page;
+      // Put the sign-in rule back off, so the demo school signs in as usual.
+      await r.go("/s/adalin-heights-school-ikoyi/settings?tab=signin");
+      await r.offCamera(async () => {
+        const must = p.getByLabel(/^Staff must log in with their work account/).first();
+        if (await must.isChecked()) {
+          await must.uncheck();
+          await p.getByRole("button", { name: "Save sign-in rule" }).click();
+          await p.waitForTimeout(1500);
+        }
+      });
+      await r.go("/developers");
+      r.caption("The API: connect your website, accounting or other systems. Keys are made in Settings.");
+      await r.wait(2800);
+      for (const [h, caption] of [
+        ["Signing in", "Every request uses an API key, and only reads what that key allows"],
+        ["Endpoints", "Read students, classes, staff, invoices, payments and attendance"],
+        ["Errors and limits", "Clear errors, and fair limits"],
+        ["Webhooks", "Webhooks tell your systems the moment a payment or new student arrives"],
+      ] as const) {
+        await r.reveal(p.getByRole("heading", { name: h }));
+        r.caption(caption);
+        await r.wait(2600);
+      }
+      r.caption("That's the whole of SchoolHub. Questions? Ask Kola, or WhatsApp Adalin.");
+      await r.wait(3000);
+    },
+  },
 ];
 
 if (require.main === module) {
