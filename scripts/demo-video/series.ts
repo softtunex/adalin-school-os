@@ -55,6 +55,28 @@ async function tour(r: Recorder, stops: [import("@playwright/test").Locator, str
   }
 }
 
+/** Open Kola if needed, ask a question, and wait (off camera) for the whole answer. */
+async function askKola(r: Recorder, question: string, caption: string, hold = 4200) {
+  const p = r.page;
+  const box = p.getByLabel("Your question for Kola");
+  if (!(await box.isVisible().catch(() => false))) {
+    await r.click(p.getByRole("button", { name: /^Ask Kola/ }).first(), 900);
+  }
+  await r.type(box, question);
+  r.caption(caption);
+  await p.keyboard.press("Enter");
+  await r.wait(1200);
+  await r.offCamera(async () => {
+    // The answer is done when the box is ready for the next question.
+    await p.waitForFunction(() => {
+      const el = document.querySelector<HTMLTextAreaElement | HTMLInputElement>('[aria-label="Your question for Kola"]');
+      return !!el && !el.disabled && el.value === "";
+    }, null, { timeout: 60_000 });
+    await p.waitForTimeout(1500);
+  });
+  await r.wait(hold);
+}
+
 /**
  * Show a PDF the app makes (report card, receipt, payslip…). The recording browser can't display PDFs,
  * so the file is fetched with the signed-in session and drawn with PDF.js, then scrolled through.
@@ -5507,6 +5529,137 @@ export const SCENES: Scene[] = [
       const cat = p.getByRole("combobox", { name: /^Category/ });
       if (await cat.count()) await tour(r, [[cat, "Filter by area: fees, results, staff, students and more"]], 2000);
       r.caption("Nothing can be edited or deleted here. Premium keeps a year of history.");
+      await r.wait(2800);
+    },
+  },
+
+  /* ---------------- Episode 26: Kola and the AI helpers ---------------- */
+  {
+    id: "e26-1",
+    chapter: EPISODES.kola,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Asking Kola",
+    as: "owner",
+    covers: [
+      "shared:kola: Ask Kola",
+      "shared:kola: Your question for Kola",
+      "shared:kola: Send",
+      "shared:kola: What can I do on this page?",
+      "shared:kola: How do I get started?",
+      "shared:kola: What can my role do?",
+      "shared:kola: Close Kola",
+      "journey: Ask Kola a question, and use each AI helper",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/fees`);
+      r.caption("Kola is SchoolHub's helper, on every page. Ask anything about using SchoolHub.");
+      await r.point(p.getByRole("button", { name: /^Ask Kola/ }).first());
+      await r.wait(2200);
+      await r.click(p.getByRole("button", { name: /^Ask Kola/ }).first(), 1000);
+      r.caption("Quick questions to start, like what can I do on this page");
+      await r.point(p.getByRole("button", { name: "What can I do on this page?" }));
+      await r.wait(2200);
+      await askKola(r, "How do I chase parents who still owe fees?", "Kola knows which page you're on, and answers with the steps and a link");
+      await askKola(r, "And can reminders go out by themselves?", "Ask a follow-up, like you would a colleague");
+      r.caption("Kola only helps with SchoolHub, and never changes anything for you");
+      await r.wait(2400);
+      await r.click(p.getByRole("button", { name: "Close Kola" }).first(), 800);
+    },
+  },
+  {
+    id: "e26-2",
+    chapter: EPISODES.kola,
+    plan: "Standard",
+    kind: "phone",
+    title: "Teachers",
+    as: "teacher",
+    covers: [],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/results`);
+      r.caption("Teachers ask Kola on their phones too");
+      await r.wait(1600);
+      await askKola(r, "How do I write report card comments for my class?", "Kola answers for their role: a class teacher gets class teacher steps", 4600);
+      await r.click(p.getByRole("button", { name: "Close Kola" }).first(), 700);
+    },
+  },
+  {
+    id: "e26-3",
+    chapter: EPISODES.kola,
+    plan: "Standard",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: [],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p");
+      r.caption("Parents have Kola in the parent app");
+      await r.wait(1600);
+      await askKola(r, "How do I pay Oluwaseun's school fees?", "It explains how to pay, check results and message the school", 4600);
+      await r.click(p.getByRole("button", { name: "Close Kola" }).first(), 700);
+    },
+  },
+  {
+    id: "e26-4",
+    chapter: EPISODES.kola,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Questions from a photo",
+    as: "maths",
+    covers: ["/s/[slug]/cbt: From a photo", "/s/[slug]/cbt: Photo of questions"],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/cbt?tab=bank`);
+      r.caption("The AI helpers. In the question bank: turn a photo of a past paper into questions.");
+      await r.wait(2400);
+      await r.click(p.getByRole("button", { name: "Paste questions" }), 900);
+      await r.point(dialog.getByRole("button", { name: "From a photo" }));
+      r.caption("Take a photo of the paper, or choose one");
+      await r.wait(1400);
+      await dialog.locator("input[type=file]").first().setInputFiles(path.resolve(".data/demo-video/assets/JSS1 maths past paper.png"));
+      await r.wait(1200);
+      await r.offCamera(() => dialog.getByText(/^\s*1\.\s/m).first().waitFor({ timeout: 90_000 }).catch(() => {}));
+      r.caption("Every question and option is typed out for you, with the answers to check");
+      await r.reveal(dialog.getByLabel("Questions", { exact: true }));
+      await r.wait(4000);
+      r.caption("Check them, then add them to the bank. Nothing personal is ever sent.");
+      await r.point(dialog.getByRole("button", { name: "Add to the bank" }));
+      await r.wait(2200);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+    },
+  },
+  {
+    id: "e26-5",
+    chapter: EPISODES.kola,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Reading any spreadsheet",
+    as: "owner",
+    covers: ["/s/[slug]/students/import: AI matched your column headings", "/s/[slug]/students/import: Start over"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/students/import`);
+      r.caption("Importing students from a list with unusual headings, like Pupil's Full Names and M/F");
+      await r.wait(2400);
+      await p.locator("input[type=file]").setInputFiles(path.resolve(".data/demo-video/assets/Unusual headings.xlsx"));
+      await r.wait(1200);
+      const check = p.getByRole("button", { name: /Check|Preview|Continue/ }).first();
+      if (await check.isVisible().catch(() => false)) await r.click(check, 1500);
+      await r.offCamera(() => p.getByText("AI matched your column headings").waitFor({ timeout: 60_000 }).catch(() => {}));
+      const matched = p.getByText("AI matched your column headings");
+      if (await matched.count()) {
+        await r.reveal(matched);
+        await r.point(matched);
+      }
+      r.caption("The AI works out which column is which. Only the headings are sent, never the names.");
+      await r.wait(4000);
+      const over = p.getByRole("button", { name: "Start over" });
+      if (await over.count()) await tour(r, [[over, "Check the preview, then import, or start over"]], 1800);
+      r.caption("Comment suggestions and writing CBT questions are in the Results and CBT episodes");
       await r.wait(2800);
     },
   },
