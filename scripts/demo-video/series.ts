@@ -4799,6 +4799,224 @@ export const SCENES: Scene[] = [
       await r.wait(2800);
     },
   },
+
+  /* ---------------- Episode 22: Expenses and payroll ---------------- */
+  {
+    id: "e22-1",
+    chapter: EPISODES.money,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Recording an expense",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/expenses",
+      "/s/[slug]/expenses#expenses",
+      "/s/[slug]/expenses: Expenses",
+      "/s/[slug]/expenses: Spent this month",
+      "/s/[slug]/expenses: Awaiting approval",
+      "/s/[slug]/expenses: Biggest cost this month",
+      "/s/[slug]/expenses: Record expense",
+      "/s/[slug]/expenses: What was it for?",
+      "/s/[slug]/expenses: Amount (₦)",
+      "/s/[slug]/expenses: Date",
+      "/s/[slug]/expenses: Category",
+      "/s/[slug]/expenses: Paid by",
+      "/s/[slug]/expenses: Vendor (optional)",
+      "/s/[slug]/expenses: Reference (optional)",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/expenses`);
+      r.caption("Expenses: everything the school spends, by category");
+      await r.wait(2800);
+      r.caption("Spent this month, what's waiting for approval, and the biggest cost");
+      await r.wait(2600);
+      r.caption("The bursar records a purchase");
+      await r.click(p.getByRole("button", { name: "Record expense" }).first(), 900);
+      const what = "Diesel for the generator, 200 litres";
+      ctx.expense = what;
+      await r.type(dialog.getByLabel("What was it for?"), what);
+      const amount = dialog.getByLabel("Amount (₦)");
+      await r.click(amount, 300);
+      await amount.fill("190000");
+      await r.wait(500);
+      await r.select(dialog.getByLabel("Category"), { label: "Diesel and fuel" });
+      await r.select(dialog.getByLabel("Paid by"), { label: "Bank transfer" });
+      await r.type(dialog.getByLabel("Vendor (optional)"), "Total Energies, Lekki");
+      await r.type(dialog.getByLabel("Reference (optional)"), "TRF-88213");
+      await r.click(dialog.getByRole("button", { name: "Record expense" }), 1500);
+      await r.offCamera(() => dialog.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => {}));
+      r.caption("Recorded, and waiting for the proprietor's approval");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e22-2",
+    chapter: EPISODES.money,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Approving, and the income statement",
+    as: "owner",
+    covers: [
+      "/s/[slug]/expenses: Approve",
+      "/s/[slug]/expenses: Reject",
+      "/s/[slug]/expenses: Delete",
+      "/s/[slug]/expenses#statement",
+      "/s/[slug]/expenses: Income statement",
+      "/s/[slug]/expenses: This month",
+      "/s/[slug]/expenses: Last month",
+      "/s/[slug]/expenses: This year",
+      "journey: Record an expense",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/expenses`);
+      r.caption("The proprietor sees what's waiting for approval");
+      await r.wait(2400);
+      const row = p.getByText(ctx.expense ?? "Diesel for the generator").locator("visible=true").first();
+      await r.reveal(row);
+      await r.point(row);
+      await r.wait(1400);
+      // Approve and Reject are in the row's menu.
+      const menu = row.locator("xpath=ancestor::*[.//button][1]").getByRole("button").last();
+      r.caption("Open its menu");
+      await r.click(menu, 700);
+      await tour(r, [[p.getByRole("menuitem", { name: "Reject" }), "Reject it, with a reason"]], 1600);
+      r.caption("or approve it");
+      await r.click(p.getByRole("menuitem", { name: "Approve" }), 900);
+      await r.click(dialog.getByRole("button", { name: "Approve" }), 1500);
+      await r.wait(1800);
+      await r.go(`${S}/expenses?tab=statement`);
+      r.caption("The income statement: fees in, spending out, and the surplus or deficit");
+      await r.wait(3200);
+      r.caption("For this month, last month, this year, or any dates");
+      await r.point(p.getByRole("link", { name: "This year" }).first());
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e22-3",
+    chapter: EPISODES.money,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Preparing payroll",
+    as: "bursar",
+    covers: [
+      "/s/[slug]/payroll",
+      "/s/[slug]/payroll: Monthly payroll",
+      "/s/[slug]/payroll: Month",
+      "/s/[slug]/payroll: Prepare payroll",
+      "/s/[slug]/payroll#staff",
+      "/s/[slug]/payroll: Staff pay details",
+      "/s/[slug]/payroll: Set pay",
+      "/s/[slug]/payroll: Edit",
+      "/s/[slug]/payroll: Basic salary (₦ a month)",
+      "/s/[slug]/payroll: Allowances",
+      "/s/[slug]/payroll: Deductions",
+      "/s/[slug]/payroll: Save pay details",
+      "/s/[slug]/payroll/[id]",
+      "/s/[slug]/payroll/[id]: Adjust",
+      "/s/[slug]/payroll/[id]: Refresh from pay details",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/payroll?tab=staff`);
+      r.caption("Payroll starts with each person's pay: basic salary, allowances and deductions");
+      await r.wait(2600);
+      await r.click(p.getByRole("button", { name: "Edit" }).first(), 900);
+      r.caption("PAYE, pension and the housing fund are worked out for you");
+      await tour(r, [
+        [dialog.getByLabel("Basic salary (₦ a month)"), "Basic salary"],
+        [dialog.getByText("Allowances").first(), "allowances like housing and transport"],
+        [dialog.getByText("Deductions").first(), "and deductions like a loan repayment"],
+        [dialog.getByRole("button", { name: "Save pay details" }), "Save pay details"],
+      ], 1600);
+      await r.click(dialog.getByRole("button", { name: "Close" }), 700);
+      await r.go(`${S}/payroll`);
+      r.caption("Each month, prepare payroll from those details in one click");
+      await r.point(p.getByRole("button", { name: "Prepare payroll" }));
+      await r.wait(2000);
+      r.caption("November is ready as a draft. Open it.");
+      const nov = p.getByRole("link", { name: /November 2026/ }).first();
+      await r.point(nov);
+      await r.offCamera(async () => {
+        await nov.click();
+        await p.waitForURL(/payroll\/[0-9a-f-]{36}/, { timeout: 20_000 });
+      });
+      r.caption("Every payslip: gross, PAYE, pension, housing fund, and take-home");
+      await r.wait(3000);
+      r.caption("What to transfer to staff, and what to remit to the tax office");
+      await r.wait(2600);
+      const adjust = p.getByRole("button", { name: "Adjust" }).first();
+      if (await adjust.count()) await tour(r, [[adjust, "Adjust one person's pay this month, like a bonus or overtime"]], 2200);
+      const refresh = p.getByRole("button", { name: "Refresh from pay details" });
+      if (await refresh.count()) await tour(r, [[refresh, "Changed someone's pay details? Refresh the draft."]], 2000);
+    },
+  },
+  {
+    id: "e22-4",
+    chapter: EPISODES.money,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Approving payroll",
+    as: "owner",
+    covers: [
+      "/s/[slug]/payroll/[id]: Approve",
+      "/s/[slug]/payroll/[id]: Mark as paid",
+      "/s/[slug]/payroll/[id]: Delete draft",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/payroll`);
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: /November 2026/ }).first().click();
+        await p.waitForURL(/payroll\/[0-9a-f-]{36}/, { timeout: 20_000 });
+      });
+      r.caption("The proprietor checks the draft and approves it. Payslips are then locked.");
+      await r.wait(2600);
+      await tour(r, [[p.getByRole("button", { name: "Delete draft" }), "or deletes it and starts again"]], 1500);
+      await r.click(p.getByRole("button", { name: "Approve" }).first(), 900);
+      await r.wait(1400);
+      await r.click(dialog.getByRole("button", { name: "Approve" }), 1500);
+      await r.wait(1800);
+      r.caption("Once the transfers have gone out, mark it as paid");
+      await r.click(p.getByRole("button", { name: "Mark as paid" }).first(), 900);
+      await r.wait(1400);
+      await r.click(dialog.getByRole("button", { name: "Mark as paid" }), 1500);
+      r.caption("Staff are told their payslip is ready, and the cost goes into Expenses");
+      await r.wait(3000);
+    },
+  },
+  {
+    id: "e22-5",
+    chapter: EPISODES.money,
+    plan: "Premium",
+    kind: "desktop",
+    title: "Payslips",
+    as: "teacher",
+    covers: [
+      "/s/[slug]/hr#pay",
+      "/s/[slug]/hr: My payslips",
+      "/s/[slug]/payslips/[id]",
+      "pdf: Payslip",
+      "journey: Prepare payroll, approve it, and staff open their payslips",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/hr?tab=pay`);
+      r.caption("Mrs Adeyemi opens My payslips");
+      await r.wait(2400);
+      const slip = p.locator("a[href*='/payslips/']").first();
+      const href = await slip.getAttribute("href");
+      await r.point(slip);
+      await r.wait(1000);
+      if (href) await showPdf(r, href, "Her payslip: pay, allowances, every deduction, and take-home", 4200);
+    },
+  },
 ];
 
 if (require.main === module) {
