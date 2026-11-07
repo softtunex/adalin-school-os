@@ -5663,6 +5663,193 @@ export const SCENES: Scene[] = [
       await r.wait(2800);
     },
   },
+
+  /* ---------------- Episode 27: The parent app ---------------- */
+  {
+    id: "e27-1",
+    chapter: EPISODES.parent,
+    plan: "Basic",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: [
+      "/p",
+      "/p: Children",
+      "/p: Updates",
+      "/p/children/[id]",
+      "/p/children/[id]: Attendance",
+      "/p/children/[id]: Fees",
+      "/p/children/[id]: Results",
+      "/p/children/[id]: Homework",
+      "/p/children/[id]: Timetable",
+      "/p/children/[id]: Conduct",
+      "/p/children/[id]: Health",
+      "/p/children/[id]: Bus",
+      "/p/children/[id]: Hostel",
+      "/p/children/[id]: News",
+      "/p/children/[id]: Report card",
+      "journey: A parent reads the report card in the app",
+    ],
+    async run(r, ctx) {
+      const p = r.page;
+      await r.go("/p");
+      r.caption("The parent app: Mrs Lawal has two children at the school");
+      await r.wait(2600);
+      const child = p.getByRole("link", { name: /Oluwaseun/ }).first();
+      await r.point(child);
+      await r.offCamera(async () => {
+        await child.click();
+        await p.waitForURL(/\/p\/children\/[^/?]+/, { timeout: 20_000 });
+      });
+      const base = new URL(p.url()).pathname;
+      ctx.parentChild = base;
+      r.caption("Everything about Oluwaseun at a glance: attendance, fees, results, homework and more");
+      await r.wait(3200);
+      for (const [tab, caption] of [
+        ["attendance", "Attendance: every day this term, present, late or absent"],
+        ["homework", "Homework: what's due, handed in and marked"],
+        ["timetable", "Her timetable, day by day"],
+        ["conduct", "Merits and incidents"],
+        ["health", "Sick bay visits"],
+        ["fees", "Fees: each invoice, what's paid, and a button to pay"],
+      ] as const) {
+        await r.go(`${base}?tab=${tab}`);
+        r.caption(caption);
+        await r.wait(2400);
+      }
+      await r.go(`${base}?tab=results`);
+      r.caption("Results: each term's report card");
+      await r.wait(1800);
+      const card = p.getByRole("link", { name: /Report card/ }).first();
+      const href = await card.getAttribute("href");
+      await r.point(card);
+      if (href) await showPdf(r, href, "The report card, the same one the school prints", 4200);
+    },
+  },
+  {
+    id: "e27-2",
+    chapter: EPISODES.parent,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Holding results",
+    as: "owner",
+    covers: [],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/settings?tab=payments`);
+      r.caption("Some schools hold report cards until the term's fees are paid. It's one switch in Settings.");
+      const hold = p.getByLabel(/Hold results until fees are paid/).first();
+      await r.reveal(hold);
+      if (!(await hold.isChecked())) await r.click(hold, 700);
+      else await r.point(hold);
+      await r.click(p.getByRole("button", { name: "Save rules" }), 1500);
+      await r.wait(1400);
+      await r.go(`${S}/students?q=Oluwaseun+Lawal`);
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: /Oluwaseun Lawal/ }).first().click();
+        await p.waitForURL(/students\/[0-9a-f-]{36}/);
+        await p.goto(`${p.url().split("?")[0]}?tab=fees`);
+      });
+      r.caption("Oluwaseun lost a textbook, so the bursar adds a small charge");
+      await r.click(p.getByRole("button", { name: "One-off invoice" }), 900);
+      await r.type(dialog.getByLabel("What it's for"), "Replacement maths textbook");
+      const amt = dialog.getByLabel("Amount (₦)");
+      await r.click(amt, 300);
+      await amt.fill("12500");
+      await r.wait(600);
+      await r.click(dialog.getByRole("button", { name: "Raise invoice" }), 1500);
+      await r.wait(1600);
+    },
+  },
+  {
+    id: "e27-3",
+    chapter: EPISODES.parent,
+    plan: "Standard",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: ["/p/children/[id]: Pay", "journey: Hold results until fees are paid"],
+    async run(r, ctx) {
+      const p = r.page;
+      if (!ctx.parentChild) throw new Error("Record e27-1 first.");
+      await r.go(`${ctx.parentChild}?tab=results`);
+      r.caption("Now Mrs Lawal's report card says Held: clear the term's fees to view");
+      const held = p.getByText("Held").first();
+      if (await held.count()) await r.point(held);
+      await r.wait(3000);
+      await r.go(`${ctx.parentChild}?tab=fees`);
+      r.caption("She pays the ₦12,500 from her phone");
+      const pay = p.getByRole("link", { name: /^Pay ₦/ }).first();
+      await r.point(pay);
+      await r.offCamera(async () => {
+        await pay.click();
+        await p.waitForURL(/\/pay\//, { timeout: 20_000 });
+      });
+      const email = p.getByLabel("Your email");
+      if (await email.count()) await email.fill("parent8@example.com");
+      await r.click(p.getByRole("button", { name: /^Pay now|^Pay ₦/ }).first(), 1500);
+      await r.offCamera(() => p.waitForURL(/test-checkout/, { timeout: 30_000 }));
+      await r.click(p.getByRole("button", { name: /^Pay ₦/ }), 1500);
+      await r.offCamera(() => p.waitForURL(/\/pay\/[^/]+(\?|$)/, { timeout: 30_000 }));
+      r.caption("Paid");
+      await r.wait(1800);
+      await r.go(`${ctx.parentChild}?tab=results`);
+      r.caption("and the report card opens again straight away");
+      await r.point(p.getByRole("link", { name: /Report card/ }).first());
+      await r.wait(3000);
+    },
+  },
+  {
+    id: "e27-4",
+    chapter: EPISODES.parent,
+    plan: "Basic",
+    kind: "phone",
+    title: "Parents",
+    as: "parent",
+    covers: [
+      "/p/messages",
+      "/p/messages: New message",
+      "/p/messages/new",
+      "/p/messages/new: About",
+      "/p/messages/new: Subject",
+      "/p/messages/new: Message",
+      "/p/messages/new: Send message",
+      "/p/notifications",
+      "/p/notifications: Mark all as read",
+      "/p/account",
+      "/p/account: Your name",
+      "/p/account: Email",
+      "/p/account: Text messages",
+      "/p/account: WhatsApp instead of SMS",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go("/p/messages");
+      r.caption("Messages: conversations with her children's teachers");
+      await r.wait(2400);
+      await r.point(p.getByRole("link", { name: "New message" }).first());
+      await r.offCamera(async () => {
+        await p.getByRole("link", { name: "New message" }).first().click();
+        await p.getByLabel("Subject").waitFor({ timeout: 20_000 });
+      });
+      await tour(r, [
+        [p.getByLabel("About"), "Which child it's about. It goes to their class teacher."],
+        [p.getByLabel("Subject"), "A subject"],
+        [p.getByLabel("Message"), "and the message"],
+        [p.getByRole("button", { name: "Send message" }), "Send message"],
+      ], 1600);
+      await r.go("/p/notifications");
+      r.caption("Updates: every alert about her children, newest first");
+      await r.wait(2200);
+      await tour(r, [[p.getByRole("button", { name: "Mark all as read" }), "Mark all as read"]], 1300);
+      await r.go("/p/account");
+      r.caption("Account: her name, email, and how she'd like to hear from the school");
+      await r.wait(2400);
+      const wa = p.getByLabel(/WhatsApp instead of SMS/).first();
+      if (await wa.count()) await tour(r, [[wa, "Text messages, or WhatsApp instead"]], 2000);
+    },
+  },
 ];
 
 if (require.main === module) {
