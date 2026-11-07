@@ -9,6 +9,7 @@
  *   npx tsx scripts/demo-video/series.ts "Getting started"  one episode
  *   npx tsx scripts/demo-video/series.ts e1-3               one scene
  */
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { expect } from "@playwright/test";
 import { runStoryboard, S, type Recorder, type Scene } from "./kit";
@@ -44,6 +45,7 @@ export const EPISODES = {
   parent: "The parent app",
   student: "The student app",
   enterprise: "Enterprise: groups, API, sign-in and your own address",
+  extras: "Extras: finishing setup, password reset and the small print",
 } as const;
 
 /** Point at each control in turn, with a caption, without pressing it. */
@@ -6068,6 +6070,194 @@ export const SCENES: Scene[] = [
       }
       r.caption("That's the whole of SchoolHub. Questions? Ask Kola, or WhatsApp Adalin.");
       await r.wait(3000);
+    },
+  },
+
+  /* ---------------- Episode 30: Extras ---------------- */
+  {
+    id: "e30-1",
+    chapter: EPISODES.extras,
+    plan: "Free",
+    kind: "desktop",
+    title: "Finishing the setup checklist",
+    covers: [
+      "/s/[slug]/settings: Save profile",
+      "/s/[slug]/academics: Set up my school",
+      "/s/[slug]/academics: Class arms",
+      "/s/[slug]/academics: Current session",
+      "journey: Create a school and finish the setup checklist",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      // A brand-new school, signed up off camera (the sign-up itself is in Episode 1).
+      const stamp = Date.now().toString(36);
+      await r.offCamera(async () => {
+        await p.goto("/signup");
+        await p.getByLabel("School name").fill("Adalin Brookside School");
+        await p.getByLabel("Your full name").fill("Mr Kunle Adebanjo");
+        await p.getByLabel("Email").fill(`kunle.${stamp}@demo.adalinschoolhub.ng`);
+        await p.getByLabel("Password", { exact: true }).fill("Brookside2026");
+        await p.getByLabel("Confirm password").fill("Brookside2026");
+        await p.getByRole("checkbox", { name: /accepts the terms/ }).check();
+        await p.getByRole("button", { name: "Create school" }).click();
+        await p.waitForURL(/welcome=1/, { timeout: 60_000 });
+      });
+      const slug = new URL(p.url()).pathname.split("/")[2];
+      r.caption("A brand-new school. Let's finish the setup checklist, one step at a time.");
+      await r.wait(2800);
+
+      // 1. Profile
+      await r.go(`/s/${slug}/settings?tab=profile`);
+      r.caption("1. The school profile: type, phone and address");
+      await r.select(p.getByLabel("School type"), { label: "Secondary" }).catch(() => p.getByLabel("School type").selectOption({ index: 1 }));
+      await r.type(p.getByLabel("Phone"), "0802 555 0100");
+      await r.type(p.getByLabel("Address"), "14 Brookside Close, Lekki Phase 1");
+      await r.type(p.getByLabel("City / town"), "Lagos");
+      await r.click(p.getByRole("button", { name: "Save profile" }), 1500);
+      await r.wait(1200);
+
+      // 2. Classes
+      await r.go(`/s/${slug}/academics`);
+      r.caption("2. Classes: tick the sections, name the arms, and set the session");
+      await r.wait(1600);
+      await r.type(p.getByLabel("Class arms"), "Gold, Diamond");
+      await r.point(p.getByLabel("Current session"));
+      await r.wait(1000);
+      r.caption("Set up my school creates every class, the common Nigerian subjects, and three terms");
+      await r.click(p.getByRole("button", { name: /Set up my school/ }), 2000);
+      await r.offCamera(() => p.getByRole("button", { name: "Add class level" }).waitFor({ timeout: 60_000 }));
+      await r.wait(2000);
+
+      // 3. Staff
+      await r.go(`/s/${slug}/staff`);
+      r.caption("3. Invite a teacher");
+      await r.click(p.getByRole("button", { name: "Invite staff" }), 900);
+      await r.type(dialog.getByLabel("Full name"), "Mrs Temi Johnson");
+      await r.type(dialog.getByLabel("Email"), `temi.${stamp}@demo.adalinschoolhub.ng`);
+      await r.click(dialog.getByLabel(/^Subject teacher/), 600);
+      await r.click(dialog.getByRole("button", { name: "Send invitation" }), 1500);
+      await r.offCamera(async () => {
+        const done = dialog.getByRole("button", { name: "Done" });
+        if (await done.isVisible().catch(() => false)) await done.click();
+      });
+
+      // 4. Students
+      await r.go(`/s/${slug}/students/new`);
+      r.caption("4. Add a student");
+      await r.type(p.getByLabel("First name"), "Ayomide");
+      await r.type(p.getByLabel("Surname"), "Bello");
+      await p.getByLabel("Date of birth").fill("2014-06-12");
+      await r.click(p.getByLabel("Male", { exact: true }), 500);
+      await p.getByLabel("Class", { exact: true }).selectOption({ index: 1 });
+      await r.type(p.getByLabel("Full name"), "Mrs Kemi Bello");
+      await p.getByLabel("Relationship").selectOption({ label: "Mother" });
+      await r.type(p.getByLabel("Phone number"), "0803 555 0144");
+      await r.click(p.getByRole("button", { name: "Save student" }), 1500);
+      await r.offCamera(() => p.waitForURL(/students\/[0-9a-f-]{36}/, { timeout: 30_000 }));
+
+      await r.go(`/s/${slug}`);
+      r.caption("All four steps done, so the checklist makes way for the school's everyday overview");
+      await r.wait(3600);
+    },
+  },
+  {
+    id: "e30-2",
+    chapter: EPISODES.extras,
+    plan: "Free",
+    kind: "desktop",
+    title: "Forgot your password",
+    covers: [
+      "/login: Forgot password?",
+      "/forgot-password",
+      "/forgot-password: Email",
+      "/forgot-password: Send reset link",
+      "/reset-password/[token]",
+      "/reset-password/[token]: New password",
+      "/reset-password/[token]: Confirm new password",
+      "/reset-password/[token]: Save password",
+    ],
+    async run(r) {
+      const p = r.page;
+      const email = "storekeeper7@demo.adalinschoolhub.ng";
+      await r.go("/login");
+      r.caption("Forgot your password? Staff reset it themselves.");
+      await r.click(p.getByRole("link", { name: "Forgot password?" }), 1200);
+      await r.offCamera(() => p.getByLabel("Email").waitFor());
+      await r.type(p.getByLabel("Email"), email);
+      await r.click(p.getByRole("button", { name: "Send reset link" }), 1500);
+      r.caption("A reset link is emailed. It works once, for a short time.");
+      await r.wait(2600);
+      // The demo server logs emails instead of sending them; take the link from its log.
+      const link = await r.offCamera(async () => {
+        await p.waitForTimeout(2500);
+        const log = readFileSync(".data/demo-server.log", "utf8");
+        const all = [...log.matchAll(/\/reset-password\/[A-Za-z0-9_-]+/g)];
+        return all.length ? all[all.length - 1][0] : null;
+      });
+      if (!link) throw new Error("No reset link in the demo server log.");
+      await r.go(link);
+      r.caption("The link opens this page. Choose a new password.");
+      await r.type(p.getByLabel("New password", { exact: true }), "Demo2026!");
+      await r.type(p.getByLabel("Confirm new password"), "Demo2026!");
+      await r.click(p.getByRole("button", { name: "Save password" }), 1500);
+      r.caption("Saved, and signed straight in");
+      await r.wait(2600);
+    },
+  },
+  {
+    id: "e30-3",
+    chapter: EPISODES.extras,
+    plan: "Standard",
+    kind: "desktop",
+    title: "Editing a CBT test",
+    as: "maths",
+    covers: ["/s/[slug]/cbt/exams/[id]/edit", "/s/[slug]/cbt/exams: Save changes"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/cbt?tab=exams`);
+      const quiz = p.getByRole("link", { name: /Algebra quiz/ }).first();
+      r.caption("A test that hasn't opened yet can still be changed");
+      await r.point(quiz);
+      await r.offCamera(async () => {
+        await quiz.click();
+        await p.waitForURL(/cbt\/exams\/[0-9a-f-]{36}/, { timeout: 20_000 });
+      });
+      await r.wait(1600);
+      const edit = p.getByText("Edit", { exact: true }).first();
+      await r.point(edit);
+      await r.offCamera(async () => {
+        await edit.click();
+        await p.waitForURL(/\/edit/, { timeout: 20_000 });
+      });
+      r.caption("The same builder: change the time, the dates, or the questions");
+      await r.wait(3000);
+      await r.point(p.getByRole("button", { name: /Save changes|Schedule exam/ }).first());
+      r.caption("Save changes");
+      await r.wait(1800);
+    },
+  },
+  {
+    id: "e30-4",
+    chapter: EPISODES.extras,
+    plan: "Free",
+    kind: "desktop",
+    title: "The small print",
+    covers: ["/terms", "/privacy", "/dpa"],
+    async run(r) {
+      const p = r.page;
+      for (const [url, caption] of [
+        ["/terms", "The terms of use, in plain English"],
+        ["/privacy", "The privacy notice: what's collected, why, and the rights of parents, staff and students"],
+        ["/dpa", "The data processing agreement every school accepts, for Nigeria's data protection law"],
+      ] as const) {
+        await r.go(url);
+        r.caption(caption);
+        await r.wait(2200);
+        await r.scroll(700);
+        await r.wait(1400);
+      }
+      await p.evaluate(() => window.scrollTo(0, 0));
     },
   },
 ];
