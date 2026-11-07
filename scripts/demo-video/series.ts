@@ -5017,6 +5017,123 @@ export const SCENES: Scene[] = [
       if (href) await showPdf(r, href, "Her payslip: pay, allowances, every deduction, and take-home", 4200);
     },
   },
+
+  /* ---------------- Episode 23: Staff attendance and leave ---------------- */
+  {
+    id: "e23-1",
+    chapter: EPISODES.hr,
+    plan: "Standard",
+    kind: "phone",
+    title: "Staff",
+    as: "teacher",
+    covers: [
+      "/s/[slug]/hr",
+      "/s/[slug]/hr#me",
+      "/s/[slug]/hr: My day",
+      "/s/[slug]/hr: Clock in",
+      "/s/[slug]/hr: Clock out",
+      "/s/[slug]/hr: My leave",
+      "/s/[slug]/hr: Request leave",
+      "/s/[slug]/hr: Type of leave",
+      "/s/[slug]/hr: First day",
+      "/s/[slug]/hr: Last day",
+      "/s/[slug]/hr: Reason",
+      "/s/[slug]/hr: Send request",
+    ],
+    async run(r) {
+      const p = r.page;
+      const dialog = p.getByRole("dialog");
+      await r.go(`${S}/hr`);
+      r.caption("Mrs Adeyemi's day, on her phone. Staff clock in here when they arrive.");
+      await r.wait(2000);
+      const clockIn = p.getByRole("button", { name: "Clock in" });
+      if (await clockIn.count()) {
+        await r.click(clockIn, 1500);
+        r.caption("Clocked in, on time. Late arrivals are flagged against the school's start time.");
+      } else {
+        r.caption("She clocked in on time this morning. At the end of the day she clocks out.");
+        await r.point(p.getByRole("button", { name: "Clock out" }));
+      }
+      await r.wait(2600);
+      const leave = p.getByRole("button", { name: "Request leave" });
+      await r.reveal(leave);
+      r.caption("Her leave balance, and a button to ask for time off");
+      await r.wait(1800);
+      await r.click(leave, 900);
+      r.caption("The type of leave, with how many days are left");
+      await r.point(dialog.getByLabel("Type of leave"));
+      await r.wait(1600);
+      const day = (n: number) => p.evaluate((k) => { const d = new Date(Date.now() + k * 86400000); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }, n);
+      await r.point(dialog.getByLabel("First day"));
+      await dialog.getByLabel("First day").fill(await day(21));
+      await r.point(dialog.getByLabel("Last day"));
+      await dialog.getByLabel("Last day").fill(await day(22));
+      await r.wait(600);
+      await r.type(dialog.getByLabel("Reason"), "Family wedding in Ibadan");
+      r.caption("Send request. The principal is told.");
+      await r.click(dialog.getByRole("button", { name: "Send request" }), 1500);
+      await r.wait(2200);
+    },
+  },
+  {
+    id: "e23-2",
+    chapter: EPISODES.hr,
+    plan: "Standard",
+    kind: "desktop",
+    title: "The principal",
+    as: "principal",
+    covers: [
+      "/s/[slug]/hr#register",
+      "/s/[slug]/hr: Today's register",
+      "/s/[slug]/hr: Set status",
+      "/s/[slug]/hr#month",
+      "/s/[slug]/hr: Monthly",
+      "/s/[slug]/hr#leave",
+      "/s/[slug]/hr: Leave requests",
+      "/s/[slug]/hr: Approve",
+      "/s/[slug]/hr: Decline",
+    ],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/hr?tab=register`);
+      r.caption("Today's register: who's in, who's late, and who's on leave");
+      await r.wait(2800);
+      const set = p.getByLabel("Set status").first();
+      if (await set.count()) await tour(r, [[set, "Mark someone present, absent or on a day off by hand"]], 2000);
+      await r.go(`${S}/hr?tab=month`);
+      r.caption("Monthly: each staff member's days on time, late and absent");
+      await r.wait(2800);
+      await r.go(`${S}/hr?tab=leave`);
+      r.caption("Leave requests waiting for a decision");
+      await r.wait(2200);
+      const row = p.getByText("Family wedding in Ibadan").locator("visible=true").first();
+      const box = row.locator("xpath=ancestor::*[.//button][1]");
+      await r.point(row);
+      r.caption("Mrs Adeyemi's annual leave, and how many days she has left");
+      await r.wait(2200);
+      await tour(r, [[box.getByRole("button", { name: "Decline" }).first(), "Decline it, with a reason"]], 1600);
+      r.caption("or approve it. She's told straight away.");
+      await r.click(box.getByRole("button", { name: "Approve" }).first(), 1500);
+      await r.wait(2400);
+    },
+  },
+  {
+    id: "e23-3",
+    chapter: EPISODES.hr,
+    plan: "Standard",
+    kind: "phone",
+    title: "Staff",
+    as: "teacher",
+    covers: ["journey: A staff member clocks in and requests leave, and it's approved"],
+    async run(r) {
+      const p = r.page;
+      await r.go(`${S}/hr`);
+      const mine = p.getByText("Family wedding in Ibadan").first();
+      if (await mine.count()) await r.reveal(mine);
+      r.caption("Approved. Her leave balance updates on its own.");
+      await r.wait(3200);
+    },
+  },
 ];
 
 if (require.main === module) {
