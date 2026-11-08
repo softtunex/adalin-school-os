@@ -1,7 +1,7 @@
 /*
- * Lays a voiceover onto a finished episode: each paragraph of the narration starts as its scene starts.
- * The audio is one file per episode from the voice generator (.data/demo-video/audio/NN.mp3). Paragraph
- * breaks are found from Whisper's word timings, matched against the script.
+ * Lays a voiceover onto a finished episode, each spoken line starting as its caption appears.
+ * The audio is one file per episode from the voice generator (.data/demo-video/audio/NN.mp3), read from
+ * the script made by voiceover.mts. Where each line begins in the audio comes from Whisper's word timings.
  *
  *   FFMPEG=.data/tools/ffmpeg.exe npx tsx scripts/demo-video/mix.mts 1
  *
@@ -9,39 +9,20 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { EPISODES } from "./series";
-import type { Take } from "./kit";
 
 const FFMPEG = process.env.FFMPEG ?? "ffmpeg";
-const n = Number(process.argv[2]);
-const nn = String(n).padStart(2, "0");
-const title = (Object.values(EPISODES) as string[])[n - 1];
-const takes: Take[] = JSON.parse(readFileSync(".data/demo-video/series/takes.json", "utf8"));
-const lengths = new Map<string, number>();
-for (const line of readFileSync(".data/demo-video/series/clip-lengths.txt", "utf8").split("\n")) {
-  const [id, d] = line.trim().split(" ");
-  if (!id || !d) continue;
-  const [h, m, s] = d.split(":").map(Number);
-  lengths.set(id, h * 3600 + m * 60 + s);
-}
-const CARD = 3;
-const OUTRO = 4.5;
+const GAP = 0.15; // the least space between two lines when one runs late
 
+const nn = String(Number(process.argv[2])).padStart(2, "0");
 const audio = `.data/demo-video/audio/${nn}.mp3`;
 const video = `.data/demo-video/series/chapters/${readdirSync(".data/demo-video/series/chapters").find((f) => f.startsWith(nn + "-"))}`;
-const paragraphs = readFileSync(`.data/demo-video/voiceover/${nn}.txt`, "utf8").trim().split(/\n\s*\n/);
+const script: { seconds: number; lines: { at: number; until: number; text: string }[] } = JSON.parse(
+  readFileSync(`.data/demo-video/voiceover/${nn}.json`, "utf8"),
+);
+const lines = script.lines;
 
-// Where each paragraph should start in the video: the title card, each scene, the closing card.
-const scenes = takes.filter((t) => t.chapter === title).map((t) => lengths.get(t.id) ?? t.length);
-const starts = [0];
-let t = CARD;
-for (const s of scenes) { starts.push(t); t += s; }
-starts.push(t);
-const videoLength = t + OUTRO;
-if (starts.length !== paragraphs.length) throw new Error(`${paragraphs.length} paragraphs for ${starts.length} slots`);
-
-// Word timings for the audio, from Whisper on Groq (the narration only, nothing personal), cached
-// next to the audio. The key is read from .env.production.local and never printed.
+// Word timings for the audio, from Whisper on Groq (the narration only, nothing personal), cached next to
+// the audio. The key is read from .env.production.local and never printed.
 const wordsFile = audio.replace(/\.mp3$/, ".words.json");
 if (!existsSync(wordsFile)) {
   const key = readFileSync(".env.production.local", "utf8").match(/^GROQ_API_KEY=["']?([^"'\r\n]+)/m)?.[1];
@@ -61,58 +42,52 @@ const norm = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
 const heardNorm = heard.map((w) => norm(w.word));
 const audioLength = heard[heard.length - 1].end + 0.3;
 
-// Each paragraph break: find where the next paragraph's opening words are heard, near where the word
-// count says it should be, and cut in the gap just before them.
-const tokens = paragraphs.map((p) => p.split(/\s+/).map(norm).filter(Boolean));
-const total = tokens.reduce((a, p) => a + p.length, 0);
-const cuts = [0];
-let done = 0;
-let from = 0;
-for (let i = 1; i < paragraphs.length; i++) {
-  done += tokens[i - 1].length;
-  const expect = Math.round((done / total) * heard.length);
+// Find where each line begins in the audio: look for its opening words just after the previous line,
+// allowing for Whisper hearing a word or two differently. Lines it can't place are reported.
+const tokens = lines.map((l) => l.text.split(/\s+/).map(norm).filter(Boolean));
+const begins = [0];
+let expect = tokens[0].length;
+let unsure = 0;
+for (let i = 1; i < lines.length; i++) {
   const open = tokens[i].slice(0, 4);
-  let best = -1, bestScore = -1;
-  for (let j = Math.max(from, expect - 60); j < Math.min(heard.length, expect + 60); j++) {
-    const score = open.filter((w, k) => heardNorm[j + k] === w).length * 100 - Math.abs(j - expect);
+  let best = expect, bestScore = -Infinity;
+  for (let j = Math.max(begins[i - 1] + 1, expect - 8); j <= Math.min(heard.length - 1, expect + 8); j++) {
+    const score = open.filter((w, k) => heardNorm[j + k] === w).length * 10 - Math.abs(j - expect);
     if (score > bestScore) { bestScore = score; best = j; }
   }
-  if (bestScore < 200) throw new Error(`can't find paragraph ${i + 1} ("${open.join(" ")}") in the audio`);
-  const at = best > 0 ? (heard[best - 1].end + heard[best].start) / 2 : 0;
-  console.log(`paragraph ${i + 1} starts at ${at.toFixed(1)}s: "${heard.slice(best, best + 4).map((w) => w.word).join(" ")}"`);
-  cuts.push(at);
-  from = best + 1;
+  if (bestScore < Math.min(2, open.length) * 10 - 8) {
+    unsure++;
+    console.log(`  unsure where line ${i + 1} starts ("${lines[i].text.slice(0, 40)}"), heard "${heard.slice(best, best + 4).map((w) => w.word).join(" ")}"`);
+  }
+  begins.push(best);
+  expect = best + tokens[i].length;
 }
+const cuts = begins.map((b) => (b > 0 ? (heard[b - 1].end + heard[b].start) / 2 : 0));
 cuts.push(audioLength);
 
-// Each piece goes in at its slot; if a piece would run into the next slot, it starts earlier, never
-// overlapping the piece before.
-const pieces = paragraphs.map((_, i) => ({ from: cuts[i], to: cuts[i + 1], at: starts[i] }));
-for (let i = pieces.length - 1; i >= 0; i--) {
-  const p = pieces[i];
-  const next = i + 1 < pieces.length ? pieces[i + 1].at : videoLength;
-  const len = p.to - p.from;
-  if (p.at + len > next) p.at = Math.max(i ? pieces[i - 1].at : 0, next - len);
-}
+// Each line goes in when its caption appears, or just after the line before if that one runs late.
+const pieces = lines.map((l, i) => ({ from: cuts[i], to: cuts[i + 1], at: l.at }));
+let late = 0;
 for (let i = 1; i < pieces.length; i++) {
-  const prevEnd = pieces[i - 1].at + (pieces[i - 1].to - pieces[i - 1].from);
-  if (pieces[i].at < prevEnd) throw new Error(`paragraph ${i + 1} doesn't fit its scene`);
+  const prevEnd = pieces[i - 1].at + (pieces[i - 1].to - pieces[i - 1].from) + GAP;
+  if (prevEnd > pieces[i].at) { late = Math.max(late, prevEnd - lines[i].at); pieces[i].at = prevEnd; }
 }
-pieces.forEach((p, i) => console.log(`paragraph ${i + 1}: ${(p.to - p.from).toFixed(1)}s of speech at ${p.at.toFixed(1)}s`));
+const last = pieces[pieces.length - 1];
+const end = Math.max(script.seconds, last.at + last.to - last.from);
+console.log(`${lines.length} lines placed; the latest runs ${late.toFixed(1)}s behind its caption; ${unsure} unsure`);
 
+// One WAV per line (its speech, then silence until the next line), joined end to end.
 mkdirSync(".data/demo-video/series/voiced", { recursive: true });
 const out = video.replace("/chapters/", "/voiced/");
-// One padded WAV per paragraph (its speech, then silence until the next slot), joined end to end.
 const work = ".data/demo-video/series/voiced/work";
 rmSync(work, { recursive: true, force: true });
 mkdirSync(work, { recursive: true });
 const ff = (...args: string[]) => execFileSync(FFMPEG, ["-y", "-hide_banner", "-loglevel", "error", ...args], { stdio: "inherit" });
 const list: string[] = [];
-const lead = pieces[0].at;
-if (lead > 0) { ff("-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono", "-t", lead.toFixed(3), `${work}/lead.wav`); list.push("file 'lead.wav'"); }
 pieces.forEach((p, i) => {
-  const slot = (i + 1 < pieces.length ? pieces[i + 1].at : videoLength) - p.at;
-  ff("-i", audio, "-af", `atrim=${p.from.toFixed(3)}:${p.to.toFixed(3)},asetpts=PTS-STARTPTS,apad=whole_dur=${slot.toFixed(3)},atrim=0:${slot.toFixed(3)}`, "-ar", "44100", "-ac", "1", `${work}/${i}.wav`);
+  const slot = (i + 1 < pieces.length ? pieces[i + 1].at : end) - p.at;
+  const lead = i === 0 ? p.at : 0;
+  ff("-i", audio, "-af", `atrim=${p.from.toFixed(3)}:${p.to.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${Math.round(lead * 1000)},apad=whole_dur=${(slot + lead).toFixed(3)},atrim=0:${(slot + lead).toFixed(3)}`, "-ar", "44100", "-ac", "1", `${work}/${i}.wav`);
   list.push(`file '${i}.wav'`);
 });
 writeFileSync(`${work}/list.txt`, list.join("\n"));
