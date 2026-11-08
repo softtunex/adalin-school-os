@@ -65,15 +65,26 @@ for (let i = 1; i < lines.length; i++) {
 const cuts = begins.map((b) => (b > 0 ? (heard[b - 1].end + heard[b].start) / 2 : 0));
 cuts.push(audioLength);
 
-// Each line goes in when its caption appears, or just after the line before if that one runs late.
-const pieces = lines.map((l, i) => ({ from: cuts[i], to: cuts[i + 1], at: l.at }));
+// Each line goes in when its caption appears. A line longer than its caption is sped up a little (up to
+// MAX_TEMPO, hard to hear); if it still runs over, the next line starts just after it.
+const MAX_TEMPO = 1.15;
+const pieces = lines.map((l, i) => {
+  const speech = cuts[i + 1] - cuts[i];
+  const room = (lines[i + 1]?.at ?? script.seconds) - l.at - GAP;
+  const tempo = Math.min(MAX_TEMPO, Math.max(1, speech / room));
+  return { from: cuts[i], to: cuts[i + 1], at: l.at, tempo, length: speech / tempo };
+});
 let late = 0;
 for (let i = 1; i < pieces.length; i++) {
-  const prevEnd = pieces[i - 1].at + (pieces[i - 1].to - pieces[i - 1].from) + GAP;
-  if (prevEnd > pieces[i].at) { late = Math.max(late, prevEnd - lines[i].at); pieces[i].at = prevEnd; }
+  const prevEnd = pieces[i - 1].at + pieces[i - 1].length + GAP;
+  if (prevEnd > pieces[i].at) {
+    late = Math.max(late, prevEnd - lines[i].at);
+    pieces[i].at = prevEnd;
+    if (prevEnd - lines[i].at > 3) console.log(`  line ${i + 1} is ${(prevEnd - lines[i].at).toFixed(1)}s late: "${lines[i].text.slice(0, 60)}"`);
+  }
 }
 const last = pieces[pieces.length - 1];
-const end = Math.max(script.seconds, last.at + last.to - last.from);
+const end = Math.max(script.seconds, last.at + last.length);
 console.log(`${lines.length} lines placed; the latest runs ${late.toFixed(1)}s behind its caption; ${unsure} unsure`);
 
 // One WAV per line (its speech, then silence until the next line), joined end to end.
@@ -87,7 +98,7 @@ const list: string[] = [];
 pieces.forEach((p, i) => {
   const slot = (i + 1 < pieces.length ? pieces[i + 1].at : end) - p.at;
   const lead = i === 0 ? p.at : 0;
-  ff("-i", audio, "-af", `atrim=${p.from.toFixed(3)}:${p.to.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${Math.round(lead * 1000)},apad=whole_dur=${(slot + lead).toFixed(3)},atrim=0:${(slot + lead).toFixed(3)}`, "-ar", "44100", "-ac", "1", `${work}/${i}.wav`);
+  ff("-i", audio, "-af", `atrim=${p.from.toFixed(3)}:${p.to.toFixed(3)},asetpts=PTS-STARTPTS,atempo=${p.tempo.toFixed(3)},adelay=${Math.round(lead * 1000)},apad=whole_dur=${(slot + lead).toFixed(3)},atrim=0:${(slot + lead).toFixed(3)}`, "-ar", "44100", "-ac", "1", `${work}/${i}.wav`);
   list.push(`file '${i}.wav'`);
 });
 writeFileSync(`${work}/list.txt`, list.join("\n"));
