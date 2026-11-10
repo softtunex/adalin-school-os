@@ -92,7 +92,10 @@ for (const ep of todo) {
     if (!page.url().includes("studio.youtube.com")) throw new Error("not signed in to YouTube Studio");
     await page.locator("ytcp-video-row, #empty-state, ytcp-video-section-content").first().waitFor();
     await page.waitForTimeout(2000);
-    const row = page.locator("ytcp-video-row").filter({ hasText: ep.ytTitle }).filter({ hasText: "Edit draft" });
+    // A draft that stopped before its title was typed is still named after the file.
+    const fileTitle = ep.file.replace(/\.mp4$/, "").replace(/-/g, " ");
+    const drafts = page.locator("ytcp-video-row").filter({ hasText: "Edit draft" });
+    const row = drafts.filter({ hasText: ep.ytTitle }).or(drafts.filter({ hasText: fileTitle }));
     if (await row.count()) {
       await row.first().getByText("Edit draft").click();
       resumed = true;
@@ -114,9 +117,15 @@ for (const ep of todo) {
     await page.locator("ytcp-video-metadata-playlists ytcp-dropdown-trigger").click();
     const dialog = page.locator("ytcp-playlist-dialog > tp-yt-paper-dialog");
     await dialog.waitFor();
-    await page.waitForTimeout(1500); // the list fills in after the dialog opens
+    // The list fills in after the dialog opens. Only "No playlists available" means it's truly missing;
+    // an unloaded list once made the script create duplicates.
     const list = dialog.locator("#playlists-list");
-    if (!(await list.getByText(PLAYLIST, { exact: true }).count())) {
+    const ours = list.getByText(PLAYLIST, { exact: true }).first();
+    const none = dialog.getByText("No playlists available");
+    await ours.or(none).first().waitFor({ timeout: 30_000 });
+    await page.waitForTimeout(1000);
+    if (!(await ours.count())) {
+      if (!(await none.count())) throw new Error("playlist list loaded without ours; not creating another");
       // First upload: make the playlist, unlisted, oldest first so the episodes play in order.
       await dialog.locator('button[aria-label="Create playlist"]').click();
       await page.getByRole("menuitem", { name: "New playlist" }).click();
@@ -131,9 +140,9 @@ for (const ep of todo) {
       await choose("#metadata-sorting-menu", /Date added \(oldest\)|Manual/);
       await create.locator("#create-button").click();
       await create.waitFor({ state: "hidden" });
-      await list.getByText(PLAYLIST, { exact: true }).waitFor();
+      await ours.waitFor();
     }
-    if (!(await list.locator('[aria-checked="true"]').count())) await list.getByText(PLAYLIST, { exact: true }).click();
+    if (!(await list.locator('[aria-checked="true"]').count())) await ours.click();
     if (!(await list.locator('[aria-checked="true"]').count())) throw new Error("playlist not ticked");
     await dialog.locator('button[aria-label="Done"]').click();
     await dialog.waitFor({ state: "hidden" });
