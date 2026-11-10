@@ -60,7 +60,10 @@ for (let i = 1; i < lines.length; i++) {
   const open = tokens[i].slice(0, 4);
   let best = expect, bestScore = -Infinity;
   for (let j = Math.max(begins[i - 1] + 1, expect - 8); j <= Math.min(heard.length - 1, expect + 8); j++) {
-    const score = open.filter((w, k) => heardNorm[j + k] === w).length * 10 - Math.abs(j - expect);
+    // A word counts if Whisper heard it run into the next one ("Lend a" as "Lender"), and the line's
+    // first word counts extra so a line doesn't start on the last word of the one before.
+    const like = (h: string | undefined, w: string) => h === w || (!!h && w.length >= 3 && h.startsWith(w));
+    const score = open.filter((w, k) => like(heardNorm[j + k], w)).length * 10 + (like(heardNorm[j], open[0]) ? 5 : 0) - Math.abs(j - expect);
     if (score > bestScore) { bestScore = score; best = j; }
   }
   // Whisper may hear two words as one ("Sick bay" as "Sickbay"), or miss a short opening word.
@@ -115,6 +118,14 @@ const last = pieces[pieces.length - 1];
 const end = Math.max(script.seconds + added, last.at + last.length + 0.8);
 const hold = end - (script.seconds + added); // the closing card, held if the closing line needs longer
 console.log(`${lines.length} lines placed; the picture pauses ${pauses.length} times (${added.toFixed(1)}s), closing card held ${hold.toFixed(1)}s; ${unsure} unsure`);
+
+// DRY=1 only compares the placing with the last mix (after a change to the matching), and stops.
+if (process.env.DRY) {
+  const before: { at: number }[] = JSON.parse(readFileSync(video.replace("/chapters/", "/voiced/").replace(/\.mp4$/, ".lines.json"), "utf8"));
+  const moved = pieces.filter((p, i) => Math.abs(p.at - before[i].at) > 0.05).length;
+  console.log(`  ${nn}: ${moved ? `${moved} lines would move` : "unchanged"}`);
+  process.exit(0);
+}
 
 // The voice track: one WAV per line (its speech, then silence until the next line), joined end to end.
 mkdirSync(".data/demo-video/series/voiced", { recursive: true });
