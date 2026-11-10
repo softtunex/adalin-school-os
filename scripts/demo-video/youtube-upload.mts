@@ -140,6 +140,18 @@ for (const ep of todo) {
   });
 
   await step("not made for kids", () => page.locator('tp-yt-paper-radio-button[name="VIDEO_MADE_FOR_KIDS_NOT_MFK"]').click());
+  // DRAFTS=1: upload and fill in only, leaving a draft, so YouTube's checks run on every episode at once;
+  // a normal run afterwards finishes each draft.
+  if (process.env.DRAFTS) {
+    if (!resumed) {
+      await step("wait for the upload", () =>
+        page.waitForFunction(() => !/uploading|upload(ing)?\s+\d+%/i.test(document.querySelector("ytcp-video-upload-progress")?.textContent ?? ""), undefined, { timeout: 20 * 60_000, polling: 2000 }),
+      );
+    }
+    await page.waitForTimeout(4000); // let the details save
+    console.log("  left as a draft");
+    continue;
+  }
   for (let k = 0; k < 3; k++) await step(`next (${k + 1})`, () => page.locator("#next-button").click());
   await step("unlisted", async () => {
     await page.locator('tp-yt-paper-radio-button[name="UNLISTED"]').click();
