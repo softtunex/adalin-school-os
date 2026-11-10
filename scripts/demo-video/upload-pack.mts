@@ -48,7 +48,12 @@ const episodes = titles.map((title, i) => {
   return { n, title, file: file.replace(/\.lines\.json$/, ".mp4"), ytTitle, description, chapters, chaptersWork: chapters.length >= 3 };
 });
 
-writeFileSync(".data/demo-video/upload-pack.json", JSON.stringify(episodes.map(({ n, title, file, ytTitle, chapters }) => ({ n, title, file, ytTitle, chapters, url: "" })), null, 1));
+// Keep the YouTube links already recorded by youtube-upload.mts.
+const known = new Map<number, string>();
+try {
+  for (const e of JSON.parse(readFileSync(".data/demo-video/upload-pack.json", "utf8"))) known.set(e.n, e.url ?? "");
+} catch {}
+writeFileSync(".data/demo-video/upload-pack.json", JSON.stringify(episodes.map(({ n, title, file, ytTitle, chapters }) => ({ n, title, file, ytTitle, chapters, url: known.get(n) ?? "" })), null, 1));
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 const few = episodes.filter((e) => !e.chaptersWork).map((e) => e.n);
