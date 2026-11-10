@@ -42,6 +42,11 @@ if (!existsSync(wordsFile)) {
 const heard: { word: string; start: number; end: number }[] = JSON.parse(readFileSync(wordsFile, "utf8"));
 const norm = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, "");
 const heardNorm = heard.map((w) => norm(w.word));
+// The wrong episode's audio would be placed line by line into nonsense, so check the chapter number first.
+const said = heardNorm.slice(0, 3).join(" ");
+if (!said.startsWith(`chapter ${Number(nn)} `) && said !== `chapter ${Number(nn)}`) {
+  throw new Error(`${audio} opens with "${heard.slice(0, 3).map((w) => w.word).join(" ")}", not "Chapter ${Number(nn)}". Wrong episode's audio?`);
+}
 const audioLength = heard[heard.length - 1].end + 0.3;
 
 // Find where each line begins in the audio: look for its opening words just after the previous line,
