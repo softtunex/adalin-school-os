@@ -162,7 +162,20 @@ for (const ep of todo) {
   });
   await step("save", async () => {
     await page.locator("#done-button").click();
-    await page.locator("ytcp-uploads-dialog").waitFor({ state: "hidden", timeout: 60_000 }).catch(() => {});
+    // Saving takes a moment; closing the browser before it finishes leaves the video a draft.
+    await page.getByText(/^\s*Video (published|saved)\s*$/).first().waitFor({ timeout: 90_000 });
+    await page.waitForTimeout(3000);
+  });
+  await step("check it reads Unlisted in Content", async () => {
+    await page.goto(`https://studio.youtube.com/channel/${CHANNEL}/videos/upload`);
+    const row = page.locator("ytcp-video-row").filter({ hasText: ep.ytTitle }).first();
+    await row.waitFor();
+    for (let k = 0; k < 10 && !/Unlisted/.test(await row.innerText()); k++) {
+      await page.waitForTimeout(3000);
+      await page.reload();
+      await row.waitFor();
+    }
+    if (!/Unlisted/.test(await row.innerText())) throw new Error(`still shows "${(await row.innerText()).replace(/\s+/g, " ").slice(0, 120)}"`);
   });
 
   ep.url = url;
