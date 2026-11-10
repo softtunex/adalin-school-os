@@ -64,7 +64,7 @@ const spoken = (s: string) =>
     .replace(/^(\d)\. /, "$1, ")
     .replace(/([^.?!])$/, "$1.");
 
-type Line = { at: number; until: number; text: string };
+type Line = { at: number; until: number; text: string; scene?: string };
 const titles = Object.values(EPISODES) as string[];
 let tight = 0;
 const episodes = titles.map((title, i) => {
@@ -75,7 +75,7 @@ const episodes = titles.map((title, i) => {
     const length = measured.get(take.id) ?? planned;
     for (const s of spans) {
       if (s.from >= length - 0.5) continue; // cut off by the clip's shorter ending
-      lines.push({ at: t + s.from, until: t + Math.min(s.to, length), text: spoken(s.text) });
+      lines.push({ at: t + s.from, until: t + Math.min(s.to, length), text: spoken(s.text), scene: take.title });
     }
     t += length;
   }
