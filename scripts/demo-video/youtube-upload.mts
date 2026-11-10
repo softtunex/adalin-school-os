@@ -153,11 +153,13 @@ for (const ep of todo) {
     url = (await link.getAttribute("href")) ?? "";
     if (!/youtu\.be\/|watch\?v=/.test(url)) throw new Error(`odd link ${url}`);
   });
-  await step("wait for the upload to finish", async () => {
+  // Wait for YouTube's copyright checks too: publishing before they finish risks a strike, and YouTube
+  // asks "Publish anyway?", which this script never answers yes to.
+  await step("wait for the upload and YouTube's checks", async () => {
     await page.waitForFunction(
-      () => !/upload(ing)?\s+\d+%|uploading/i.test(document.querySelector("ytcp-video-upload-progress")?.textContent ?? ""),
+      () => /checks complete/i.test(document.querySelector("ytcp-video-upload-progress")?.textContent ?? ""),
       undefined,
-      { timeout: 15 * 60_000, polling: 2000 },
+      { timeout: 30 * 60_000, polling: 3000 },
     );
   });
   await step("save", async () => {
