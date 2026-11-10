@@ -7,7 +7,7 @@
  *
  * Writes .data/demo-video/series/voiced/NN-*.mp4.
  */
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
 const FFMPEG = process.env.FFMPEG ?? "ffmpeg";
@@ -48,6 +48,7 @@ const audioLength = heard[heard.length - 1].end + 0.3;
 // allowing for Whisper hearing a word or two differently. Lines it can't place are reported.
 const tokens = lines.map((l) => l.text.split(/\s+/).map(norm).filter(Boolean));
 const begins = [0];
+const missed = new Map<number, number>(); // lines whose first word Whisper didn't hear
 let expect = tokens[0].length;
 let unsure = 0;
 for (let i = 1; i < lines.length; i++) {
@@ -57,6 +58,9 @@ for (let i = 1; i < lines.length; i++) {
     const score = open.filter((w, k) => heardNorm[j + k] === w).length * 10 - Math.abs(j - expect);
     if (score > bestScore) { bestScore = score; best = j; }
   }
+  // Whisper may hear two words as one ("Sick bay" as "Sickbay"), or miss a short opening word.
+  if (heardNorm[best] !== open[0] && best - 1 > begins[i - 1] && heardNorm[best - 1] === open[0] + (open[1] ?? "")) best--;
+  else if (heardNorm[best] !== open[0] && heardNorm[best] === open[1]) missed.set(i, best);
   if (bestScore < Math.min(2, open.length) * 10 - 8) {
     unsure++;
     console.log(`  unsure where line ${i + 1} starts ("${lines[i].text.slice(0, 40)}"), heard "${heard.slice(best, best + 4).map((w) => w.word).join(" ")}"`);
@@ -66,6 +70,21 @@ for (let i = 1; i < lines.length; i++) {
 }
 const cuts = begins.map((b) => (b > 0 ? (heard[b - 1].end + heard[b].start) / 2 : 0));
 cuts.push(audioLength);
+// Where the first word was missed, the line really starts at the last pause the voice took before the
+// words that were heard (the pause between the missed word and the rest is skipped).
+if (missed.size) {
+  const raw = spawnSync(FFMPEG, ["-hide_banner", "-i", audio, "-af", "silencedetect=n=-40dB:d=0.12", "-f", "null", "-"], { encoding: "utf8" }).stderr;
+  const quiet: [number, number][] = [];
+  let s: number | null = null;
+  for (const m of raw.matchAll(/silence_(start|end): ([\d.]+)/g)) {
+    if (m[1] === "start") s = Number(m[2]);
+    else if (s !== null) { quiet.push([s, Number(m[2])]); s = null; }
+  }
+  for (const [i, b] of missed) {
+    const gap = quiet.filter(([, e]) => e < heard[b].start - 0.25 && e > cuts[i - 1] + 0.3).pop();
+    if (gap) cuts[i] = (gap[0] + gap[1]) / 2;
+  }
+}
 
 // Each line goes in when its caption appears. A line longer than its caption is sped up a little. If the
 // voice is still talking when the next caption is due, the picture pauses on the frame before that
