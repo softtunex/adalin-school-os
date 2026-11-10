@@ -22,7 +22,10 @@ const PLAYLIST = "Adalin SchoolHub: Tutorial Series";
 const PACK = ".data/demo-video/upload-pack.json";
 const PROFILE = resolve(".data/youtube-profile");
 
-type Ep = { n: number; title: string; file: string; ytTitle: string; chapters: { at: number; name: string }[]; url: string };
+type Ep = { n: number; title: string; file: string; ytTitle: string; chapters: { at: number; name: string }[]; url: string; thumb?: boolean };
+// The episode's title card as a still, made from the voiced video:
+//   for f in .data/demo-video/series/voiced/*.mp4; do ffmpeg -ss 1.8 -i $f -frames:v 1 -vf scale=1280:720 .data/demo-video/thumbnails/NN.png; done
+const thumb = (n: number) => `.data/demo-video/thumbnails/${String(n).padStart(2, "0")}.png`;
 const pack: Ep[] = JSON.parse(readFileSync(PACK, "utf8"));
 const html = readFileSync(".data/demo-video/upload-pack.html", "utf8");
 
@@ -63,6 +66,22 @@ async function fill(box: Locator, text: string, multiline: boolean) {
   if (got !== text.replace(/\s+/g, " ").trim()) throw new Error(`text didn't stick (got "${got.slice(0, 60)}…")`);
 }
 
+// Videos uploaded before thumbnails were added get theirs on the video's edit page.
+for (const ep of pack.filter((e) => e.n >= a && e.n <= (b || a) && e.url && !e.thumb)) {
+  const id = ep.url.split("/").pop();
+  await step(`thumbnail for episode ${ep.n}`, async () => {
+    await page.goto(`https://studio.youtube.com/video/${id}/edit`);
+    await page.locator("ytcp-thumbnail-uploader input#file-loader").setInputFiles(thumb(ep.n));
+    const save = page.locator("ytcp-button#save");
+    await page.waitForFunction(() => document.querySelector("ytcp-button#save")?.getAttribute("aria-disabled") !== "true", undefined, { timeout: 60_000 });
+    await save.click();
+    await page.waitForFunction(() => document.querySelector("ytcp-button#save")?.getAttribute("aria-disabled") === "true", undefined, { timeout: 60_000 });
+  });
+  ep.thumb = true;
+  writeFileSync(PACK, JSON.stringify(pack, null, 1));
+  console.log(`Episode ${ep.n}: thumbnail set`);
+}
+
 for (const ep of todo) {
   console.log(`Episode ${ep.n}: ${ep.ytTitle}`);
   // A run that stopped part-way leaves a draft (already uploaded, private): finish that instead of
@@ -89,6 +108,7 @@ for (const ep of todo) {
   await page.locator("#title-textarea #textbox").waitFor();
   await step("title", async () => fill(page.locator("#title-textarea #textbox"), ep.ytTitle, false));
   await step("description", async () => fill(page.locator("#description-textarea #textbox"), description(ep.n), true));
+  await step("thumbnail", () => page.locator("ytcp-thumbnail-uploader input#file-loader").setInputFiles(thumb(ep.n)));
 
   await step("playlist", async () => {
     await page.locator("ytcp-video-metadata-playlists ytcp-dropdown-trigger").click();
@@ -146,6 +166,7 @@ for (const ep of todo) {
   });
 
   ep.url = url;
+  ep.thumb = true;
   writeFileSync(PACK, JSON.stringify(pack, null, 1));
   console.log(`  uploaded, unlisted: ${url}`);
   await page.keyboard.press("Escape").catch(() => {});
