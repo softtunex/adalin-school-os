@@ -10,6 +10,8 @@ import { can, type Access } from "./access";
 import type { Permission } from "../rbac/permissions";
 import { aiAvailability, aiSettings, runAi, type AiActor } from "./ai";
 import { myChildren } from "./parent-portal";
+import { listPlans } from "./school-profile";
+import { FEATURES, LIMITS, type FeatureKey } from "../plans/catalog";
 
 /*
  * Kola, the helper: answers "how do I…" questions about SchoolHub from the help guide, for the pages
@@ -127,9 +129,33 @@ export function addVideo(reply: string, question: string, videosFor: (link: stri
 }
 const stem = (w: string) => w.replace(/(ing|es|s)$/, "");
 
+const ABOUT_PLANS = /\b(plans?|upgrade|downgrade|subscri\w*|price|pricing|cost|how much|enterprise|premium|standard|basic|free plan|locked|lock)\b/i;
+
+/**
+ * What each plan includes, from the plans table (the same one that sets prices and locks), so Kola can
+ * say what an upgrade adds. Given only when a question is about plans.
+ */
+export function planBrief(list: { key: string; name: string; pricePerStudentKobo: number | null; features: string[]; limits: Record<string, number> }[], current: string) {
+  const label = (f: string) => FEATURES[f as FeatureKey] ?? f;
+  return list
+    .map((p, i) => {
+      const before = new Set(list[i - 1]?.features ?? []);
+      const added = p.features.filter((f) => !before.has(f)).map(label);
+      const price = p.pricePerStudentKobo === null ? "price agreed with Adalin (contact Adalin)" : p.pricePerStudentKobo === 0 ? "free" : `₦${(p.pricePerStudentKobo / 100).toLocaleString("en-NG")} per student per term`;
+      const limits = (["students", "staff"] as const).filter((k) => p.limits[k] > 0).map((k) => `up to ${p.limits[k]} ${LIMITS[k].toLowerCase()}`);
+      return `- ${p.name}${p.key === current ? " (this school's plan)" : ""}: ${price}${limits.length ? `; ${limits.join(", ")}` : ""}. ${i === 0 ? "Includes" : `Everything in ${list[i - 1].name}, plus`}: ${added.join(", ")}.`;
+    })
+    .join("\n");
+}
+
 export async function askKola(db: DB, access: Access, input: z.infer<typeof kolaSchema>) {
   const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const brief = kolaBrief(access, { page: input.page, question });
+  // Plan questions can follow on ("but what extra would I get?"), so look at the last few messages.
+  const recent = input.messages.slice(-4).map((m) => m.content).join(" ");
+  const plansText = ABOUT_PLANS.test(recent)
+    ? `\n\nSchoolHub plans (only the proprietor can change the plan, in Settings → Plan & billing):\n${planBrief(await listPlans(db), access.plan.key)}`
+    : "";
   const history = input.messages.slice(-8);
   const system = `[task:kola] You are Kola, the friendly helper inside Adalin SchoolHub, a school management app used by schools in Nigeria. You are talking to ${greetingName(access.user.name)}, whose role at ${access.school.name} is ${brief.roles}. The school is on the ${access.plan.name} plan.${input.page ? ` They are on the page ${input.page}.` : ""}
 
@@ -139,6 +165,7 @@ Answer questions about how to use SchoolHub, using only the guide below. Rules:
 - Use only the button and tab names in the guide, word for word.
 - Only mention pages in the guide; this person can't open others. If they ask about something not there, say their role doesn't include it and suggest asking the school's admin or proprietor.
 - If a page is locked, say it comes with a higher plan (Settings → Plan & billing, for the proprietor).
+- Questions about plans, prices or what an upgrade adds: answer from the SchoolHub plans list when it's given below, naming what the plan adds. That's not a role question.
 - You can't see or change the school's records (students, scores, fees). If asked for figures or to do something, say where they can see or do it themselves.
 - If the guide doesn't cover it, say you're not sure and suggest the page most likely to have it, or contacting Adalin support. Never make up buttons or features.
 - Stay on SchoolHub and school work. Politely decline anything else.
@@ -150,7 +177,7 @@ AI helpers this person can use:
 ${brief.aiHelpers}
 
 Pages this person can open (full guide given for the ones that matter to this question; ask them to open a page for more):
-${brief.pages}`;
+${brief.pages}${plansText}`;
 
   const reply = placeVideos(await runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 }), brief.videos);
   const base = `/s/${access.school.slug}`;

@@ -9,7 +9,8 @@ import { registerSchoolOwner } from "@/lib/services/accounts";
 import { AI_DAILY, AI_PER_PERSON, aiAvailability, aiUsedToday, runAi, saveAiSettings } from "@/lib/services/ai";
 import { cleanQuestionText, draftQuestions } from "@/lib/services/ai-questions";
 import { parseQuestions } from "@/lib/services/cbt";
-import { addVideo, askKola, greetingName, kolaBrief, placeVideos } from "@/lib/services/kola";
+import { addVideo, askKola, greetingName, kolaBrief, placeVideos, planBrief } from "@/lib/services/kola";
+import { listPlans } from "@/lib/services/school-profile";
 import { createTestDatabase } from "./helpers";
 
 let database: Database;
@@ -162,6 +163,13 @@ describe("allowances and Kola's brief", () => {
     expect(placeVideos("All of them: [[SERIES]]", offered)).toMatch(/\[SchoolHub video tutorials\]\(https:\/\/www\.youtube\.com\/playlist\?list=/);
     // Ordinary lines that mention videos stay.
     expect(placeVideos("To add a video:\n1. Open Materials.", offered)).toBe("To add a video:\n1. Open Materials.");
+  });
+
+  it("tells Kola what each plan adds, from the plans table", async () => {
+    const text = planBrief(await listPlans(database.db), "standard");
+    expect(text).toMatch(/- Standard \(this school's plan\): ₦1,200 per student per term\./);
+    expect(text).toMatch(/- Enterprise: price agreed with Adalin \(contact Adalin\)\. Everything in Premium, plus: Multi-campus, Custom domain and white-label, API access, Single sign-on\./);
+    expect(text).toMatch(/- Free: free; up to 50 students, up to 5 staff accounts\. Includes: /);
   });
 
   it("adds the video for the page a reply links to when Kola leaves it out, matching the question", () => {
