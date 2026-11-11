@@ -99,8 +99,24 @@ for (const ep of todo) {
     if (await row.count()) {
       await row.first().getByText("Edit draft").click();
       resumed = true;
+      return;
+    }
+    // Already finished by a run that stopped before recording it: record it, never upload it again.
+    const done = page.locator("ytcp-video-row").filter({ hasText: ep.ytTitle }).first();
+    if (await done.count()) {
+      const href = (await done.locator('a[href*="/video/"]').first().getAttribute("href")) ?? "";
+      const id = href.match(/\/video\/([\w-]+)/)?.[1];
+      if (!id) throw new Error("found the finished video but not its id");
+      if (!/Unlisted/.test(await done.innerText())) throw new Error(`finished video isn't Unlisted: "${(await done.innerText()).replace(/\s+/g, " ").slice(0, 100)}"`);
+      ep.url = `https://youtu.be/${id}`;
+      ep.thumb = true;
     }
   });
+  if (ep.url) {
+    writeFileSync(PACK, JSON.stringify(pack, null, 1));
+    console.log(`  already up, unlisted: ${ep.url}`);
+    continue;
+  }
   if (!resumed) {
     await step("open the upload dialog", async () => {
       await page.goto(`https://studio.youtube.com/channel/${CHANNEL}/videos/upload?d=ud`);
@@ -117,31 +133,15 @@ for (const ep of todo) {
     await page.locator("ytcp-video-metadata-playlists ytcp-dropdown-trigger").click();
     const dialog = page.locator("ytcp-playlist-dialog > tp-yt-paper-dialog");
     await dialog.waitFor();
-    // The list fills in after the dialog opens. Only "No playlists available" means it's truly missing;
-    // an unloaded list once made the script create duplicates.
+    // The playlist must already exist (made once, by hand or by the first run). This script never creates
+    // one: YouTube briefly shows "No playlists available" while the list loads, which once made it create
+    // nine duplicates.
     const list = dialog.locator("#playlists-list");
-    const ours = list.getByText(PLAYLIST, { exact: true }).first();
-    const none = dialog.getByText("No playlists available");
-    await ours.or(none).first().waitFor({ timeout: 30_000 });
+    const all = list.getByText(PLAYLIST, { exact: true });
+    const ours = all.first();
+    await ours.waitFor({ timeout: 45_000 });
     await page.waitForTimeout(1000);
-    if (!(await ours.count())) {
-      if (!(await none.count())) throw new Error("playlist list loaded without ours; not creating another");
-      // First upload: make the playlist, unlisted, oldest first so the episodes play in order.
-      await dialog.locator('button[aria-label="Create playlist"]').click();
-      await page.getByRole("menuitem", { name: "New playlist" }).click();
-      const create = page.locator("ytcp-playlist-creation-dialog tp-yt-paper-dialog").first();
-      await create.waitFor();
-      await fill(create.locator("#title-textarea #textbox"), PLAYLIST, false);
-      const choose = async (menu: string, item: RegExp) => {
-        await create.locator(`${menu} ytcp-dropdown-trigger`).click();
-        await page.locator("tp-yt-paper-item:visible").filter({ hasText: item }).first().click();
-      };
-      await choose("#visibility-selector", /^\s*Unlisted\s*$/);
-      await choose("#metadata-sorting-menu", /Date added \(oldest\)|Manual/);
-      await create.locator("#create-button").click();
-      await create.waitFor({ state: "hidden" });
-      await ours.waitFor();
-    }
+    if ((await all.count()) !== 1) throw new Error(`expected one "${PLAYLIST}" playlist, found ${await all.count()}`);
     if (!(await list.locator('[aria-checked="true"]').count())) await ours.click();
     if (!(await list.locator('[aria-checked="true"]').count())) throw new Error("playlist not ticked");
     await dialog.locator('button[aria-label="Done"]').click();
@@ -186,7 +186,7 @@ for (const ep of todo) {
   await step("save", async () => {
     await page.locator("#done-button").click();
     // Saving takes a moment; closing the browser before it finishes leaves the video a draft.
-    await page.getByText(/^\s*Video (published|saved)\s*$/).first().waitFor({ timeout: 90_000 });
+    await page.getByText(/^\s*Video (published|saved)\s*$/).first().waitFor({ timeout: 180_000 });
     await page.waitForTimeout(3000);
   });
   await step("check it reads Unlisted in Content", async () => {
