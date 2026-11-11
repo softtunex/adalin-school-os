@@ -9,7 +9,7 @@ import { registerSchoolOwner } from "@/lib/services/accounts";
 import { AI_DAILY, AI_PER_PERSON, aiAvailability, aiUsedToday, runAi, saveAiSettings } from "@/lib/services/ai";
 import { cleanQuestionText, draftQuestions } from "@/lib/services/ai-questions";
 import { parseQuestions } from "@/lib/services/cbt";
-import { askKola, greetingName, kolaBrief, placeVideos } from "@/lib/services/kola";
+import { addVideo, askKola, greetingName, kolaBrief, placeVideos } from "@/lib/services/kola";
 import { createTestDatabase } from "./helpers";
 
 let database: Database;
@@ -162,6 +162,23 @@ describe("allowances and Kola's brief", () => {
     expect(placeVideos("All of them: [[SERIES]]", offered)).toMatch(/\[SchoolHub video tutorials\]\(https:\/\/www\.youtube\.com\/playlist\?list=/);
     // Ordinary lines that mention videos stay.
     expect(placeVideos("To add a video:\n1. Open Materials.", offered)).toBe("To add a video:\n1. Open Materials.");
+  });
+
+  it("adds the video for the page a reply links to when Kola leaves it out, matching the question", () => {
+    const academics = [
+      { title: "Episode 7: Classes", url: "https://youtu.be/aaaaaaaaaaa" },
+      { title: "Episode 7: Sessions & terms", url: "https://youtu.be/aaaaaaaaaaa?t=196" },
+    ];
+    const videosFor = (link: string) => (link.startsWith("/s/x/academics") ? academics : undefined);
+    expect(addVideo("1. Open [Classes & subjects](/s/x/academics).", "It's a new term, what do I do?", videosFor)).toBe(
+      "1. Open [Classes & subjects](/s/x/academics).\n\nWatch how: [Episode 7: Sessions & terms](https://youtu.be/aaaaaaaaaaa?t=196)",
+    );
+    // No close match: the page's main scene.
+    expect(addVideo("Open [Classes & subjects](/s/x/academics).", "help", videosFor)).toMatch(/Episode 7: Classes\]/);
+    // A reply that already has a video, or links nowhere with videos, is left alone.
+    const has = "Open it.\n\nWatch how: [Episode 7: Classes](https://youtu.be/aaaaaaaaaaa)";
+    expect(addVideo(has, "term", videosFor)).toBe(has);
+    expect(addVideo("Ask your admin.", "term", videosFor)).toBe("Ask your admin.");
   });
 
   it("always tells Kola where AI can be used, so \"where can I use AI?\" has an answer", async () => {

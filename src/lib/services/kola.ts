@@ -109,6 +109,24 @@ export function placeVideos(reply: string, offered: KolaVideo[]) {
   return out.replace(/\n*^[ \t]*(?:watch(?: how)?|videos?)[ \t]*:[ \t]*$/gim, "").trimEnd();
 }
 
+/**
+ * Kola often leaves the video out, so when a reply has none, add the scene for the first page it links to,
+ * the one whose name best matches the question (e.g. "new term" → Sessions & terms).
+ */
+export function addVideo(reply: string, question: string, videosFor: (link: string) => KolaVideo[] | undefined) {
+  if (/https:\/\/(youtu\.be|www\.youtube\.com)\//.test(reply)) return reply;
+  const asked = new Set(words(question).map(stem));
+  for (const [, link] of reply.matchAll(/\[[^\]]+\]\((\/[^)\s]*)\)/g)) {
+    const list = videosFor(link);
+    if (!list?.length) continue;
+    const score = (v: KolaVideo) => words(v.title.replace(/^Episode \d+: /, "")).filter((w) => asked.has(stem(w))).length;
+    const best = list.reduce((a, b) => (score(b) > score(a) ? b : a));
+    return `${reply}\n\nWatch how: [${best.title}](${best.url})`;
+  }
+  return reply;
+}
+const stem = (w: string) => w.replace(/(ing|es|s)$/, "");
+
 export async function askKola(db: DB, access: Access, input: z.infer<typeof kolaSchema>) {
   const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const brief = kolaBrief(access, { page: input.page, question });
@@ -134,7 +152,9 @@ ${brief.aiHelpers}
 Pages this person can open (full guide given for the ones that matter to this question; ask them to open a page for more):
 ${brief.pages}`;
 
-  return placeVideos(await runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 }), brief.videos);
+  const reply = placeVideos(await runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 }), brief.videos);
+  const base = `/s/${access.school.slug}`;
+  return addVideo(reply, question, (link) => (link === base || link.startsWith(`${base}/`) ? KOLA_VIDEOS[link.slice(base.length).match(/^(\/[^/?#]*)?/)![0]] : undefined));
 }
 
 const TITLES = /^(mr|mrs|miss|ms|dr|prof|engr|chief|pastor|rev|alhaji|alhaja|hajia|barr|sir|madam|nurse)\.?$/i;
@@ -182,5 +202,7 @@ ${KOLA_PARENT_GUIDE}${videoLine(KOLA_PARENT_VIDEOS, parentVideos)}
 
 Their children:
 ${kids}`;
-  return placeVideos(await runAi(db, kola.actor, "kola", "text", [{ role: "system", content: system }, ...input.messages.slice(-8)], { maxTokens: 600, temperature: 0.3 }), parentVideos);
+  const reply = placeVideos(await runAi(db, kola.actor, "kola", "text", [{ role: "system", content: system }, ...input.messages.slice(-8)], { maxTokens: 600, temperature: 0.3 }), parentVideos);
+  const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  return addVideo(reply, question, (link) => (link === "/p" || link.startsWith("/p/") ? KOLA_PARENT_VIDEOS : undefined));
 }
