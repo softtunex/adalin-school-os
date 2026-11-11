@@ -9,7 +9,7 @@ import { registerSchoolOwner } from "@/lib/services/accounts";
 import { AI_DAILY, AI_PER_PERSON, aiAvailability, aiUsedToday, runAi, saveAiSettings } from "@/lib/services/ai";
 import { cleanQuestionText, draftQuestions } from "@/lib/services/ai-questions";
 import { parseQuestions } from "@/lib/services/cbt";
-import { askKola, greetingName, kolaBrief } from "@/lib/services/kola";
+import { askKola, greetingName, kolaBrief, placeVideos } from "@/lib/services/kola";
 import { createTestDatabase } from "./helpers";
 
 let database: Database;
@@ -145,9 +145,23 @@ describe("allowances and Kola's brief", () => {
   it("gives Kola the tutorial videos for the pages a question is about, and only those", async () => {
     const brief = kolaBrief(await access(), { question: "How do I invite a new teacher?" });
     const staff = brief.pages.split("\n- ").find((p) => p.includes(`/s/${slug}/staff)`))!;
-    expect(staff).toMatch(/Videos: \[Episode \d+: [^\]]+\]\(https:\/\/youtu\.be\/[\w-]{11}(\?t=\d+)?\)/);
-    // Pages not explained in full don't carry videos either.
-    expect(brief.pages.match(/Videos:/g)?.length ?? 0).toBeLessThanOrEqual(brief.detailed.length);
+    // Kola sees codes and titles, never the addresses.
+    expect(staff).toMatch(/Videos: \[\[V\d\]\] \w/);
+    expect(brief.pages).not.toMatch(/youtu/);
+    expect(brief.videos[0].url).toMatch(/^https:\/\/youtu\.be\/[\w-]{11}(\?t=\d+)?$/);
+    expect(brief.pages.match(/Videos:/g)?.length ?? 0).toBeLessThanOrEqual(2);
+  });
+
+  it("only ever links Kola's replies to our own videos", () => {
+    const offered = [{ title: "Episode 21: Recording a payment", url: "https://youtu.be/abcdefghijk?t=40" }];
+    expect(placeVideos("Open Fees.\n\nWatch how: [[V1]]", offered)).toBe("Open Fees.\n\nWatch how: [Episode 21: Recording a payment](https://youtu.be/abcdefghijk?t=40)");
+    // A made-up code, title or address is dropped, along with its now-empty line.
+    expect(placeVideos("Open Results.\n\nWatch how: [[V7]]", offered)).toBe("Open Results.");
+    expect(placeVideos("Open Results.\n\nWatch how: [Episode 12: Viewing results](https://youtu.be/3K9ZxUeJQbU)", offered)).toBe("Open Results.");
+    expect(placeVideos("See https://www.youtube.com/watch?v=3K9ZxUeJQbU for more.", offered)).toBe("See  for more.");
+    expect(placeVideos("All of them: [[SERIES]]", offered)).toMatch(/\[SchoolHub video tutorials\]\(https:\/\/www\.youtube\.com\/playlist\?list=/);
+    // Ordinary lines that mention videos stay.
+    expect(placeVideos("To add a video:\n1. Open Materials.", offered)).toBe("To add a video:\n1. Open Materials.");
   });
 
   it("always tells Kola where AI can be used, so \"where can I use AI?\" has an answer", async () => {

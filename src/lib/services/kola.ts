@@ -61,14 +61,15 @@ export function kolaBrief(access: Access, focus: { page?: string; question?: str
       .slice(0, 4)
       .map((s) => s.key),
   );
-  // Videos only for the page that matters most (the answer is nearly always about it), to keep the brief small.
-  const withVideos = new Set([...detailed].slice(0, 1));
+  // Videos for the two pages that matter most, by code only (V1, V2…): the server puts in the real links.
+  const withVideos = new Set([...detailed].slice(0, 2));
+  const videos: KolaVideo[] = [];
   const lines = scored.map(({ p, key }) => {
     const where = p.group ? `${p.group} → ${p.label}` : p.label;
     const head = `- ${where} (link: ${p.href})${p.locked ? " [locked: needs a higher plan]" : ""}`;
     if (!detailed.has(key) || !KOLA_GUIDE[key]) return head;
     const cant = (CANT[key] ?? []).filter(([perm]) => !can(access, perm)).map(([, what]) => what);
-    return `${head}\n  ${KOLA_GUIDE[key]}${cant.length ? `\n  This person can't do: ${cant.join("; ")}. Say who can, and don't give them the steps.` : ""}${withVideos.has(key) ? videoLine(KOLA_VIDEOS[key]?.slice(0, 2)) : ""}`;
+    return `${head}\n  ${KOLA_GUIDE[key]}${cant.length ? `\n  This person can't do: ${cant.join("; ")}. Say who can, and don't give them the steps.` : ""}${withVideos.has(key) ? videoLine(KOLA_VIDEOS[key]?.slice(0, 2), videos) : ""}`;
   });
   // Always: the AI helpers on pages they can open, and Kola itself, so "where can I use AI?" has an answer.
   // Opening a page isn't enough: a subject teacher sees Students and Results but can't import or write report comments.
@@ -77,15 +78,36 @@ export function kolaBrief(access: Access, focus: { page?: string; question?: str
     .filter(({ p, key }) => KOLA_AI[key] && !p.locked && (allowed[key] ?? []).some((perm) => can(access, perm)))
     .map(({ p, key }) => `- ${KOLA_AI[key]} (link: ${p.href})`);
   const aiHelpers = [...ai, "- Kola (you): the Ask Kola button at the bottom right of every page answers how-to questions."].join("\n");
-  return { pages: lines.join("\n"), aiHelpers, roles: access.roles.map((r) => r.name).join(", ") || "member", detailed: [...detailed] };
+  return { pages: lines.join("\n"), aiHelpers, roles: access.roles.map((r) => r.name).join(", ") || "member", detailed: [...detailed], videos };
 }
 
-/** The tutorial scenes that show a page, for Kola to offer after its answer. */
-function videoLine(videos: KolaVideo[] | undefined) {
-  return videos?.length ? `\n  Videos: ${videos.map((v) => `[${v.title}](${v.url})`).join("; ")}` : "";
+/** The tutorial scenes that show a page, numbered into `offered` so Kola can name them by code. */
+function videoLine(list: KolaVideo[] | undefined, offered: KolaVideo[]) {
+  if (!list?.length) return "";
+  const codes = list.map((v) => `[[V${offered.push(v)}]] ${v.title.replace(/^Episode \d+: /, "")}`);
+  return `\n  Videos: ${codes.join("; ")}`;
 }
 
-const VIDEO_RULE = `- When you explain a page that lists Videos, end with one line offering the one that best fits the question, e.g. "Watch how: [Episode 21: Recording a payment](https://youtu.be/…)". Copy video links exactly as given; never make one up, and leave it out if none fits.`;
+const VIDEO_RULE = `- When you explain a page that lists Videos, end with one line offering the one that best fits the question, written as its code only, e.g. "Watch how: [[V2]]". Use only codes listed; never write a video title or a web address yourself. Leave it out if none fits. For the whole tutorial series, write [[SERIES]].`;
+
+/**
+ * Kola names videos by code; this swaps in the real links. Any code it made up, and any YouTube address it
+ * wrote itself, is removed, so a reply can only ever link to our own videos.
+ */
+export function placeVideos(reply: string, offered: KolaVideo[]) {
+  const out = reply
+    .replace(/\[\[V(\d+)\]\]/g, (_, n) => {
+      const v = offered[Number(n) - 1];
+      return v ? `[${v.title}](${v.url})` : "";
+    })
+    .replace(/\[\[SERIES\]\]/g, `[SchoolHub video tutorials](${KOLA_SERIES})`)
+    .replace(/\[([^\]]+)\]\((https?:\/\/(?:www\.)?(?:youtu\.be|youtube\.com)[^)]*)\)/g, (link, _text, url) =>
+      url === KOLA_SERIES || offered.some((v) => v.url === url) ? link : "",
+    )
+    .replace(/(?<!\()https?:\/\/(?:www\.)?(?:youtu\.be|youtube\.com)\/\S+/g, (url) => (url === KOLA_SERIES || offered.some((v) => v.url === url) ? url : ""));
+  // A "Watch how:" line left with nothing to watch goes too.
+  return out.replace(/\n*^[ \t]*(?:watch(?: how)?|videos?)[ \t]*:[ \t]*$/gim, "").trimEnd();
+}
 
 export async function askKola(db: DB, access: Access, input: z.infer<typeof kolaSchema>) {
   const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
@@ -104,7 +126,7 @@ Answer questions about how to use SchoolHub, using only the guide below. Rules:
 - Stay on SchoolHub and school work. Politely decline anything else.
 ${VIDEO_RULE}
 
-${KOLA_GENERAL} The full video tutorial series: [SchoolHub tutorials](${KOLA_SERIES}).
+${KOLA_GENERAL}
 
 AI helpers this person can use:
 ${brief.aiHelpers}
@@ -112,7 +134,7 @@ ${brief.aiHelpers}
 Pages this person can open (full guide given for the ones that matter to this question; ask them to open a page for more):
 ${brief.pages}`;
 
-  return runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 });
+  return placeVideos(await runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 }), brief.videos);
 }
 
 const TITLES = /^(mr|mrs|miss|ms|dr|prof|engr|chief|pastor|rev|alhaji|alhaja|hajia|barr|sir|madam|nurse)\.?$/i;
@@ -144,6 +166,7 @@ export async function askParentKola(db: DB, user: { id: string; name: string }, 
   const kola = await parentKola(db, user.id);
   if (!kola) throw new AppError("Kola isn't available for your school.", "forbidden");
   const kids = kola.children.map((c) => `- ${c.firstName} at ${c.school} (link: /p/children/${c.id}; a section: /p/children/${c.id}?tab=fees)`).join("\n");
+  const parentVideos: KolaVideo[] = [];
   const system = `[task:kola] You are Kola, the friendly helper in the Adalin SchoolHub parent app, used by parents of schools in Nigeria. You are talking to ${greetingName(user.name)}, a parent.${input.page ? ` They are on the page ${input.page}.` : ""}
 
 Answer questions about how to use the parent app, using only the guide below. Rules:
@@ -155,9 +178,9 @@ Answer questions about how to use the parent app, using only the guide below. Ru
 - Stay on the parent app and school matters. Politely decline anything else.
 ${VIDEO_RULE}
 
-${KOLA_PARENT_GUIDE}${videoLine(KOLA_PARENT_VIDEOS)}
+${KOLA_PARENT_GUIDE}${videoLine(KOLA_PARENT_VIDEOS, parentVideos)}
 
 Their children:
 ${kids}`;
-  return runAi(db, kola.actor, "kola", "text", [{ role: "system", content: system }, ...input.messages.slice(-8)], { maxTokens: 600, temperature: 0.3 });
+  return placeVideos(await runAi(db, kola.actor, "kola", "text", [{ role: "system", content: system }, ...input.messages.slice(-8)], { maxTokens: 600, temperature: 0.3 }), parentVideos);
 }
