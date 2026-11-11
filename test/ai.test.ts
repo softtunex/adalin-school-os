@@ -1,5 +1,7 @@
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { KOLA_GUIDE } from "@/lib/ai/kola-guide";
+import { KOLA_VIDEOS } from "@/lib/ai/kola-videos";
 import { stripThinking, type AiMessage } from "@/lib/ai/provider";
 import type { Database } from "@/lib/db/client";
 import { aiUsage, schools } from "@/lib/db/schema";
@@ -187,6 +189,14 @@ describe("allowances and Kola's brief", () => {
     const has = "Open it.\n\nWatch how: [Episode 7: Classes](https://youtu.be/aaaaaaaaaaa)";
     expect(addVideo(has, "term", videosFor)).toBe(has);
     expect(addVideo("Ask your admin.", "term", videosFor)).toBe("Ask your admin.");
+  });
+
+  it("points 'send the admission form' at the Settings episode that sets the form up, not the applicants list", () => {
+    const admissions = KOLA_VIDEOS["/admissions"];
+    expect(admissions[0].title).toBe("Episode 5: Setting up admissions");
+    const reply = addVideo("Open [Admissions](/s/x/admissions).", "How do I send admission form", (l) => (l.startsWith("/s/x/admissions") ? admissions : undefined));
+    expect(reply).toMatch(/Watch how: \[Episode 5: Setting up admissions\]/);
+    expect(KOLA_GUIDE["/admissions"]).toMatch(/no form to create.*Your admission link/);
   });
 
   it("always tells Kola where AI can be used, so \"where can I use AI?\" has an answer", async () => {

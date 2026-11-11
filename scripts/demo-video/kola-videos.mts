@@ -32,9 +32,14 @@ titles.forEach((_, i) => {
 });
 
 const pageOf = (cover: string) => {
-  const m = cover.match(/^\/s\/\[slug\](\/[^/:\s]+)?/);
+  const m = cover.match(/^\/s\/\[slug\](\/[^/:\s#]+)?/);
   return m ? (m[1] ?? "") : null;
 };
+// A Settings tab that sets up a page (settings#admissions sets up /admissions) is the video for "how do I set
+// up X", so it goes first on that page, named for what it shows. The public apply form belongs to Admissions.
+const SETUP = 1000;
+const setupOf = (cover: string) => cover.match(/^\/s\/\[slug\]\/settings#([\w-]+)$/)?.[1];
+const ALSO: [RegExp, string, string][] = [[/^\/apply\//, "/admissions", "How parents apply"]];
 
 type Video = { title: string; url: string; weight: number };
 const byPage = new Map<string, Video[]>();
@@ -46,16 +51,28 @@ for (const scene of SCENES) {
   const url = pack.find((e) => e.n === n)?.url;
   const at = starts.get(`${n}|${take.title}`);
   if (!url || at === undefined) continue;
-  const video = (weight: number): Video => ({ title: `Episode ${n}: ${take.title}`, url: at ? `${url}?t=${at}` : url, weight });
+  const video = (weight: number, name = take.title): Video => ({ title: `Episode ${n}: ${name}`, url: at ? `${url}?t=${at}` : url, weight });
   const counts = new Map<string, number>();
+  const names = new Map<string, string>();
   for (const c of scene.covers ?? []) {
     const page = pageOf(c);
     if (page !== null && page in KOLA_GUIDE) counts.set(page, (counts.get(page) ?? 0) + 1);
     if (/^\/p(\/|$|:)/.test(c)) counts.set("parent", (counts.get("parent") ?? 0) + 1);
+    const setup = setupOf(c);
+    if (setup && `/${setup}` in KOLA_GUIDE) {
+      counts.set(`/${setup}`, SETUP);
+      names.set(`/${setup}`, `Setting up ${take.title[0].toLowerCase()}${take.title.slice(1)}`);
+    }
+    for (const [re, to, name] of ALSO) {
+      if (re.test(c)) {
+        counts.set(to, (counts.get(to) ?? 0) + 1);
+        names.set(to, name);
+      }
+    }
   }
   for (const [page, weight] of counts) {
     if (page === "parent") parent.push(video(weight));
-    else byPage.set(page, [...(byPage.get(page) ?? []), video(weight)]);
+    else byPage.set(page, [...(byPage.get(page) ?? []), video(weight, names.get(page))]);
   }
 }
 const best = (list: Video[]) => [...list].sort((a, b) => b.weight - a.weight).slice(0, PER_PAGE).map(({ title, url }) => ({ title, url }));

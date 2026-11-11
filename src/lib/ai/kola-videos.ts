@@ -40,12 +40,16 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
   ],
   "/admissions": [
     {
+      title: "Episode 5: Setting up admissions",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=77",
+    },
+    {
       title: "Episode 10: Applicants",
       url: "https://youtu.be/SQ2DzNMzCrY?t=46",
     },
     {
-      title: "Episode 10: Enrolment",
-      url: "https://youtu.be/SQ2DzNMzCrY?t=141",
+      title: "Episode 10: How parents apply",
+      url: "https://youtu.be/SQ2DzNMzCrY",
     },
   ],
   "/announcements": [
@@ -108,16 +112,16 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
   ],
   "/documents": [
     {
-      title: "Episode 24: ID cards",
-      url: "https://youtu.be/POmUBaoOUdM",
+      title: "Episode 5: Setting up documents",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=312",
     },
     {
       title: "Episode 24: The register and templates",
       url: "https://youtu.be/POmUBaoOUdM?t=136",
     },
     {
-      title: "Episode 24: Testimonials and transcripts",
-      url: "https://youtu.be/POmUBaoOUdM?t=48",
+      title: "Episode 24: ID cards",
+      url: "https://youtu.be/POmUBaoOUdM",
     },
   ],
   "/expenses": [
@@ -146,11 +150,19 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
   ],
   "/hostel": [
     {
+      title: "Episode 5: Setting up sick bay, transport and boarding",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=267",
+    },
+    {
       title: "Episode 19: Boarding",
       url: "https://youtu.be/KtrjGXrs9pI?t=49",
     },
   ],
   "/hr": [
+    {
+      title: "Episode 5: Setting up staff & HR",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=132",
+    },
     {
       title: "Episode 23: Staff",
       url: "https://youtu.be/nIcxw4rlpwU",
@@ -159,12 +171,12 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
       title: "Episode 23: The principal",
       url: "https://youtu.be/nIcxw4rlpwU?t=31",
     },
-    {
-      title: "Episode 22: Payslips",
-      url: "https://youtu.be/apbQvH4tvr8?t=134",
-    },
   ],
   "/inventory": [
+    {
+      title: "Episode 5: Setting up library and inventory",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=230",
+    },
     {
       title: "Episode 25: The store",
       url: "https://youtu.be/Ixg2h37L5vM",
@@ -185,6 +197,10 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
     },
   ],
   "/library": [
+    {
+      title: "Episode 5: Setting up library and inventory",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=230",
+    },
     {
       title: "Episode 18: The library",
       url: "https://youtu.be/9SkcjdB84A4?t=75",
@@ -207,6 +223,10 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
     },
   ],
   "/payroll": [
+    {
+      title: "Episode 5: Setting up payroll",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=177",
+    },
     {
       title: "Episode 22: Preparing payroll",
       url: "https://youtu.be/apbQvH4tvr8?t=62",
@@ -282,12 +302,12 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
   ],
   "/timetable": [
     {
-      title: "Episode 12: A class's timetable",
-      url: "https://youtu.be/yYB8i2VA2ak?t=42",
-    },
-    {
       title: "Episode 12: Bell schedule",
       url: "https://youtu.be/yYB8i2VA2ak",
+    },
+    {
+      title: "Episode 12: A class's timetable",
+      url: "https://youtu.be/yYB8i2VA2ak?t=42",
     },
     {
       title: "Episode 12: Teachers' timetables",
@@ -295,6 +315,10 @@ export const KOLA_VIDEOS: Record<string, KolaVideo[]> = {
     },
   ],
   "/transport": [
+    {
+      title: "Episode 5: Setting up sick bay, transport and boarding",
+      url: "https://youtu.be/_cpbAmdLP0Q?t=267",
+    },
     {
       title: "Episode 19: Transport",
       url: "https://youtu.be/KtrjGXrs9pI",
