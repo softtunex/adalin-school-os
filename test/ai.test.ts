@@ -197,6 +197,11 @@ describe("allowances and Kola's brief", () => {
     const reply = addVideo("Open [Admissions](/s/x/admissions).", "How do I send admission form", (l) => (l.startsWith("/s/x/admissions") ? admissions : undefined));
     expect(reply).toMatch(/Watch how: \[Episode 5: Setting up admissions\]/);
     expect(KOLA_GUIDE["/admissions"]).toMatch(/no form to create.*Your admission link/);
+    // The follow-up links no page: the conversation's page gives the next video, not the one already shown.
+    const followUp = "After a parent submits the form, the application appears under **Applicants**. Open the applicant, then **Offer admission**.";
+    expect(addVideo(followUp, "What's the flow after they fill it?", (l) => (l.startsWith("/s/x/admissions") ? admissions : undefined), [reply])).toMatch(
+      /Watch how: \[Episode 10: Applicants\]/,
+    );
   });
 
   it("always tells Kola where AI can be used, so \"where can I use AI?\" has an answer", async () => {

@@ -115,13 +115,22 @@ export function placeVideos(reply: string, offered: KolaVideo[]) {
  * Kola often leaves the video out, so when a reply has none, add the scene for the first page it links to,
  * the one whose name best matches the question (e.g. "new term" → Sessions & terms).
  */
-export function addVideo(reply: string, question: string, videosFor: (link: string) => KolaVideo[] | undefined) {
+/**
+ * earlier: Kola's previous replies, newest first. A follow-up ("what happens after they fill it?") often
+ * links no page, so it takes the video from the page the conversation is about, skipping any video
+ * already given.
+ */
+export function addVideo(reply: string, question: string, videosFor: (link: string) => KolaVideo[] | undefined, earlier: string[] = []) {
   if (/https:\/\/(youtu\.be|www\.youtube\.com)\//.test(reply)) return reply;
   const asked = new Set(words(question).map(stem));
-  for (const [, link] of reply.matchAll(/\[[^\]]+\]\((\/[^)\s]*)\)/g)) {
-    const list = videosFor(link);
+  const said = new Set(words(reply).map(stem));
+  const shown = earlier.join("\n");
+  const links = (text: string) => [...text.matchAll(/\[[^\]]+\]\((\/[^)\s]*)\)/g)].map((m) => m[1]);
+  for (const link of [...links(reply), ...earlier.flatMap(links)]) {
+    const list = videosFor(link)?.filter((v) => !shown.includes(v.url));
     if (!list?.length) continue;
-    const score = (v: KolaVideo) => words(v.title.replace(/^Episode \d+: /, "")).filter((w) => asked.has(stem(w))).length;
+    // The question decides; what the reply talks about breaks ties.
+    const score = (v: KolaVideo) => words(v.title.replace(/^Episode \d+: /, "")).reduce((n, w) => n + (asked.has(stem(w)) ? 2 : said.has(stem(w)) ? 1 : 0), 0);
     const best = list.reduce((a, b) => (score(b) > score(a) ? b : a));
     return `${reply}\n\nWatch how: [${best.title}](${best.url})`;
   }
@@ -181,8 +190,15 @@ ${brief.pages}${plansText}`;
 
   const reply = placeVideos(await runAi(db, access, "kola", "text", [{ role: "system", content: system }, ...history], { maxTokens: 700, temperature: 0.3 }), brief.videos);
   const base = `/s/${access.school.slug}`;
-  return addVideo(reply, question, (link) => (link === base || link.startsWith(`${base}/`) ? KOLA_VIDEOS[link.slice(base.length).match(/^(\/[^/?#]*)?/)![0]] : undefined));
+  return addVideo(reply, question, (link) => (link === base || link.startsWith(`${base}/`) ? KOLA_VIDEOS[link.slice(base.length).match(/^(\/[^/?#]*)?/)![0]] : undefined), earlierReplies(input.messages));
 }
+
+const earlierReplies = (messages: { role: string; content: string }[]) =>
+  messages
+    .filter((m) => m.role === "assistant")
+    .slice(-3)
+    .reverse()
+    .map((m) => m.content);
 
 const TITLES = /^(mr|mrs|miss|ms|dr|prof|engr|chief|pastor|rev|alhaji|alhaja|hajia|barr|sir|madam|nurse)\.?$/i;
 
@@ -231,5 +247,5 @@ Their children:
 ${kids}`;
   const reply = placeVideos(await runAi(db, kola.actor, "kola", "text", [{ role: "system", content: system }, ...input.messages.slice(-8)], { maxTokens: 600, temperature: 0.3 }), parentVideos);
   const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
-  return addVideo(reply, question, (link) => (link === "/p" || link.startsWith("/p/") ? KOLA_PARENT_VIDEOS : undefined));
+  return addVideo(reply, question, (link) => (link === "/p" || link.startsWith("/p/") ? KOLA_PARENT_VIDEOS : undefined), earlierReplies(input.messages));
 }
