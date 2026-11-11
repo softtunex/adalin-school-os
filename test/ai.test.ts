@@ -142,6 +142,14 @@ describe("allowances and Kola's brief", () => {
     expect(kolaBrief(a, { page: `/s/${slug}/library`, question: "what now" }).detailed).toContain("/library");
   });
 
+  it("gives Kola the tutorial videos for the pages a question is about, and only those", async () => {
+    const brief = kolaBrief(await access(), { question: "How do I invite a new teacher?" });
+    const staff = brief.pages.split("\n- ").find((p) => p.includes(`/s/${slug}/staff)`))!;
+    expect(staff).toMatch(/Videos: \[Episode \d+: [^\]]+\]\(https:\/\/youtu\.be\/[\w-]{11}(\?t=\d+)?\)/);
+    // Pages not explained in full don't carry videos either.
+    expect(brief.pages.match(/Videos:/g)?.length ?? 0).toBeLessThanOrEqual(brief.detailed.length);
+  });
+
   it("always tells Kola where AI can be used, so \"where can I use AI?\" has an answer", async () => {
     const brief = kolaBrief(await access(), { question: "Where are the places where I can use AI on this platform" });
     expect(brief.aiHelpers).toMatch(/Write questions with AI/);

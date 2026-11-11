@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { KOLA_AI, KOLA_GENERAL, KOLA_GUIDE, KOLA_PARENT_GUIDE } from "../ai/kola-guide";
+import { KOLA_PARENT_VIDEOS, KOLA_SERIES, KOLA_VIDEOS, type KolaVideo } from "../ai/kola-videos";
 import type { DB } from "../db/client";
 import { schools } from "../db/schema";
 import { AppError } from "../errors";
@@ -60,12 +61,14 @@ export function kolaBrief(access: Access, focus: { page?: string; question?: str
       .slice(0, 4)
       .map((s) => s.key),
   );
+  // Videos only for the page that matters most (the answer is nearly always about it), to keep the brief small.
+  const withVideos = new Set([...detailed].slice(0, 1));
   const lines = scored.map(({ p, key }) => {
     const where = p.group ? `${p.group} → ${p.label}` : p.label;
     const head = `- ${where} (link: ${p.href})${p.locked ? " [locked: needs a higher plan]" : ""}`;
     if (!detailed.has(key) || !KOLA_GUIDE[key]) return head;
     const cant = (CANT[key] ?? []).filter(([perm]) => !can(access, perm)).map(([, what]) => what);
-    return `${head}\n  ${KOLA_GUIDE[key]}${cant.length ? `\n  This person can't do: ${cant.join("; ")}. Say who can, and don't give them the steps.` : ""}`;
+    return `${head}\n  ${KOLA_GUIDE[key]}${cant.length ? `\n  This person can't do: ${cant.join("; ")}. Say who can, and don't give them the steps.` : ""}${withVideos.has(key) ? videoLine(KOLA_VIDEOS[key]?.slice(0, 2)) : ""}`;
   });
   // Always: the AI helpers on pages they can open, and Kola itself, so "where can I use AI?" has an answer.
   // Opening a page isn't enough: a subject teacher sees Students and Results but can't import or write report comments.
@@ -76,6 +79,13 @@ export function kolaBrief(access: Access, focus: { page?: string; question?: str
   const aiHelpers = [...ai, "- Kola (you): the Ask Kola button at the bottom right of every page answers how-to questions."].join("\n");
   return { pages: lines.join("\n"), aiHelpers, roles: access.roles.map((r) => r.name).join(", ") || "member", detailed: [...detailed] };
 }
+
+/** The tutorial scenes that show a page, for Kola to offer after its answer. */
+function videoLine(videos: KolaVideo[] | undefined) {
+  return videos?.length ? `\n  Videos: ${videos.map((v) => `[${v.title}](${v.url})`).join("; ")}` : "";
+}
+
+const VIDEO_RULE = `- When you explain a page that lists Videos, end with one line offering the one that best fits the question, e.g. "Watch how: [Episode 21: Recording a payment](https://youtu.be/…)". Copy video links exactly as given; never make one up, and leave it out if none fits.`;
 
 export async function askKola(db: DB, access: Access, input: z.infer<typeof kolaSchema>) {
   const question = [...input.messages].reverse().find((m) => m.role === "user")?.content ?? "";
@@ -92,8 +102,9 @@ Answer questions about how to use SchoolHub, using only the guide below. Rules:
 - You can't see or change the school's records (students, scores, fees). If asked for figures or to do something, say where they can see or do it themselves.
 - If the guide doesn't cover it, say you're not sure and suggest the page most likely to have it, or contacting Adalin support. Never make up buttons or features.
 - Stay on SchoolHub and school work. Politely decline anything else.
+${VIDEO_RULE}
 
-${KOLA_GENERAL}
+${KOLA_GENERAL} The full video tutorial series: [SchoolHub tutorials](${KOLA_SERIES}).
 
 AI helpers this person can use:
 ${brief.aiHelpers}
@@ -142,8 +153,9 @@ Answer questions about how to use the parent app, using only the guide below. Ru
 - Questions about school policy, fees amounts, dates or a child's progress are for the school: suggest Message the teacher.
 - Never make up buttons or features. If unsure, suggest messaging the school.
 - Stay on the parent app and school matters. Politely decline anything else.
+${VIDEO_RULE}
 
-${KOLA_PARENT_GUIDE}
+${KOLA_PARENT_GUIDE}${videoLine(KOLA_PARENT_VIDEOS)}
 
 Their children:
 ${kids}`;

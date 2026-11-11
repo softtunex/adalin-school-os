@@ -12,12 +12,22 @@ type Msg = { role: "user" | "assistant"; content: string };
 const KOLA_IMG = `data:image/svg+xml;utf8,${encodeURIComponent(KOLA_SVG)}`;
 const STARTERS = ["What can I do on this page?", "How do I get started?", "What can my role do?"];
 
-/** Turns Kola's reply into text with working links (only to pages inside SchoolHub) and bold. */
+const TUTORIAL = /^https:\/\/(youtu\.be\/[\w-]{11}(\?t=\d+)?|www\.youtube\.com\/playlist\?list=[\w-]+)$/;
+
+/** Turns Kola's reply into text with working links (pages inside SchoolHub, and our tutorial videos) and bold. */
 function rich(text: string, linkPrefix: string, onLink: () => void): ReactNode[] {
   // Raw addresses that slip through, like "(/p)" or "(e.g., `/p/children/…`)", are noise to people: drop them.
   const tidy = text.replace(/(?<!\])\s*\((?:e\.g\.,?\s*)?`?\/(?:p|s)(?:[/?][^)\s`]*)?`?\)/g, "").replace(/`([^`]+)`/g, "$1");
   return tidy.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*)/g).map((part, i) => {
     const link = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    // Our tutorial videos are the only outside links Kola may give, and they open in a new tab.
+    if (link && TUTORIAL.test(link[2])) {
+      return (
+        <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer" onClick={onLink} className="font-semibold text-brand underline underline-offset-2">
+          {link[1]}
+        </a>
+      );
+    }
     if (link) {
       return link[2] === linkPrefix || link[2].startsWith(`${linkPrefix}/`) || link[2].startsWith(`${linkPrefix}?`) ? (
         <Link key={i} href={link[2]} onClick={onLink} className="font-semibold text-brand underline underline-offset-2">
