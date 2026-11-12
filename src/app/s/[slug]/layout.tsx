@@ -11,6 +11,8 @@ import { KolaChat } from "@/components/kola-chat";
 import { askKolaAction } from "./kola-actions";
 import { greetingName } from "@/lib/services/kola";
 import { aiAvailability, aiSettings } from "@/lib/services/ai";
+import { can } from "@/lib/services/access";
+import { TryKola } from "@/components/try-kola";
 
 export default async function SchoolLayout({ children, params }: { children: ReactNode; params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -21,6 +23,7 @@ export default async function SchoolLayout({ children, params }: { children: Rea
     access.isStaff ? supportNotice(getDb(), access) : null,
   ]);
   const notice = support?.self ? support : (bill ?? support);
+  const ai = aiAvailability(access);
 
   return (
     <AppShell
@@ -31,7 +34,12 @@ export default async function SchoolLayout({ children, params }: { children: Rea
       nav={resolveNav(slug, { permissions: access.permissions, features: new Set(access.plan.features), isStaff: access.isStaff, badges })}
     >
       {children}
-      {aiAvailability(access).ok && (access.isStaff || aiSettings(access.school.aiSettings).kolaForFamilies) ? <KolaChat ask={askKolaAction.bind(null, slug)} linkPrefix={`/s/${slug}`} firstName={greetingName(access.user.name)} /> : null}
+      {ai.ok && (access.isStaff || aiSettings(access.school.aiSettings).kolaForFamilies) ? (
+        <KolaChat ask={askKolaAction.bind(null, slug)} linkPrefix={`/s/${slug}`} firstName={greetingName(access.user.name)} />
+      ) : !ai.ok && ai.upgrade && access.isStaff ? (
+        // Free and Basic: an advert for Kola in its usual spot, never shown to families.
+        <TryKola slug={slug} canBill={can(access, "school:billing")} trialAvailable={!access.school.trialUsed} />
+      ) : null}
     </AppShell>
   );
 }
