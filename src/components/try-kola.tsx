@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { startTrialAction } from "@/app/s/[slug]/settings/billing-actions";
+import { useState } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { Alert } from "@/components/ui/display";
 import { Icon } from "@/components/ui/icons";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/cn";
@@ -21,13 +19,11 @@ const PERKS = [
 
 /**
  * Stands where "Ask Kola" sits on plans without AI (Free and Basic): an advert, not a chat. Opens a
- * showcase of Kola and the AI helpers, then offers the free month, an upgrade, or (for staff who
- * don't handle billing) tells them who can switch it on.
+ * showcase of Kola and the AI helpers, then sends whoever pays to upgrade (no free trial from here),
+ * or tells other staff who can switch it on.
  */
-export function TryKola({ slug, canBill, trialAvailable }: { slug: string; canBill: boolean; trialAvailable: boolean }) {
+export function TryKola({ slug, canBill }: { slug: string; canBill: boolean }) {
   const [open, setOpen] = useState(false);
-  const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
   return (
     <>
@@ -51,10 +47,7 @@ export function TryKola({ slug, canBill, trialAvailable }: { slug: string; canBi
 
       <Modal
         open={open}
-        onClose={() => {
-          setOpen(false);
-          setError(null);
-        }}
+        onClose={() => setOpen(false)}
         title="Meet Kola, your SchoolHub helper"
       >
         <div className="flex flex-col gap-5">
@@ -81,36 +74,16 @@ export function TryKola({ slug, canBill, trialAvailable }: { slug: string; canBi
             ))}
           </ul>
 
-          {error ? <Alert tone="danger">{error}</Alert> : null}
-
           {canBill ? (
             <>
-              <p className="fs-14 text-muted">
-                Kola and the AI helpers come with the Standard and Premium plans.
-                {trialAvailable ? " Try them free for a month: no card, no bill, and you can go back to your plan after." : ""}
-              </p>
+              <p className="fs-14 text-muted">Kola and the AI helpers come with the Standard and Premium plans. Upgrade to switch them on for your whole school.</p>
               <div className="flex flex-wrap justify-end gap-2.5">
-                <ButtonLink href={`/s/${slug}/settings?tab=plan`} variant="secondary" onClick={() => setOpen(false)}>
-                  See plans
+                <Button variant="secondary" onClick={() => setOpen(false)}>
+                  Not now
+                </Button>
+                <ButtonLink href={`/s/${slug}/settings?tab=plan`} onClick={() => setOpen(false)}>
+                  Upgrade to try Kola
                 </ButtonLink>
-                {trialAvailable ? (
-                  <Button
-                    disabled={pending}
-                    onClick={() =>
-                      start(async () => {
-                        const r = await startTrialAction(slug, "premium");
-                        if (r.error) setError(r.error);
-                        // On success the page refreshes onto Premium and "Ask Kola" takes this button's place.
-                      })
-                    }
-                  >
-                    {pending ? "Starting…" : "Try it free for a month"}
-                  </Button>
-                ) : (
-                  <ButtonLink href={`/s/${slug}/settings?tab=plan`} onClick={() => setOpen(false)}>
-                    Upgrade to get Kola
-                  </ButtonLink>
-                )}
               </div>
             </>
           ) : (

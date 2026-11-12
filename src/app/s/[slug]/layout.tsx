@@ -38,7 +38,7 @@ export default async function SchoolLayout({ children, params }: { children: Rea
         <KolaChat ask={askKolaAction.bind(null, slug)} linkPrefix={`/s/${slug}`} firstName={greetingName(access.user.name)} />
       ) : !ai.ok && ai.upgrade && access.isStaff ? (
         // Free and Basic: an advert for Kola in its usual spot, never shown to families.
-        <TryKola slug={slug} canBill={can(access, "school:billing")} trialAvailable={!access.school.trialUsed} />
+        <TryKola slug={slug} canBill={can(access, "school:billing")} />
       ) : null}
     </AppShell>
   );
