@@ -10,7 +10,7 @@ For the Director to generate. Each file drops into `public/illustrations/` under
 - **People:** Nigerian students, teachers and parents with a range of skin tones, hairstyles (braids, cornrows, afros, low cuts, hijab), and clothing (school uniforms with ties/pinafores, ankara prints, gele on one parent, kaftan on one teacher).
 - **Palette (stick to it):** brand orange `#FE6007` (hero colour), blue `#1A8FD6`, green `#239A3D`, sunny yellow `#FFC83D`, pink `#F28BC1`, purple `#7C5CDB`, warm skin tones, near-black `#1D1D1F` for hair/pupils. Backgrounds: none.
 - **Format:** transparent PNG (or SVG), at least 1600px on the longest side. No text, letters or numbers baked in (except the "A1" on report cards, which is fine).
-- **Mascot:** one recurring character across the whole product. Suggestion: **"Kola", a cheerful orange hornbill** (a West African bird, so it's ours and doesn't copy Duolingo's owl). Orange body `#FE6007`, cream belly, big yellow-and-orange casque/beak, round white eyes, small graduation cap with a blue tassel. Should feel as friendly as Duo but clearly different.
+- **Mascot:** one recurring character across the whole product: **"Kola", a cheerful orange robin** (Director, 13 Nov 2026). Round orange body `#FE6007`, cream belly, small yellow beak, round white eyes, black graduation cap with a blue tassel. Should feel as friendly as Duo but clearly different. Never draw Kola as an owl or a hornbill.
 
 ## Files needed
 
