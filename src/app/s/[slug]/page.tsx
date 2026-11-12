@@ -4,7 +4,7 @@ import { Kola } from "@/components/illustrations/art";
 import { Illustration } from "@/components/illustrations";
 import { PageBody, Topbar } from "@/components/topbar";
 import { ButtonLink } from "@/components/ui/button";
-import { Avatar, Badge, Banner, Card, IconChip, StatCard, StatGrid, type Tone } from "@/components/ui/display";
+import { Alert, Avatar, Badge, Banner, Card, IconChip, StatCard, StatGrid, type Tone } from "@/components/ui/display";
 import { Icon, type IconName } from "@/components/ui/icons";
 import { requireAccess } from "@/lib/auth/session";
 import { getDb } from "@/lib/db/client";
@@ -16,10 +16,18 @@ import { ClockCard } from "./hr/hr-client";
 import { hasFeature } from "@/lib/plans/entitlements";
 import { getMyDay, lagosClock, LEAVE_LABEL } from "@/lib/services/hr";
 import { formatWhen } from "@/lib/dates";
+import { TRIAL_DAYS, TRIAL_PLANS } from "@/lib/services/billing";
+import { TrialOffer } from "./trial-offer";
 
 export const metadata: Metadata = { title: "Overview" };
 
 const tz = "Africa/Lagos";
+
+/** Whole days left before a date, or null once it has passed (or there is none). */
+function daysUntil(when: Date | null) {
+  const ms = when ? when.getTime() - Date.now() : 0;
+  return ms > 0 ? Math.ceil(ms / 86_400_000) : null;
+}
 
 function greeting() {
   const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: tz }).format(new Date()));
@@ -58,6 +66,9 @@ export default async function OverviewPage({ params, searchParams }: { params: P
     { icon: "bookOpen", tone: "success", title: "Classes & subjects", text: "Arms, teachers, terms", href: `${base}/academics`, show: can(access, "academics:view") },
   ];
 
+  const canBill = can(access, "school:billing");
+  const trialEndsAt = access.school.trialEndsAt;
+  const trialDaysLeft = daysUntil(trialEndsAt);
   const studentLimit = getLimit(access.plan, "students");
   const dateLine = new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: tz }).format(new Date());
 
@@ -112,6 +123,18 @@ export default async function OverviewPage({ params, searchParams }: { params: P
           >
             {done} of {visible.length} steps done · Next: {nextStep.title.toLowerCase()}
           </Banner>
+        ) : null}
+
+        {canBill && !access.school.trialUsed && !TRIAL_PLANS.includes(access.plan.key) ? <TrialOffer slug={slug} schoolId={access.school.id} days={TRIAL_DAYS} /> : null}
+
+        {canBill && trialDaysLeft !== null ? (
+          <Alert tone={trialDaysLeft <= 7 ? "warning" : "blue"} title={`${access.plan.name} free trial: ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`}>
+            Every {access.plan.name} feature is open until {trialEndsAt!.toLocaleDateString("en-NG", { day: "numeric", month: "long", timeZone: tz })}. To keep them after that,{" "}
+            <Link href={`${base}/settings?tab=plan`} className="font-semibold text-blue hover:underline">
+              choose a plan
+            </Link>
+            .
+          </Alert>
         ) : null}
 
         <StatGrid>

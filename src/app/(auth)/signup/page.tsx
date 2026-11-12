@@ -8,7 +8,7 @@ export default function SignupPage() {
   return (
     <>
       <h1 className="font-display fs-32 font-black leading-tight tracking-[-0.02em]">Set up your school</h1>
-      <p className="mt-1 fs-15.5 text-muted">Free for up to 50 students. No card needed.</p>
+      <p className="mt-1 fs-15.5 text-muted">Free for up to 50 students, with your first month of Premium free. No card needed.</p>
       <SignupForm />
       <p className="mt-8 text-center fs-15 text-muted">
         Already have an account?{" "}
